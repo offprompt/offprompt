@@ -11,13 +11,14 @@ export type Presentation =
   | { readonly channel: 'browser' }
   | { readonly channel: 'result'; readonly url: string; readonly reason: string }
   | {
-      /** The page of a request made from a sandbox, reached over a tunnel or the vendor's port forwarding. */
+      /**
+       * The page of a request made from a sandbox, reached over a tunnel or the vendor's port
+       * forwarding. The agent always passes the link on, whatever dialog the host shows.
+       */
       readonly channel: 'remote'
       readonly url: string
       readonly via: 'tunnel' | 'loopback'
       readonly port: number
-      /** The host put the link in its own dialog, so the agent has nothing to pass on. */
-      readonly shownByHost: boolean
     }
 
 /** The part of the MCP server the ladder reaches for. */
@@ -63,11 +64,12 @@ const spawnOpener = async (url: string) => {
 }
 
 /**
- * Offers the URL through the host's own dialog. Only an accept means the person is on their
- * way to the page. A decline or a cancel means they are not, as with \`codex exec\`, which
- * cancels every dialog it cannot show, and an error means the host cannot show one: each
- * leaves the ladder free to fall through. A dialog still open when the wait ends is one the
- * person is looking at.
+ * Offers the URL through the host's own dialog, and says whether the person took it. Only an
+ * accept within the wait means they are on their way to the page. A decline or a cancel means
+ * they are not, as with \`codex exec\`, which cancels every dialog it cannot show, and an error
+ * means the host cannot show one. A dialog still open when the wait ends counts for nothing
+ * either: a host can take URL dialogs and never show one, as Claude's Agent SDK under
+ * Conductor did, and then nobody is looking at it. Each leaves the ladder free to fall through.
  */
 const offerElicitation = async ({
   server,
@@ -93,7 +95,7 @@ const offerElicitation = async ({
       () => 'refused' as const,
     )
   const outcome = await Promise.race([pending, delay(settleMs).then(() => 'pending' as const)])
-  return outcome !== 'refused'
+  return outcome === 'accepted'
 }
 
 /** Where a remote request's page can be reached, and the key its values are sealed to. */
@@ -104,7 +106,9 @@ export type RemoteLink = { readonly path: string; readonly publicKey: string }
  * no local channel worked, and the result says so when that happens. From a sandbox the
  * platform opener is never run: a browser there is on a screen the human cannot see. The
  * page is exposed through the tunnel, or left on the loopback for the vendor's port
- * forwarding to carry, and the link goes to the host's dialog or into the result.
+ * forwarding to carry. The link always goes into the result for the agent to show, and to the
+ * host's dialog as well where it takes one: the page is sealed to a key after the `#`, so the
+ * link is no secret, and a host's dialog is not always one anybody sees.
  */
 export const createPresenter = ({
   server,
@@ -125,8 +129,8 @@ export const createPresenter = ({
     // The key rides after the `#`, which no tunnel or proxy receives. It is a public key, so the
     // transcript holding the link is harmless.
     const url = `${tunnel ?? loopback.origin}${link.path}#k=${link.publicKey}`
-    const shownByHost = await offerElicitation({ server, request, url, settleMs })
-    return { channel: 'remote', url, via: tunnel === undefined ? 'loopback' : 'tunnel', port: loopback.port, shownByHost }
+    void offerElicitation({ server, request, url, settleMs })
+    return { channel: 'remote', url, via: tunnel === undefined ? 'loopback' : 'tunnel', port: loopback.port }
   }
 
   return async ({

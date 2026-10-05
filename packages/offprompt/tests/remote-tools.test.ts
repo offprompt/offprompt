@@ -176,15 +176,15 @@ describe('collect_secret from a sandbox', () => {
     )
   })
 
-  it('leaves a tunnel link the host is showing out of the result, and still does not wait', async () => {
+  it('puts the tunnel link in the result for the agent even when the host takes a dialog, and does not wait', async () => {
     const { collect } = await setupTest({ elicitation: true })
 
     const answer = await collect()
 
     expect(answer.status).toBe('awaiting')
-    expect(answer.url).toBeUndefined()
+    expect(answer.url).toMatch(/^https:\/\/[\w.-]+\/r\/[0-9a-f]{32}#k=[\w-]{87}$/)
     expect(answer.note).toBe(
-      'offprompt is running in a cloud sandbox and exposed its page through a tunnel. The host is showing the user the link. Call await_secret.',
+      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} Say nothing else about it. Then call await_secret.`,
     )
   })
 

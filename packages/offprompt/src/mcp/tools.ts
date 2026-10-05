@@ -271,13 +271,12 @@ const SHOW_LINK =
   'Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do:'
 
 const remoteNote = (presentation: Extract<Presentation, { channel: 'remote' }>) => {
-  const { url, via, shownByHost } = presentation
+  const { url, via } = presentation
   const port = String(presentation.port)
   if (via === 'loopback') {
     return `offprompt could not open a tunnel from this sandbox. ${SHOW_LINK} ${url} It opens only if their tool forwards port ${port} to their machine; if it forwards to another port, they change the port in the link. If nothing forwards it, this sandbox cannot expose a page: they can turn on port forwarding or allow outbound connections to Cloudflare, then ask you to try again. Then call await_secret.`
   }
   const exposed = 'offprompt is running in a cloud sandbox and exposed its page through a tunnel.'
-  if (shownByHost) return `${exposed} The host is showing the user the link. Call await_secret.`
   return `${exposed} ${SHOW_LINK} ${url} Say nothing else about it. Then call await_secret.`
 }
 
@@ -354,8 +353,6 @@ export const registerTools = ({
     const fileKeys = await fileKeysOf(request)
     const relayed =
       presentation?.channel === 'result' || presentation?.channel === 'remote' ? presentation : undefined
-    // A tunnel link the host's own dialog is showing stays out of the result.
-    const shown = relayed?.channel === 'remote' && relayed.via === 'tunnel' && relayed.shownByHost
     return bothWays({
       payload: {
         ...tellUser(request),
@@ -368,7 +365,7 @@ export const registerTools = ({
         ...fileKeysReport(fileKeys),
         sink: sinkReport(request),
         note: relayed === undefined ? statusNote({ request, fileKeys }) : noteFor(relayed),
-        ...(relayed === undefined || shown ? {} : { url: relayed.url }),
+        ...(relayed === undefined ? {} : { url: relayed.url }),
       },
       lead: headline(request),
     })

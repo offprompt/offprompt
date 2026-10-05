@@ -75,16 +75,17 @@ describe('openerFor', () => {
 })
 
 describe('the presentation ladder', () => {
-  it('offers the URL through the host when the client advertises url elicitation', async () => {
+  it('offers the URL through the host, and opens the browser when the dialog goes unanswered', async () => {
     const { present, request, url, elicitInput, openUrl } = setupTest({ elicitationUrl: true })
 
     const presentation = await present({ request, url })
 
-    expect(presentation).toEqual({ channel: 'elicitation' })
+    // A host can take the dialog and never show it, as Claude's Agent SDK under Conductor did.
     expect(elicitInput).toHaveBeenCalledWith(
       expect.objectContaining({ mode: 'url', url, elicitationId: request.id }),
     )
-    expect(openUrl).not.toHaveBeenCalled()
+    expect(presentation).toEqual({ channel: 'browser' })
+    expect(openUrl).toHaveBeenCalledWith(url)
   })
 
   it('opens the browser itself when the client does not advertise url elicitation', async () => {
@@ -163,7 +164,6 @@ describe('the presentation ladder, from a sandbox', () => {
       url: `${TUNNEL}/r/abc#k=PUBLICKEY`,
       via: 'tunnel',
       port: 54321,
-      shownByHost: false,
     })
     expect(openUrl).not.toHaveBeenCalled()
   })
@@ -178,29 +178,24 @@ describe('the presentation ladder, from a sandbox', () => {
       url: 'http://127.0.0.1:54321/r/abc#k=PUBLICKEY',
       via: 'loopback',
       port: 54321,
-      shownByHost: false,
     })
     expect(openUrl).not.toHaveBeenCalled()
   })
 
-  it('gives the link to the host dialog when the client takes url elicitation', async () => {
-    const { present, request, url, elicitInput, openUrl } = setupTest({ elicitationUrl: true, tunnel: TUNNEL })
+  it('offers the link in the host dialog as well, and keeps it for the agent whatever the dialog does', async () => {
+    const answers = [new Promise<never>(() => undefined), Promise.resolve({ action: 'accept' }), Promise.resolve({ action: 'cancel' })]
+    const presentations = await Promise.all(
+      answers.map(async elicitationAnswer => {
+        const { present, request, url, elicitInput, openUrl } = setupTest({ elicitationUrl: true, tunnel: TUNNEL, elicitationAnswer })
+        const presentation = await present({ request, url, remote: REMOTE })
+        expect(elicitInput).toHaveBeenCalledWith(expect.objectContaining({ url: `${TUNNEL}/r/abc#k=PUBLICKEY` }))
+        expect(openUrl).not.toHaveBeenCalled()
+        return presentation
+      }),
+    )
 
-    const presentation = await present({ request, url, remote: REMOTE })
-
-    expect(presentation).toMatchObject({ channel: 'remote', via: 'tunnel', shownByHost: true })
-    expect(elicitInput).toHaveBeenCalledWith(expect.objectContaining({ url: `${TUNNEL}/r/abc#k=PUBLICKEY` }))
-    expect(openUrl).not.toHaveBeenCalled()
-  })
-
-  it('puts the link in the result when the host cancels the dialog', async () => {
-    const { present, request, url } = setupTest({
-      elicitationUrl: true,
-      tunnel: TUNNEL,
-      elicitationAnswer: Promise.resolve({ action: 'cancel' }),
-    })
-
-    expect(await present({ request, url, remote: REMOTE })).toMatchObject({ channel: 'remote', shownByHost: false })
+    const link = { channel: 'remote', url: `${TUNNEL}/r/abc#k=PUBLICKEY`, via: 'tunnel', port: 54321 }
+    expect(presentations).toEqual([link, link, link])
   })
 
   it('never runs the platform opener, even when the host refuses the elicitation', async () => {
@@ -212,7 +207,7 @@ describe('the presentation ladder, from a sandbox', () => {
 
     const presentation = await present({ request, url, remote: REMOTE })
 
-    expect(presentation).toMatchObject({ channel: 'remote', shownByHost: false })
+    expect(presentation).toMatchObject({ channel: 'remote', url: `${TUNNEL}/r/abc#k=PUBLICKEY` })
     expect(openUrl).not.toHaveBeenCalled()
   })
 })
