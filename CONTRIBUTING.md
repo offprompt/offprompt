@@ -124,6 +124,8 @@ request open while changesets wait, with the next version and its changelog entr
 release with its entry, and lists it in the MCP Registry. A run that stopped partway finishes
 the rest when run again. `pnpm release npm --dry-run` shows what would go out.
 
-A pull request merges into `main` once its `all checks` check passes, which it does when the
-checks and the hosts have passed on Linux, Windows and macOS. Auto-merge waits for it:
-`gh pr merge --auto --rebase`.
+Changes reach `main` only through pull requests. One merges once it is up to date with `main`
+and its `all checks` check passes, which it does when the checks and the hosts have passed on
+Linux, Windows and macOS; what lands is then what was checked, so `main` is not checked again.
+Auto-merge waits for it: `gh pr merge --auto --rebase`. A pull request that `main` moved past
+catches up with `gh pr update-branch --rebase`.
