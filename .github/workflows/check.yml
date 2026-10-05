@@ -1,13 +1,11 @@
 # Typecheck, lint and test every package on Linux, Windows and macOS, then run the page's
 # browser tests. Every step runs even when an earlier one failed, so one run shows every failure.
 #
-# macOS minutes count ten times over in a private repository, so macOS runs where a change is
-# about to land: on pull requests, on main and master, and when started by hand.
+# A pull request is checked as it will land: main takes changes only through pull requests, each
+# up to date with main when it merges, so what lands on main was checked already.
 name: check
 
 on:
-  push:
-    branches: [main, master, monorepo]
   pull_request:
   workflow_dispatch:
 
@@ -17,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(github.event_name == 'push' && github.ref_name != 'main' && github.ref_name != 'master' && '["ubuntu-latest", "windows-latest"]' || '["ubuntu-latest", "windows-latest", "macos-latest"]') }}
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       # A Windows checkout turns line endings into CRLF unless told otherwise.
@@ -58,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(github.event_name == 'push' && github.ref_name != 'main' && github.ref_name != 'master' && '["ubuntu-latest", "windows-latest"]' || '["ubuntu-latest", "windows-latest", "macos-latest"]') }}
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Keep line endings as committed
@@ -101,12 +99,11 @@ jobs:
 
   # Claude Code against a scripted model on a machine the person reaches over SSH, where
   # offprompt exposes the page through a real Cloudflare quick tunnel and the run fills it at
-  # its https address. It runs where macOS runs, and its failure fails nothing: a quick tunnel
-  # depends on Cloudflare's free service, which promises no uptime, and on its new hostname
-  # reaching DNS in time, so a red run here can be Cloudflare's rather than offprompt's.
+  # its https address. Its failure fails nothing: a quick tunnel depends on Cloudflare's free
+  # service, which promises no uptime, and on its new hostname reaching DNS in time, so a red
+  # run here can be Cloudflare's rather than offprompt's.
   tunnel:
     name: tunnel on ubuntu-latest
-    if: ${{ github.event_name != 'push' || github.ref_name == 'main' || github.ref_name == 'master' }}
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:

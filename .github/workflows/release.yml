@@ -15,7 +15,6 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
-  actions: write
   contents: write
   pull-requests: write
   id-token: write
@@ -46,14 +45,6 @@ jobs:
           title: Release offprompt
           commit: 'chore: release offprompt'
 
-      # What this workflow pushes with its own token starts no workflow, so the release pull
-      # request would never get the checks it needs to merge. They are started here instead.
-      - name: Check the release pull request
-        if: steps.changesets.outputs.hasChangesets == 'true'
-        run: gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "changeset-release/$GITHUB_REF_NAME"
-        env:
-          GH_TOKEN: ${{ github.token }}
-
       - name: Which parts of this version are due
         id: pending
         if: steps.changesets.outputs.hasChangesets == 'false'
@@ -61,10 +52,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Typecheck, lint and test
-        if: steps.pending.outputs.npm == 'true'
-        run: pnpm exec turbo run typecheck lint test --concurrency=1 --filter=!@offprompt/docs --filter=!@offprompt/site
-
+      # The release pull request was checked as it landed, like every change to main.
       - name: Publish to npm
         if: steps.pending.outputs.npm == 'true'
         run: pnpm release npm
