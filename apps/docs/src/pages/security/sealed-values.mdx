@@ -14,8 +14,8 @@ Every request from a sandbox gets its own ECDH P-256 key pair.
 
 - The public half travels in the link, after the `#`: `…#k=BL0yBC9F2AfM…`. A browser never sends
   that part of an address to a server, so no tunnel or proxy sees it. The agent's host does,
-  since the link travels in its dialog or in the tool result, and from the tool result it reaches
-  the transcript and the model provider's logs. That is harmless for a public key: it lets
+  since the link travels in the tool result, and in its dialog where it shows one, and from the
+  tool result it reaches the transcript and the model provider's logs. That is harmless for a public key: it lets
   whoever holds it seal values to the sandbox, never open them.
 - The private half cannot be exported and lives only on the request, in offprompt's memory. It
   is dropped from the request when the request leaves `awaiting`: once written or cancelled, and,

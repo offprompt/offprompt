@@ -147,7 +147,7 @@ Two cases do not wait, and `await_secret` does the waiting for both. One is the 
 of the local ladder below, where the model has to relay the URL itself: blocking there
 would hold back the message that gets the human to the page. The other is every request
 made from a sandbox, which lives longer than any one call. Both return `awaiting`, with
-the URL unless the host's own dialog is showing it.
+the URL.
 
 ### `await_secret`
 
@@ -220,10 +220,12 @@ The model never carries the URL. The plugin picks the first channel that works:
 
 1. URL-mode elicitation, when the client advertises `elicitation.url`
    ([spec](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation)).
-   The host shows the origin in its own dialog. Only an `accept` counts, or a dialog still
-   open after a moment, which the human is looking at. A `decline`, a `cancel` or an error
-   goes on to the next channel: `codex exec`, and the Codex SDK built on it, advertise
-   URL-mode elicitation and cancel every dialog, since nobody is there to see it.
+   The host shows the origin in its own dialog. Only an `accept` within a moment counts. A
+   `decline`, a `cancel`, an error or no answer goes on to the next channel: `codex exec`, and
+   the Codex SDK built on it, advertise URL-mode elicitation and cancel every dialog, since
+   nobody is there to see it, and Claude's Agent SDK under Conductor advertised it and never
+   showed the dialog or answered, which a dialog left open had been taken for being seen
+   until 2026-10-05.
 2. The plugin opens the browser itself with `open`, `xdg-open`, or on Windows
    `rundll32 url.dll,FileProtocolHandler`. This is the v1 default.
    Claude Code currently rejects URL-mode elicitation
@@ -238,8 +240,11 @@ distrust. That rule holds on the human's machine only.
 ### From a sandbox
 
 offprompt never runs the platform opener here: a browser it opened would be on a screen the
-agent can see and the human cannot. It exposes its own page server, and the link reaches
-the human through the host's dialog or through the agent.
+agent can see and the human cannot. It exposes its own page server, and the link always
+goes into the tool result for the agent to show, and to the host's dialog as well where the
+host takes one. The page is sealed to the key after the `#`, so the link is no secret, and a
+dialog is not always one the human sees: under Conductor's cloud workspaces the Agent SDK
+took the dialog and never showed it, and the agent had no link to pass on.
 
 **Quick tunnel.** One `cloudflared` quick tunnel (try.cloudflare.com) per MCP server
 process, started on the first remote request and reused by every later one.

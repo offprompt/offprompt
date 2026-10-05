@@ -115,16 +115,16 @@ Conductor".
 On your own machine the model never carries the page's address. offprompt tries, in order:
 
 1. **URL elicitation**, where the agent's host supports it: the host shows the link in a dialog of
-   its own. Only an accepted dialog counts, or one still open after a moment, which someone is
-   looking at.
+   its own. Only a dialog you accept within a moment counts; offprompt goes on otherwise, since
+   some hosts take the dialog and never show it.
 2. **Opening your browser** itself, with `open` on macOS, `xdg-open` on Linux, or
    `rundll32 url.dll,FileProtocolHandler` on Windows.
 3. **The link in the tool result**, only when the browser cannot be opened. The agent shows it to
    you, and the result says so.
 
 So the rule on your own machine is simple: offprompt opens itself. From a
-[cloud sandbox](/guides/cloud-sandboxes) the link always comes through the host's dialog or the
-agent.
+[cloud sandbox](/guides/cloud-sandboxes) the agent always shows you the link, and the host's
+dialog may offer it too.
 
 ## One plugin, three formats
 
