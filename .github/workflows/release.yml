@@ -1,63 +1,67 @@
-# Releases the version a tag names, such as v0.1.0, once the tag is pushed: the npm package
-# offprompt, then the same version in the MCP Registry, then a GitHub release with its notes.
-# Neither registry holds a token for this: npm's trusted publishing and the MCP Registry's
-# GitHub login both trust this workflow through GitHub's OIDC, and npm records where the
-# package was built.
+# Releases offprompt from main. Each change that reaches npm says what it is in a changeset
+# (`pnpm changeset`); while any wait, Changesets keeps a "Release offprompt" pull request open
+# with the next version and its changelog entry. Merging it is the release: the version npm
+# does not have yet goes to npm, to a GitHub release with its entry, and to the MCP Registry.
+# npm and the registry trust this workflow through GitHub's OIDC, so no token is stored. It
+# runs once the repository is public, where npm records where each version was built.
 name: release
 
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
   contents: write
+  pull-requests: write
   id-token: write
 
 jobs:
   release:
-    # npm marks only a package's bin executable, so it is packed where the launcher's mode
-    # survives.
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
 
       - uses: pnpm/action-setup@v4
 
+      # Node 24's own npm publishes through trusted publishing. Updated in place, npm loses the
+      # sigstore it signs provenance with.
       - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: pnpm
 
-      # Trusted publishing needs npm 11.5.1 or later.
-      - run: npm install --global npm@latest
-
       - run: pnpm install --frozen-lockfile
 
-      - name: The tag names the version every manifest declares
-        run: |
-          version=$(node -p "require('./packages/offprompt/package.json').version")
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "the tag is $GITHUB_REF_NAME, and the package is $version"
-            exit 1
-          fi
+      - name: The release pull request, while changes wait
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm version-packages
+          title: Release offprompt
+          commit: 'chore: release offprompt'
+
+      - name: Whether npm has this version
+        id: pending
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: pnpm release pending
 
       - name: Typecheck, lint and test
+        if: steps.pending.outputs.due == 'true'
         run: pnpm exec turbo run typecheck lint test --concurrency=1 --filter=!@offprompt/docs --filter=!@offprompt/site
 
-      - name: Assemble the package
-        run: pnpm package "$RUNNER_TEMP/offprompt"
+      - name: Publish to npm, with a GitHub release
+        if: steps.pending.outputs.due == 'true'
+        run: pnpm release publish
+        env:
+          GH_TOKEN: ${{ github.token }}
 
-      - name: Publish to npm
-        run: npm publish "$RUNNER_TEMP/offprompt" --access public
-
-      - name: Publish to the MCP Registry
+      - name: List it in the MCP Registry
+        if: steps.pending.outputs.due == 'true'
         run: |
           curl -fsSL https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz \
             | tar -xz mcp-publisher
           ./mcp-publisher login github-oidc
           ./mcp-publisher publish
-
-      - name: A GitHub release with the changes since the last one
-        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
-        env:
-          GH_TOKEN: ${{ github.token }}
