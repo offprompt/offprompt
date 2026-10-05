@@ -94,18 +94,24 @@ it.skipIf(WINDOWS)('starts no server until a tool is called, and the call is ans
   expect(await readFile(join(project, '.env'), 'utf8')).toMatch(/^SESSION_SECRET=/)
 })
 
-it.skipIf(WINDOWS)('stops the server once it has had nothing to do, and starts it again for the next call', async () => {
-  const { connect, generate, project } = await setupTest()
-  const { client, starts } = await connect({ idleSeconds: 1 })
+// The four seconds it waits for the server to stop leave a slow runner too little of vitest's
+// five for two starts, so it has twenty.
+it.skipIf(WINDOWS)(
+  'stops the server once it has had nothing to do, and starts it again for the next call',
+  async () => {
+    const { connect, generate, project } = await setupTest()
+    const { client, starts } = await connect({ idleSeconds: 1 })
 
-  await generate(client, 'FIRST_SECRET')
-  await sleep(4000)
-  await client.ping()
-  await generate(client, 'SECOND_SECRET')
+    await generate(client, 'FIRST_SECRET')
+    await sleep(4000)
+    await client.ping()
+    await generate(client, 'SECOND_SECRET')
 
-  expect(starts()).toBe(2)
-  expect(await readFile(join(project, '.env'), 'utf8')).toMatch(/^FIRST_SECRET=.*\nSECOND_SECRET=/s)
-})
+    expect(starts()).toBe(2)
+    expect(await readFile(join(project, '.env'), 'utf8')).toMatch(/^FIRST_SECRET=.*\nSECOND_SECRET=/s)
+  },
+  20_000,
+)
 
 /** The launcher's own replies to messages written as a host writes them, one per line. */
 const exchange = async ({ plugin, project }: { plugin: string; project: string }, messages: readonly object[]) => {
