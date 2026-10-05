@@ -43,6 +43,21 @@ export default defineConfig({
     },
     text: 'Suggest a change to this page',
   },
+  // Each page's card is drawn by offprompt.dev, under the sidebar group the page sits in. Like
+  // the edit link, this function reaches the browser as its source text and names nothing
+  // from outside itself.
+  ogImageUrl: (path: string) => {
+    const section = path.startsWith('/guides/')
+      ? 'Guides'
+      : path.startsWith('/reference/')
+        ? 'Reference'
+        : path.startsWith('/security/')
+          ? 'Security'
+          : ['/introduction', '/installation', '/first-secret'].includes(path)
+            ? 'Getting started'
+            : 'More'
+    return `https://offprompt.dev/og/docs?section=${encodeURIComponent(section)}&title=%title&description=%description`
+  },
   socials: [{ icon: 'github', link: REPO }],
   markdown: { remarkPlugins: [registryLists] },
   topNav: [
