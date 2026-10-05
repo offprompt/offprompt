@@ -1,6 +1,7 @@
 import { categoryLabels, providers } from 'offprompt/showcase'
 import { defineConfig } from 'vocs/config'
 
+import redirects from './redirects.json' with { type: 'json' }
 import { registryLists } from './registry.ts'
 
 /** The public repository, as offprompt.dev links it. */
@@ -26,7 +27,7 @@ export default defineConfig({
   // request, a preview's included, to the live site.
   head: { base: false },
   // The docs open on the introduction: there is no page of their own at the root.
-  redirects: [{ source: '/', destination: '/introduction' }],
+  redirects,
   iconUrl: '/icon.svg',
   accentColor: 'light-dark(#2B4A3B, #7CF5C2)',
   renderStrategy: 'full-static',

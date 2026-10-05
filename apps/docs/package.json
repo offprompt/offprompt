@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "node scripts/samples.mjs && vocs dev",
-    "build": "node scripts/samples.mjs && vocs build",
+    "build": "node scripts/samples.mjs && vocs build && node scripts/vercel.mjs",
     "preview": "vocs preview",
     "video": "node scripts/video.mjs",
     "typecheck": "tsc --noEmit",
