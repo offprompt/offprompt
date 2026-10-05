@@ -123,3 +123,7 @@ request open while changesets wait, with the next version and its changelog entr
 `packages/offprompt/CHANGELOG.md`. Merging it publishes that version to npm, opens a GitHub
 release with its entry, and lists it in the MCP Registry. A run that stopped partway finishes
 the rest when run again. `pnpm release npm --dry-run` shows what would go out.
+
+A pull request merges into `main` once its `all checks` check passes, which it does when the
+checks and the hosts have passed on Linux, Windows and macOS. Auto-merge waits for it:
+`gh pr merge --auto --rebase`.

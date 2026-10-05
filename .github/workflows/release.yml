@@ -15,6 +15,7 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
   id-token: write
@@ -44,6 +45,14 @@ jobs:
           version: pnpm version-packages
           title: Release offprompt
           commit: 'chore: release offprompt'
+
+      # What this workflow pushes with its own token starts no workflow, so the release pull
+      # request would never get the checks it needs to merge. They are started here instead.
+      - name: Check the release pull request
+        if: steps.changesets.outputs.hasChangesets == 'true'
+        run: gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "changeset-release/$GITHUB_REF_NAME"
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Which parts of this version are due
         id: pending

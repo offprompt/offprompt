@@ -170,3 +170,16 @@ jobs:
           exit 1
         env:
           BASE: ${{ github.base_ref }}
+
+  # The one check main's ruleset requires before a pull request merges: it passes when every
+  # job above passed or was skipped, so the matrices can change without the ruleset. The
+  # tunnel is left out, since its failure fails nothing.
+  all:
+    name: all checks
+    if: ${{ always() }}
+    needs: [check, hosts, changeset]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job passed or was skipped
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1
