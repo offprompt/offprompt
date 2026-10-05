@@ -176,3 +176,36 @@ single('shows the field the site picks, and it stays editable', async ({ fields 
   await resend.fill('sk_not-a-resend-key')
   await expect(fields.frame.getByText('starts with re_', { exact: false })).toBeVisible()
 })
+
+/**
+ * A page the showcase renders, left open in a tab nobody looks at for a number of minutes:
+ * the browser's clock jumps a minute at a time and each timer fires at most once a jump, as a
+ * browser holds back a background tab's.
+ */
+const shownFor = async ({ page, body, minutes }: { page: Page; body: string; minutes: number }) => {
+  await page.clock.install()
+  await page.route(`${SITE}/sample`, route => route.fulfill({ contentType: 'text/html', body }))
+  await page.goto(`${SITE}/sample`)
+  await expect(page.getByText(/left$/)).toBeVisible()
+  await Array.from({ length: minutes }).reduce<Promise<void>>(
+    done => done.then(() => page.clock.fastForward(60_000)),
+    Promise.resolve(),
+  )
+}
+
+base('keeps a sample page open however long a site shows it', async ({ page }) => {
+  const { DEMO, samplePage } = await loadShowcase()
+  const { demo: _, ...plain } = DEMO
+  await shownFor({ page, body: samplePage(plain), minutes: 12 })
+
+  await expect(page.getByText(/left$/)).toBeVisible()
+  await expect(page.getByText('This request has expired')).toBeHidden()
+})
+
+base('keeps the page to try open however long a site shows it', async ({ page }) => {
+  const { DEMO, samplePage } = await loadShowcase()
+  await shownFor({ page, body: samplePage(DEMO), minutes: 12 })
+
+  await expect(page.getByText(/left$/)).toBeVisible()
+  await expect(page.getByText('This request has expired')).toBeHidden()
+})

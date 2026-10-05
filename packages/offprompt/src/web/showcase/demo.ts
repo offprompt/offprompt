@@ -164,6 +164,13 @@ const reportHeight = () => {
   watchAll()
 }
 
+/**
+ * The least time the stand-in's clock shows before it starts over. A clock that ran low would
+ * have the page count it down between two checks and close the request, and a browser checks
+ * only once a minute in a tab nobody is looking at.
+ */
+const LOWEST_SECONDS = 120
+
 /** Takes the server's place for the page it runs in. */
 export const start = (config: DemoConfig) => {
   const opened = Date.now()
@@ -171,7 +178,10 @@ export const start = (config: DemoConfig) => {
 
   const answer = async (_input: RequestInfo | URL, init?: RequestInit) => {
     if (init?.method !== 'POST') {
-      return json({ status: 'awaiting', expiresIn: config.ttl - (((Date.now() - opened) / 1000) % config.ttl) })
+      return json({
+        status: 'awaiting',
+        expiresIn: config.ttl - (((Date.now() - opened) / 1000) % (config.ttl - LOWEST_SECONDS)),
+      })
     }
     const key = bodyOf(init).get('fingerprint') ?? ''
     const values = writtenValues()

@@ -107,11 +107,14 @@ const style = (body: string) => `<style nonce="${NONCE}">\n${body}\n</style>`
 
 /**
  * Answers the page's status checks as an open request whose clock keeps running, and keeps
- * focus from leaving the page it is shown in.
+ * focus from leaving the page it is shown in. The clock starts over two minutes before it
+ * would run out: one that ran low would have the page count it down between two checks and
+ * close the request, as every page on the site did after a few minutes in a background tab,
+ * where a browser checks only once a minute.
  */
 const STANDIN = script(`const opened = Date.now();
 const ttl = ${String(DEFAULT_TTL_MS / 1000)};
-window.fetch = () => Promise.resolve(new Response(JSON.stringify({ status: 'awaiting', expiresIn: ttl - (((Date.now() - opened) / 1000) % ttl) }), { headers: { 'content-type': 'application/json' } }));
+window.fetch = () => Promise.resolve(new Response(JSON.stringify({ status: 'awaiting', expiresIn: ttl - (((Date.now() - opened) / 1000) % (ttl - 120)) }), { headers: { 'content-type': 'application/json' } }));
 HTMLElement.prototype.focus = () => {};`)
 
 /**
