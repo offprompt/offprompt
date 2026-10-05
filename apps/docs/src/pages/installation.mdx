@@ -69,6 +69,27 @@ Each agent gets it the way it takes plugins:
 
 `--agent` works here too.
 
+### From a marketplace
+
+Claude Code and Codex can also add offprompt from its repository, which is a plugin marketplace
+too. Each fetches the plugin from npm. In Claude Code:
+
+```
+/plugin marketplace add offprompt/offprompt
+/plugin install offprompt@offprompt
+```
+
+In Codex:
+
+```sh
+codex plugin marketplace add offprompt/offprompt
+codex plugin add offprompt@offprompt
+```
+
+On Windows, install with `npx offprompt init -g` instead. The plugin starts its server through a
+shell script, which Windows does not run by itself; `init -g` has its copy of the plugin start
+the server with `node`.
+
 ## Updating
 
 Run `init` again from the newest version. In a project, that replaces `tools/offprompt/mcp.mjs`:
