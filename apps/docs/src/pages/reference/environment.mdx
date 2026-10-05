@@ -1,0 +1,35 @@
+---
+description: The environment variables offprompt reads, and what each changes.
+---
+
+# Environment
+
+offprompt needs no configuration. These are the variables it reads, and who sets each.
+
+| Variable | Set by | What it changes |
+| --- | --- | --- |
+| `OFFPROMPT_TUNNEL=off` | You | From a sandbox, skips the Cloudflare tunnel and hands out a `127.0.0.1` link for your port forwarding to carry. See [Cloud sandboxes](/guides/cloud-sandboxes#when-there-is-no-tunnel) |
+| `OFFPROMPT_IDLE_SECONDS` | You | How long the plugin's launcher leaves the server running with no request open and no tool call, before it stops it: 300 seconds unless set. The next tool call starts it again |
+| `OFFPROMPT_STATE_FILE` | The plugin's launcher, not you | The file the server tells the launcher in when it may be stopped |
+| `CLAUDE_CODE_REMOTE=true` | Claude Code on the web | offprompt runs in a sandbox |
+| `SSH_CONNECTION` | SSH, VS Code Remote-SSH | offprompt runs in a sandbox |
+| `CODESPACES=true` | GitHub Codespaces | offprompt runs in a sandbox |
+| `DISPLAY`, `WAYLAND_DISPLAY` | Your desktop | On Linux with neither, offprompt runs in a sandbox |
+| `WORKSPACE_FOLDER_PATHS` | Cursor | The project folders offprompt may write in |
+| `CONDUCTOR_WORKSPACE_ID` | Conductor | The line above the page's heading adds "in Conductor" |
+| `PATH` | You or your system | A `cloudflared` on it is used before a cached copy, and nothing is downloaded |
+| `CLAUDE_PLUGIN_DATA`, `PLUGIN_DATA` | The agent, for a plugin | Where the downloaded `cloudflared` is cached |
+| `XDG_CACHE_HOME` | You or your system | Where `cloudflared` is cached when the agent gives no plugin folder: `$XDG_CACHE_HOME/offprompt`, or `~/.cache/offprompt` |
+| `PI_CODING_AGENT_DIR` | You | Where `init -g` finds Pi's agent directory, `~/.pi/agent` otherwise |
+
+Codex gives an MCP server only a few of its own variables. offprompt's Codex config and plugin
+pass on `OFFPROMPT_TUNNEL`, `SSH_CONNECTION`, `CODESPACES`, `DISPLAY`, `WAYLAND_DISPLAY`,
+`CONDUCTOR_WORKSPACE_ID` and `XDG_CACHE_HOME`, and what `xdg-open` needs to reach your browser on
+Linux: `XDG_RUNTIME_DIR`, `XDG_CURRENT_DESKTOP`, `XDG_DATA_DIRS`, `DBUS_SESSION_BUS_ADDRESS` and
+`BROWSER`. See [Codex](/guides/agents#codex).
+
+## Where offprompt keeps things
+
+Nowhere, for requests: they live in the server's memory and end with it. The project tree and
+your home folder are left alone, apart from the files you ask it to write and, from a sandbox, the
+cached `cloudflared`.

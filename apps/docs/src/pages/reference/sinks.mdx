@@ -1,0 +1,88 @@
+---
+description: Where offprompt writes values, dotenv or a file of its own, and the rules both follow.
+---
+
+# Sinks
+
+A sink is where a request's values are written. The agent names it once, in
+[`collect_secret`](/reference/collect-secret), and offprompt fixes it then: the page submits
+values and nothing about where they go.
+
+| Kind | Fields | Behaviour |
+| --- | --- | --- |
+| `dotenv` | `path`, default `.env` | Upserts `NAME=value` lines and leaves every other line byte-identical |
+| `file` | `path` | Writes the one value as the whole file |
+
+::::code-group
+
+```json [dotenv]
+{ "kind": "dotenv", "path": ".env.local" }
+```
+
+```json [file]
+{ "kind": "file", "path": "certs/signing.pem" }
+```
+
+::::
+
+## dotenv
+
+Each key the file already holds is updated in place; the page says it will be replaced. Later
+lines assigning the same key are dropped, so no reader can still find the old value. Every other
+key is added at the end. Comments, blank lines and keys the request did not ask for stay exactly
+as they were. A file that does not exist yet is created.
+
+Values are written the way [dotenv](https://github.com/motdotla/dotenv) reads them back, and the
+way a shell that `source`s the file reads them too:
+
+- bare only when they hold nothing but letters, digits and `_ @ % + = : , . / -`;
+- otherwise single-quoted, which dotenv and a shell both take literally, so a connection string's
+  `&` or a space stays part of the value;
+- or double-quoted, with `\n` escapes, for a value on several lines;
+- or single-quoted across real newlines, for a value on several lines that holds a `"` or a `\`,
+  such as a JSON document.
+
+A shell reads the double-quoted form differently, keeping `\n` as two characters, and the same
+goes for a value with a single quote and a `$` or a backtick, which only double quotes can carry.
+dotenv, and the frameworks that read `.env` files with it, read both exactly.
+
+A value is never double-quoted when it carries a backslash of its own, which a reader could take
+for an escape. One that no form can carry exactly, a single quote together with a double quote or
+a backslash, is refused before anything is written, and the page says so.
+
+A `.env` that exists but cannot be read stops the write, rather than being taken for empty:
+upserting into nothing would drop every other key in it.
+
+## file
+
+The value becomes the file's whole content, for a PEM key, a JSON credentials file or anything
+else a project reads from a file of its own. A `file` sink takes exactly one key.
+
+## Rules both follow
+
+**Atomic.** offprompt writes a temporary file beside the target and renames it into place, so the
+file is either as it was or fully written. The folder has to take new files for that, which the
+page checks before you type.
+
+**Private.** On macOS and Linux the file is written with mode `0600`, readable and writable by you
+alone, and a folder offprompt creates for it gets mode `0700`. Windows has no file modes: there
+the file takes the permissions of its folder, which for a project under your user folder means
+you and the machine's administrators.
+
+**Inside the project.** The path resolves against the project folder and must stay inside it,
+symlinks included. `../.env`, an absolute path elsewhere, and a symlink that leads out are all
+refused, as are the project folder itself and any folder.
+
+**Not in git, unless you say so.** A file git tracks is refused unless you tick the override on
+the page. A request of generated keys alone, which opens no page, is refused for a tracked file
+outright, since only you can allow that write.
+
+**All or nothing.** Either every value in the request is written or none is. A write the file
+system refuses leaves the file as it was and the values on the page, and **Try again** writes
+them once it is fixed.
+
+## After the write
+
+offprompt reads the file back for the [fingerprint](/guides/fingerprint), and tells the agent the
+name of every key the file now holds, as `file_keys`. The agent has no reason to open the file,
+and is told not to: reading it would put the values into the transcript.

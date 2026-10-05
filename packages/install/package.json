@@ -1,0 +1,33 @@
+{
+  "name": "@offprompt/install",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Every way offprompt reaches an agent: the plugin directory, the scripts that install it, and the config for projects that carry the bundle themselves.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "offprompt-install": "dist/offprompt-install.mjs"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "package": "pnpm --filter offprompt build && node scripts/build.mjs && node scripts/package.mjs",
+    "agents": "pnpm --filter offprompt build && node scripts/build.mjs && node dist/offprompt-install.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "offprompt": "workspace:*"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "catalog:",
+    "@types/cross-spawn": "^6.0.6",
+    "@types/node": "catalog:",
+    "add-mcp": "^2.4.0",
+    "cross-spawn": "^7.0.6",
+    "esbuild": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

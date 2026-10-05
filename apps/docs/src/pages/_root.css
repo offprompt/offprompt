@@ -1,0 +1,331 @@
+@import '@fontsource-variable/jetbrains-mono';
+
+/* Geist is Vocs' own; code is set in JetBrains Mono, as offprompt.dev and offprompt's page are. */
+:root {
+  --vocs-font-family-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+}
+
+/* The wordmark as offprompt.dev draws it: the mark, then the name. */
+[data-v-logo-text] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.4px;
+}
+
+[data-v-logo-text]::before {
+  content: '';
+  width: 32px;
+  height: 16px;
+  background-color: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 43 21'%3E%3Cpath fill-rule='evenodd' d='M5 11c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z M16 0c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z m0 2.25c1.518 0 2.75 1.232 2.75 2.75 0 1.518-1.232 2.75-2.75 2.75-1.518 0-2.75-1.232-2.75-2.75 0-1.518 1.232-2.75 2.75-2.75z M27 11c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z M38 11c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+/*
+ * The introduction's video: Claude Code asking offprompt for a key, and the page it opens.
+ */
+.offprompt-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin: 24px 0 8px;
+  border-radius: 12px;
+  border: 1px solid light-dark(#e4e6e1, #2a2e2b);
+  background: #f3f4f1;
+}
+
+/*
+ * The page to try, at the top of "The page": its controls, a note, and offprompt's page in a
+ * frame. The frame's height is its page's, so its border sits outside it rather than taking
+ * two pixels the page then scrolls by.
+ */
+.offprompt-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 24px 0 8px;
+}
+
+.offprompt-demo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.offprompt-demo-controls button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--vocs-border-color-primary);
+  background: var(--vocs-background-color-surface);
+  color: var(--vocs-text-color-heading);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.offprompt-demo-controls button[data-primary] {
+  border-color: transparent;
+  background: var(--vocs-color-accent);
+  color: var(--vocs-color-accentInvert);
+}
+
+.offprompt-demo-controls button:disabled,
+.offprompt-demo-controls label:has(input:disabled) {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.offprompt-demo-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.offprompt-demo-controls input {
+  accent-color: var(--vocs-color-accent);
+}
+
+.offprompt-demo-note {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--vocs-text-color-secondary);
+}
+
+.offprompt-demo-note[data-warn] {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--vocs-background-color-warning-tint);
+  color: var(--vocs-text-color-primary);
+}
+
+.offprompt-demo iframe {
+  display: block;
+  box-sizing: content-box;
+  width: calc(100% - 2px);
+  border: 1px solid var(--vocs-border-color-primary);
+  border-radius: 12px;
+  background: #fbfbf9;
+}
+
+/* A registry logo: white on the provider's colour, or the text colour on a plain tile. */
+.offprompt-logo {
+  flex: none;
+  color: var(--vocs-text-color-heading);
+}
+
+.offprompt-logo[data-plain] rect {
+  stroke: var(--vocs-border-color-primary);
+  vector-effect: non-scaling-stroke;
+}
+
+/* Under a provider's name: its logo, what it is for, and its site. */
+.offprompt-provider-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0 20px;
+}
+
+.offprompt-provider-header div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.offprompt-provider-header a {
+  color: var(--vocs-text-color-secondary);
+  text-decoration: none;
+}
+
+.offprompt-provider-header a:hover {
+  color: var(--vocs-text-color-heading);
+}
+
+/*
+ * A provider's fields as offprompt's page draws them, the card sitting on the docs page itself.
+ * The frame is clear and reaches past the text by the room the card keeps for its shadow,
+ * 20px above, 24px at the sides and 48px below, so the card lines up with the text. A frame
+ * in another colour scheme than the page around it is painted opaque, hence light here too.
+ */
+.offprompt-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 24px 0 28px;
+}
+
+.offprompt-fields iframe {
+  display: block;
+  width: calc(100% + 48px);
+  margin: -20px -24px -40px;
+  border: 0;
+  background: transparent;
+  color-scheme: light;
+}
+
+.offprompt-fields figcaption {
+  font-size: 13.5px;
+  color: var(--vocs-text-color-secondary);
+}
+
+/* Every provider: a search, the categories to narrow by, and a card per provider. */
+.offprompt-catalogue {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.offprompt-catalogue-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.offprompt-catalogue-controls input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--vocs-border-color-primary);
+  background: var(--vocs-background-color-surface);
+  color: var(--vocs-text-color-heading);
+  font-size: 15px;
+}
+
+.offprompt-catalogue-controls input:focus {
+  outline: 2px solid var(--vocs-color-accent);
+  outline-offset: -1px;
+}
+
+.offprompt-catalogue-controls [role='group'] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.offprompt-catalogue-controls button {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--vocs-border-color-primary);
+  background: transparent;
+  color: var(--vocs-text-color-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.offprompt-catalogue-controls button small {
+  color: var(--vocs-text-color-secondary);
+}
+
+.offprompt-catalogue-controls button[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--vocs-color-accent);
+  color: var(--vocs-color-accentInvert);
+}
+
+.offprompt-catalogue-controls button[aria-pressed='true'] small {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.offprompt-catalogue section {
+  scroll-margin-top: 80px;
+}
+
+.offprompt-catalogue h2 {
+  margin: 24px 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--vocs-text-color-heading);
+}
+
+.offprompt-catalogue-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.offprompt-catalogue-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--vocs-border-color-primary);
+  color: var(--vocs-text-color-primary);
+  text-decoration: none;
+}
+
+.offprompt-catalogue-card:hover {
+  border-color: var(--vocs-color-accent);
+}
+
+.offprompt-catalogue-card span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.offprompt-catalogue-card strong {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--vocs-text-color-heading);
+}
+
+.offprompt-catalogue-card code {
+  overflow: hidden;
+  padding: 0;
+  background: none;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--vocs-text-color-secondary);
+}
+
+.offprompt-catalogue-card code small {
+  font-size: 11px;
+}
+
+.offprompt-catalogue-none {
+  margin: 16px 0;
+  color: var(--vocs-text-color-secondary);
+}
+
+/*
+ * A key's checks on its provider's page, drawn as offprompt's page draws a check that passes:
+ * Lucide's circle-check in its green, then the rule.
+ */
+ul.offprompt-checks[data-v] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 0;
+  list-style: none;
+}
+
+ul.offprompt-checks[data-v] li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+ul.offprompt-checks[data-v] li::before {
+  content: '';
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: #2f9e5b;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m16 9-5.5 5.5L8 12'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}

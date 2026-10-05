@@ -1,0 +1,33 @@
+{
+  "name": "offprompt-monorepo",
+  "private": true,
+  "type": "module",
+  "description": "Hand a secret to a coding agent without the secret entering the transcript.",
+  "license": "MIT",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:browser": "turbo run test:browser",
+    "check": "turbo run typecheck lint test",
+    "preview": "pnpm --filter offprompt preview",
+    "package": "pnpm --filter @offprompt/install package",
+    "agents": "pnpm --filter @offprompt/install agents",
+    "e2e": "pnpm --filter offprompt --filter @offprompt/install build && pnpm --filter @offprompt/e2e e2e",
+    "playground": "pnpm --filter offprompt --filter @offprompt/install build && pnpm --filter @offprompt/playground playground",
+    "site": "pnpm --filter offprompt build && pnpm --filter @offprompt/site dev",
+    "docs": "pnpm --filter offprompt build && pnpm --filter @offprompt/docs dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "catalog:",
+    "eslint": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:"
+  }
+}

@@ -1,0 +1,77 @@
+---
+description: How the page encrypts values to the sandbox, so a tunnel carries only ciphertext.
+---
+
+# Sealed values
+
+From a [cloud sandbox](/guides/cloud-sandboxes), the page reaches you through a tunnel or the
+vendor's port forwarding. So the page encrypts your values in the browser, to a key only the
+sandbox holds, and whatever carries the traffic sees ciphertext.
+
+## The key pair
+
+Every request from a sandbox gets its own ECDH P-256 key pair.
+
+- The public half travels in the link, after the `#`: `…#k=BL0yBC9F2AfM…`. A browser never sends
+  that part of an address to a server, so no tunnel or proxy sees it. The agent's host does,
+  since the link travels in its dialog or in the tool result, and from the tool result it reaches
+  the transcript and the model provider's logs. That is harmless for a public key: it lets
+  whoever holds it seal values to the sandbox, never open them.
+- The private half cannot be exported and lives only on the request, in offprompt's memory. It
+  is dropped from the request when the request leaves `awaiting`: once written or cancelled, and,
+  once expired, on the next read of the request, which every submission makes first. Dropped
+  means released for garbage collection, not wiped. From then on offprompt has nothing to open a
+  sealed value with, wherever it was captured.
+
+## Sealing
+
+When you press the write button, the page:
+
+:::steps
+
+### Builds the plaintext
+
+`{"values":{"value0":"…"},"allowTracked":false,"fingerprint":"…"}`: the fields an ordinary write
+carries, without the nonce. `fingerprint` is the key the page took its
+[fingerprint](/guides/fingerprint) with, made for this one write.
+
+### Makes a key pair of its own
+
+An ephemeral P-256 pair, for this one write.
+
+### Derives a key
+
+ECDH with the sandbox's public key, then HKDF-SHA-256, with the request token's 16 bytes as salt
+and `offprompt/v1/seal` as info, into an AES-256-GCM key.
+
+### Encrypts
+
+Under a random 12-byte IV, with `offprompt/v1|<token>|<page nonce>` as additional data, which
+ties the ciphertext to this request. The nonce is the request's own, the same on every load of
+its page.
+
+### Posts two fields
+
+`nonce`, in the clear, since offprompt checks it before decrypting, and `sealed`:
+`v1.<page public key>.<iv>.<ciphertext>`, each part base64url.
+
+:::
+
+offprompt opens it into the same values an ordinary write carries, so the checks and the write
+are the same code for both.
+
+## Why these
+
+Node and every browser ship ECDH P-256, HKDF and AES-GCM with no dependency, and a P-256 public
+key fits in a link, where an RSA key would add about 400 characters. WebCrypto needs a secure
+context, and both kinds of link are one: the tunnel is HTTPS, and browsers treat `127.0.0.1` as
+secure.
+
+The page keeps its write button off until its script has read a valid key from the link, and
+says so when the link has none or the browser has no WebCrypto.
+
+## What it does not cover
+
+Encryption stops passive exposure: logs, inspection, a proxy that records traffic. It does not
+stop a tunnel operator who rewrites the page's script to read values before they are sealed. The
+[threat model](/security/threat-model#from-a-sandbox) lists what is accepted from a sandbox.

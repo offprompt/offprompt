@@ -1,0 +1,112 @@
+---
+description: Put offprompt in a project for everyone who works on it, or in every agent you use.
+---
+
+# Installation
+
+offprompt goes into a project for everyone who works on it, the way a dependency does. In the
+project's folder:
+
+```sh
+npx offprompt init
+```
+
+That puts the server in the project as `tools/offprompt/mcp.mjs`, one self-contained file that
+runs on `node` alone, with the notices its fonts, icons and logos ask to travel with it. Then it
+declares the server in the project config of each agent found on your machine:
+
+| Agent | Where the project declares offprompt |
+| --- | --- |
+| Claude Code | `.mcp.json` |
+| Codex | `.codex/config.toml` |
+| Cursor | `.cursor/mcp.json` |
+| Pi | `.pi/mcp-adapter.json`, read through [pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter), which goes in `.pi/settings.json` |
+
+Servers the project already declares are kept. Commit these files together with
+`tools/offprompt/`, and everyone on the project gets offprompt, as does every cloud sandbox that
+clones it.
+
+offprompt runs on Node 22 or later, on the machine the agent runs on.
+
+## The first run
+
+- **Claude Code** asks before it starts a server a project declares. Approve offprompt once.
+- **Codex** and **Pi** read a project's config only in a project you trust.
+
+Then ask the agent for something that needs a key, as in [Your first secret](/first-secret).
+
+## Choosing agents
+
+Without `--agent`, `init` sets up every agent it finds on the machine. Name them to choose:
+
+```sh
+npx offprompt init --agent codex                       # only Codex
+npx offprompt init --agent claude-code --agent cursor  # these two
+npx offprompt list                                     # every agent, whether it was found, and how offprompt reaches it
+```
+
+Agents other than these four have no project config offprompt writes yet: `init` names them,
+and `init -g --agent <name>` sets one up for you instead. Naming one of them in a project fails
+the run.
+
+## For every project you open
+
+To have offprompt in every project instead, install it for yourself with `-g`:
+
+```sh
+npx offprompt init -g
+```
+
+Each agent gets it the way it takes plugins:
+
+| Agent | How |
+| --- | --- |
+| Claude Code | A plugin, through `claude plugin`. Where no `claude` is on `PATH` yet, as on a sandbox image being built, a server in `~/.claude.json` |
+| Codex | A plugin, through `codex plugin` |
+| Cursor | A copy of the plugin in `~/.cursor/plugins/local/offprompt` |
+| Pi | A server in its agent directory, `~/.pi/agent` unless `PI_CODING_AGENT_DIR` moves it |
+| Every other agent [add-mcp](https://github.com/neondatabase/add-mcp) knows | A server in its MCP config: Gemini CLI, VS Code, OpenCode, Goose, Kiro CLI, Windsurf, Zed and more |
+
+`--agent` works here too.
+
+## Updating
+
+Run `init` again from the newest version. In a project, that replaces `tools/offprompt/mcp.mjs`:
+
+```sh
+npx offprompt@latest init
+```
+
+For yourself:
+
+```sh
+npx offprompt@latest init -g
+```
+
+Claude Code and Codex keep a plugin at the version they installed, so `init -g` takes
+offprompt out of them and puts it back to pick up the new files.
+
+## Removing
+
+```sh
+npx offprompt remove      # from this project
+npx offprompt remove -g   # from every agent that has it
+```
+
+In a project, `remove` takes offprompt's entry out of each agent's file, leaves every other
+server declared there as it was, and deletes `tools/offprompt/`. With `--agent`, it takes out
+only those agents' entries and leaves the bundle for the rest.
+
+## Where the project is
+
+offprompt writes inside the project the agent works in, and finds it without the model's help:
+
+- Claude Code starts offprompt in the project's folder, and so does Cursor for a server the
+  project's `.cursor/mcp.json` declares, naming the project in `WORKSPACE_FOLDER_PATHS` too.
+- Codex starts its plugin in the plugin's own folder and names the project in every tool call.
+- Cursor starts a plugin in your home folder and names the project as an MCP root, and any agent
+  that names its workspace as an MCP root works the same way.
+
+An agent that does neither, and starts offprompt outside a project, gets a refusal asking you to
+set the server's working directory to the project in the agent's MCP settings. See
+[Agents](/guides/agents) for each one in detail.

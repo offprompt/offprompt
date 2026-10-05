@@ -1,0 +1,61 @@
+---
+description: How the page's server on 127.0.0.1 keeps other pages, other tabs and other hosts out.
+---
+
+# The local server
+
+offprompt serves its page from a server inside its own process, for as long as the agent runs
+it. The server holds every request in memory, and nothing it serves loads anything from the
+network.
+
+## Who can reach it
+
+- It listens on `127.0.0.1` only, on a random free port.
+- Every request must carry a `Host` of `127.0.0.1` or `localhost`, on any port, since port
+  forwarding may carry the page to you under another number, or the tunnel's hostname exactly,
+  while a tunnel is up. Any other gets 421, checked first, which closes DNS rebinding: a
+  rebinding page's requests carry its own domain as `Host`.
+- Every page's path carries the request's 128-bit random token. An unknown token, or a path
+  without one, answers 404, so a scanner that finds the port gets nothing. A request that has
+  closed is still found for an hour after its expiry time: its page answers 410, and its status
+  200.
+- A request the browser marks as coming from another site is refused with 403: a
+  `Sec-Fetch-Site` of `cross-site` or `same-site`, so a page on another port of the same machine
+  is refused too. Without that header offprompt falls back to `Origin`, and lets through any
+  `http://127.0.0.1` or `http://localhost` origin on any port, the tunnel's own, and a request
+  with no `Origin` or `Origin: null`. The status path, `/r/<token>/status`, checks only the
+  `Host`. Every path still needs the request's 128-bit token.
+- The write must echo a nonce embedded in the page it came from.
+
+## What the page may do
+
+The page ships with this Content Security Policy:
+
+```
+default-src 'none'; script-src 'nonce-…'; connect-src 'self'; style-src 'nonce-…';
+font-src data:; form-action 'self'; base-uri 'none'; frame-ancestors 'none'
+```
+
+Its one script, about 30 KB, and its styles are inline under a nonce minted for each response.
+Its two typefaces are inside the stylesheet. The only place the script can send a request is the
+server that served it, and no other site can frame the page. The page also sends no referrer, so
+a registry link it opens does not learn its address.
+
+## The values
+
+- Values are typed into text areas, and secret single-line ones are masked. Browsers' password
+  managers never take a text area for a password field, so they do not offer to save a secret as
+  a password.
+- Each write is claimed before it starts, so a page submitted twice writes once.
+- A file imported on the page is read there and never uploaded. With the page's script off, a
+  file picked for a multi-line field is posted to offprompt as that field's value.
+- offprompt runs every check again on the values it receives, so the page's script is a
+  convenience, not the gate.
+
+## Requests from a sandbox
+
+A request made from a [cloud sandbox](/guides/cloud-sandboxes) takes its values
+[sealed](/security/sealed-values) and nothing else. A write without the sealed field, or with
+plain values beside it, is refused with 400: without the page's script, values would cross the
+tunnel in the clear. A sealed value that does not open gets 403 and the same out-of-date page a
+bad nonce gets, without saying which part failed.

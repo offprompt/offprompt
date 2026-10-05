@@ -1,0 +1,112 @@
+---
+description: The four ways an agent can ask for a value, and what each looks like on the page.
+---
+
+# Asking for values
+
+Each key in a [`collect_secret`](/reference/collect-secret) request says how its value comes to
+be, in one of four ways. The agent picks one per key, and the tool's description teaches it
+which fits.
+
+| Asked as | For | What you see |
+| --- | --- | --- |
+| `generate: {}` | `AUTH_SECRET`, `JWT_SECRET`, encryption keys | Nothing to type: the page makes a random value as it opens, with **Regenerate** |
+| `provider: "stripe"` | `STRIPE_SECRET_KEY` | The provider's logo, a link to where the key is made, and its checks |
+| `format: "postgres_url"` | `DATABASE_URL` | What the value is, its checks, and links to create one with Supabase, Neon or PlanetScale |
+| none of these | `MAX_RETRIES`, anything else | A plain field |
+
+```json
+{
+  "secrets": [
+    { "name": "STRIPE_SECRET_KEY", "provider": "stripe" },
+    { "name": "DATABASE_URL", "format": "postgres_url" },
+    { "name": "AUTH_SECRET", "generate": {} },
+    { "name": "MAX_RETRIES", "format": "integer", "secret": false }
+  ],
+  "reason": "Checkout signs its requests with Stripe, and the app needs a database and a session secret.",
+  "sink": { "kind": "dotenv", "path": ".env" }
+}
+```
+
+A key takes at most one of `generate`, `provider` and `format`.
+
+## A provider's key
+
+`provider` names a provider in offprompt's [registry](/reference/providers). The field shows its
+logo, links to the page where the key is made, and checks the value against the key's rules,
+which are mostly a prefix and a length. That catches the most common slip, pasting a key from
+the wrong provider.
+
+When a provider issues several keys, the variable's name says which: `STRIPE_WEBHOOK_SECRET`
+with `provider: "stripe"` is Stripe's webhook signing secret. When the name does not say, the
+agent names the key as `provider/key`, such as `stripe/webhook_secret`, and offprompt refuses
+a request that leaves it unclear.
+
+A key named the usual way is recognised even when the agent names no provider. `OPENAI_API_KEY`
+on its own gets OpenAI's logo, link and checks. Names are matched with framework prefixes
+dropped, so `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is Supabase's publishable key too; the prefixes
+are `NEXT_PUBLIC_`, `NUXT_PUBLIC_`, `EXPO_PUBLIC_`, `REACT_APP_`, `GATSBY_`, `VITE_` and `PUBLIC_`.
+
+## A known kind of value
+
+`format` is for a value no one provider issues, such as a Postgres connection string, a UUID or
+a PEM block. The field says what the value is and checks it. Where a provider can create one,
+the field links there for someone who has none yet. [Formats](/reference/formats) lists them
+all.
+
+Formats that take several lines, `base64`, `jwt`, `pem` and `json`, get a taller field, shown in
+the clear, with a file picker.
+
+## Anything else
+
+A key with none of the three, whose name no provider's key goes by, is plain text with no checks.
+
+## Values that are not secret
+
+`secret: false` shows a value in the clear, for one that is not secret, such as `MAX_RETRIES` or
+a sender address. The registry says the same of a provider's public keys, such as Stripe's
+publishable key.
+
+## Captions
+
+`caption` is one short line under the field's name, up to 90 characters, such as where to find
+the value: "Stripe dashboard → Developers → API keys".
+
+## Generated values
+
+`generate` asks for a random value, for signing and encryption secrets such as `AUTH_SECRET`,
+`JWT_SECRET` and `SESSION_SECRET`:
+
+```json
+[
+  { "name": "AUTH_SECRET", "generate": {} },
+  { "name": "ENCRYPTION_KEY", "generate": { "bytes": 32, "encoding": "hex" } }
+]
+```
+
+`bytes` is 16 to 64, 32 unless set. `encoding` is `base64url`, `base64` or `hex`, `base64url`
+unless set.
+
+- The page makes the value from your browser's random bytes as it opens. It is masked like any
+  other; you can show it, make another with **Regenerate**, or paste one you already use, which
+  is checked to be as long as one offprompt would make and in the same encoding.
+- A field that comes back empty, as it does with the page's script off, is made by offprompt at
+  write time.
+- A key the file already holds is kept as it is, since a new signing or encryption secret signs
+  everyone out or leaves stored data unreadable. The result lists it under `kept`.
+- A request of generated keys alone opens no page at all: offprompt makes them, writes them and
+  answers at once. It refuses a git-tracked file there, since only you can allow that write, on
+  the page.
+
+The agent never sees a generated value either.
+
+## One request for everything
+
+A request takes one to twelve keys, and they share one page, one wait and one atomic write.
+Agents are told to ask for every key a task needs in one call, so you paste once.
+
+## The reason
+
+`reason` is shown on the page as the agent's claim about why it needs the values, so it is
+written for you: up to 2,000 characters of Markdown, rendered with bold, italics, code, lists
+and quotes. Links show their address as text and are not clickable.

@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "types": ["node", "mdast-util-to-hast", "remark-stringify"]
+  },
+  "include": ["registry.ts", "vocs.config.ts", "src/components"]
+}

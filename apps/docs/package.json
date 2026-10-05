@@ -1,0 +1,40 @@
+{
+  "name": "@offprompt/docs",
+  "private": true,
+  "type": "module",
+  "description": "docs.offprompt.dev",
+  "license": "MIT",
+  "scripts": {
+    "dev": "node scripts/samples.mjs && vocs dev",
+    "build": "node scripts/samples.mjs && vocs build",
+    "preview": "vocs preview",
+    "video": "node scripts/video.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "react": "~19.3.0",
+    "react-dom": "~19.3.0",
+    "vocs": "~2.10.0",
+    "waku": "1.0.0-rc.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "catalog:",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "catalog:",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "catalog:",
+    "mdast-util-directive": "^3.1.0",
+    "mdast-util-gfm-table": "^2.0.0",
+    "mdast-util-to-hast": "^13.2.1",
+    "offprompt": "workspace:*",
+    "remark-stringify": "^11.0.0",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
+    "unified": "^11.0.5",
+    "vite": "^8.3.1"
+  }
+}

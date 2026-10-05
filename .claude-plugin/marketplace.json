@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "offprompt",
+  "description": "Hand a secret to a coding agent without the secret entering the transcript.",
+  "owner": {
+    "name": "Valerio Leo",
+    "url": "https://github.com/valerioleo"
+  },
+  "plugins": [
+    {
+      "name": "offprompt",
+      "description": "Lets the agent ask you for API keys, tokens and passwords in a browser page, and writes them to .env or another file. The model sees the key names and a four-emoji fingerprint, never the values.",
+      "author": {
+        "name": "Valerio Leo",
+        "url": "https://github.com/valerioleo"
+      },
+      "homepage": "https://offprompt.dev",
+      "repository": "https://github.com/offprompt/offprompt",
+      "license": "MIT",
+      "category": "security",
+      "keywords": ["secrets", "env", "dotenv", "api-keys", "mcp", "security"],
+      "tags": ["secrets", "env", "dotenv", "api-keys", "mcp", "security"],
+      "source": {
+        "source": "npm",
+        "package": "offprompt"
+      }
+    }
+  ]
+}

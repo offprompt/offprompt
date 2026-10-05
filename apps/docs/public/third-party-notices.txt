@@ -1,0 +1,49 @@
+# Third-party notices
+
+docs.offprompt.dev's own code and text are under the MIT License, in `LICENSE` at the root of
+offprompt's repository. These parts of the site are other people's work, under their own terms.
+The site serves this file at `/third-party-notices.txt`.
+
+## Vocs
+
+The site is built with Vocs (https://vocs.dev), under the MIT License, which brings the typeface
+and icons below.
+
+## Geist and JetBrains Mono
+
+The site is set in Geist (https://github.com/vercel/geist-font), which Vocs serves, and
+JetBrains Mono (https://github.com/JetBrains/JetBrainsMono), which the site serves through
+@fontsource-variable/jetbrains-mono. Both are under the SIL Open Font License, Version 1.1
+(https://openfontlicense.org):
+
+    Geist: Copyright 2024 The Geist Project Authors (https://github.com/vercel/geist-font)
+    JetBrains Mono: Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)
+
+## Icons
+
+Vocs draws its icons from these sets, through Iconify:
+
+- Lucide (https://lucide.dev), under the ISC License:
+
+      Copyright (c) Lucide Icons and Contributors
+
+      Permission to use, copy, modify, and/or distribute this software for any
+      purpose with or without fee is hereby granted, provided that the above
+      copyright notice and this permission notice appear in all copies.
+
+- Remix Icon (https://remixicon.com), under the Apache License 2.0.
+- vscode-icons (https://github.com/vscode-icons/vscode-icons), under the MIT License.
+- Simple Icons (https://simpleicons.org), under CC0 1.0. The marks belong to their owners.
+
+## Logos
+
+The provider logos on the provider pages come from offprompt's own registry, and so from the
+projects packages/offprompt/THIRD_PARTY_NOTICES.md in offprompt's repository lists: Simple Icons
+(https://simpleicons.org), under CC0 1.0, and lobe-icons (https://github.com/lobehub/lobe-icons),
+under the MIT License. The marks belong to their owners, and the docs only use them to name the
+providers offprompt works with.
+
+## Everything else
+
+The rest of what the site runs on, such as React and Waku, is open source, each package under the
+licence in its own `package.json`.

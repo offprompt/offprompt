@@ -1,0 +1,80 @@
+---
+description: Short answers to the questions people ask about offprompt first.
+---
+
+# FAQ
+
+## Can't the agent just read the `.env` afterwards?
+
+It can. A `.env` on disk is readable by whatever can read files, the agent included, and offprompt
+does not watch what the agent reads. What offprompt does is keep the value out of the conversation
+on the way in, and give the agent no reason to look: every result lists the names of all the keys
+the file holds, and tells the agent that opening the file would put the values into the transcript.
+
+This was learned the hard way. In one cloud session an agent opened the file "to double-check it
+looks complete", and every value went into its context. The instructions and results have said so
+plainly ever since. See the [threat model](/security/threat-model#what-it-does-not-protect-against).
+
+## Why not paste the key into the chat?
+
+Whatever you paste goes into the model's context, the transcript on disk and the provider's logs,
+and stays there. With offprompt the only thing in any of them is the key's name.
+
+## Does offprompt send my values anywhere?
+
+Only into the file. offprompt runs where your agent runs, as a process the agent starts, and its
+page makes no outbound requests. It sends nothing to us, and there is no offprompt server to send to.
+From a [cloud sandbox](/guides/cloud-sandboxes) the page reaches you through a Cloudflare tunnel,
+and your browser encrypts the values before they enter it.
+
+## Does offprompt keep my values?
+
+No. A request lives in the server's memory while it is open. Once the values are written, the file
+is the only place they are.
+
+## Does offprompt take memory while my agent runs?
+
+Very little until the agent asks for a value. Installed for you, as a plugin, offprompt starts as
+a small launcher of about 3 MB, which answers the agent's opening questions itself. The server
+behind it, about 80 MB on Node, starts when the agent first calls one of its tools, and stops again
+once it has had nothing to do for five minutes. On Windows, and in a project install, the server
+runs for the whole session, as it did before.
+
+## Why does the agent tell me four emoji?
+
+That is the [fingerprint](/guides/fingerprint). The same four on your page and in the chat mean
+the file holds exactly what you typed. The agent says them as soon as the write lands, while
+your page is still open, and offprompt's result opens with them.
+
+## Which agents does it work with?
+
+Any that speaks MCP. `npx offprompt init` sets up Claude Code, Codex, Cursor and Pi in a project, and
+`init -g` sets up every agent [add-mcp](https://github.com/neondatabase/add-mcp) knows, for you. See
+[Agents](/guides/agents).
+
+## Why does the agent send me a link? I thought offprompt opened the page itself.
+
+On your own machine it does, and a link to click there is the case to distrust. From a cloud
+sandbox, or a machine with no browser to open, offprompt cannot reach your screen, so the agent
+passes you the link instead.
+
+## What if I paste the wrong key?
+
+The page tells you before anything is written. Each field checks its value as you type, and names
+the key you pasted when it recognises it: "That's the publishable key. Use the secret key from the
+same page."
+
+## Can it write to Vercel, GitHub or my secrets manager directly?
+
+Not yet: offprompt writes files. To fill the page from a store you already use, see
+[Values you already keep](/guides/stores).
+
+## Why does my password manager not offer to fill or save these fields?
+
+The fields are text areas, not password inputs, so browsers and password managers leave them
+alone. That keeps a password manager from saving an API key as a website password.
+
+## Is it open source?
+
+Yes, under the MIT licence. The packages bundled into the server and the page's fonts, icons and
+logos keep their own licences, listed in the notices that travel with the server.

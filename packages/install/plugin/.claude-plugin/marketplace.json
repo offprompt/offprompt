@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "offprompt",
+  "description": "offprompt — hand a secret to a coding agent without the secret entering the transcript.",
+  "owner": {
+    "name": "Valerio Leo",
+    "url": "https://github.com/valerioleo"
+  },
+  "plugins": [
+    {
+      "name": "offprompt",
+      "category": "security",
+      "description": "Collects a secret from the human in a browser page on loopback and writes it to a dotenv or file sink. The model gets the key name, never the value.",
+      "source": "."
+    }
+  ]
+}

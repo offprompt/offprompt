@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "offprompt",
+  "displayName": "offprompt",
+  "version": "0.1.0",
+  "description": "Ask the human for a secret and have it land where the project needs it, while the transcript, the model context and the provider logs only ever see the secret's name.",
+  "author": {
+    "name": "Valerio Leo",
+    "url": "https://github.com/valerioleo"
+  },
+  "license": "MIT",
+  "keywords": ["secrets", "env", "mcp", "security", "dotenv"]
+}

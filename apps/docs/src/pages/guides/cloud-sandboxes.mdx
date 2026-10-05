@@ -1,0 +1,106 @@
+---
+description: When the agent runs somewhere your browser is not, it passes you a link, and your values are encrypted before they leave the browser.
+---
+
+# Cloud sandboxes
+
+When the agent runs somewhere your browser is not, such as Claude Code on the web, a Cursor Cloud
+Agent, a Conductor cloud workspace, Codex cloud, a codespace, a devcontainer or an SSH session,
+offprompt cannot open a page on your screen. The agent passes you a link instead. You still do
+everything in your own browser: open the link, type, press the write button.
+
+## The link
+
+```
+https://some-four-words.trycloudflare.com/r/1b6eea06…#k=BL0yBC9F2AfM…
+```
+
+It is a Cloudflare quick tunnel to the page offprompt serves inside the sandbox. The part after
+`#k=` is a public key made for this one request, and your browser never sends it anywhere. When
+you press the write button, the page encrypts your values to that key, so the tunnel carries
+ciphertext and only the sandbox can read it. [Sealed values](/security/sealed-values) has the
+details.
+
+The link is good for 30 minutes and for one write. The agent shows it to you on its own line,
+then waits with [`await_secret`](/reference/await-secret).
+
+:::warning
+The link is a bearer link: whoever holds it within the 30 minutes can submit first. Open it
+yourself, and do not paste it anywhere else. Were someone to submit first, your own submission
+would fail, which is how you would notice.
+:::
+
+## How offprompt knows
+
+offprompt reads the environment once, when its server starts, to decide whether it runs on your
+machine:
+
+| Signal | Environment |
+| --- | --- |
+| `CLAUDE_CODE_REMOTE=true` | Claude Code on the web |
+| `SSH_CONNECTION` set | SSH, VS Code Remote-SSH |
+| `CODESPACES=true` | GitHub Codespaces |
+| Linux with neither `DISPLAY` nor `WAYLAND_DISPLAY` | Headless containers and VMs |
+
+On macOS or Windows with none of these, it is your own machine. Only on Linux with a display can
+offprompt not tell, and there the agent's `sandbox: true` decides, request by request: Cursor's
+cloud VMs, for one, have a desktop and a browser the agent drives. The agent is asked to set
+`sandbox: true` only when its environment tells it where it runs, and the environment's answer
+takes precedence wherever it has one.
+
+## The tunnel
+
+offprompt starts one `cloudflared` quick tunnel per server, on the first request from a sandbox,
+and reuses it for every later one.
+
+- It uses the `cloudflared` on `PATH` when there is one. Otherwise it downloads a pinned release
+  from Cloudflare's GitHub releases, keeps it only when its SHA-256 matches the one pinned in
+  offprompt's source, and caches it: in the plugin's data directory when the agent gives one,
+  otherwise in `$XDG_CACHE_HOME/offprompt` when that is set, or `~/.cache/offprompt`. Linux and
+  macOS, x64 and arm64, are pinned. The download gets 60 seconds of its own.
+- Once `cloudflared` runs, the link is handed out only when a request through the tunnel reaches
+  offprompt's own server, and the tunnel gets 20 seconds to get there.
+- If the tunnel stops, the next request starts a new one with a new address, and links handed out
+  earlier stop working.
+
+## When there is no tunnel
+
+`cloudflared` dials Cloudflare directly and ignores `HTTP_PROXY`, so a sandbox that sends all
+its traffic through an HTTP proxy cannot open one. Nor can one with no `cloudflared` on `PATH`
+where the download fails, or where no release is pinned for the platform, as on Windows. The link
+is then a local one:
+
+```
+http://127.0.0.1:53803/r/1b6eea06…#k=BL0yBC9F2AfM…
+```
+
+It opens if your tool forwards that port from the sandbox to your machine. If it forwards it
+under another number, such as `53803 → localhost:52143`, change the port in the link. Forwarding
+has to reach the page as `localhost` or `127.0.0.1`: forwarding under the vendor's own hostname,
+such as a codespace's `*.app.github.dev` address, is refused with 421 "Wrong host". If nothing
+forwards it, the sandbox cannot show you a page: turn on port forwarding, or allow outbound
+connections to Cloudflare, and ask the agent to try again.
+
+Set `OFFPROMPT_TUNNEL=off` in an environment whose port forwarding you would rather use.
+
+## Getting offprompt into a sandbox
+
+A project that carries offprompt, as [`npx offprompt init`](/installation) sets it up, needs no
+install at all: a sandbox that clones it runs it from `tools/offprompt/`.
+
+For a sandbox image that should have offprompt in every project, install it for the agent's user
+while building the image:
+
+```sh
+npx offprompt init -g --agent claude-code
+```
+
+Where the `claude` command is not on `PATH` yet, that declares the server in `~/.claude.json`,
+which Claude Code reads when it starts.
+
+## Where values end up
+
+The sandbox holds the values once they are written, like any file in its VM, and so does its
+vendor. Reading the file there puts them into the transcript just as it would on your machine,
+and the agent is told not to. [Threat model](/security/threat-model#from-a-sandbox) lists who
+sees what.

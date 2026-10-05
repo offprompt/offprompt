@@ -1,0 +1,30 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.offprompt/offprompt",
+  "title": "offprompt",
+  "description": "Ask the human for API keys in a browser page and write them to .env. The model only sees key names.",
+  "websiteUrl": "https://offprompt.dev",
+  "repository": {
+    "url": "https://github.com/offprompt/offprompt",
+    "source": "github",
+    "subfolder": "packages/offprompt"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "offprompt",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ]
+    }
+  ]
+}

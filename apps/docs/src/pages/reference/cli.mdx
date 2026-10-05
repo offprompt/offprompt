@@ -1,0 +1,75 @@
+---
+description: npx offprompt init, list, remove and mcp, and the flags they take.
+---
+
+# Command line
+
+```
+npx offprompt [init | remove | list] [--agent <name>]... [--project <dir>]
+npx offprompt [init | remove] -g [--agent <name>]...
+npx offprompt mcp
+```
+
+## init
+
+Puts offprompt into the project for the agents found on this machine, or those named with
+`--agent`. It copies the server to `tools/offprompt/mcp.mjs` and declares it in each agent's
+project config. [Installation](/installation) lists the files. `add` does the same.
+
+With `-g`, it installs offprompt for you, in every project, instead: as a plugin where the agent
+takes plugins, and as a server in its MCP config otherwise. npx runs offprompt from a cache it may
+clear, so `-g` first copies the package to `~/.local/share/offprompt`, and the agents install
+from that copy.
+
+Running `init` again replaces the server with the version you ran and rewrites offprompt's entry
+in each file. With `-g`, Claude Code and Codex get offprompt taken out and put back, since they keep a
+plugin at the version they installed.
+
+## remove
+
+Takes offprompt out of the project: its entry in each agent's config, then `tools/offprompt/`.
+Every other server a file declares stays. With `--agent`, only those agents' entries go, and the
+server stays for the rest.
+
+With `-g`, it takes offprompt out of every agent that has it, and then removes
+`~/.local/share/offprompt`. Claude Code and Codex take their plugin out through their own command,
+so for them it needs `claude` and `codex` on your `PATH`. With `--agent`, only those agents' entries
+go, and the copy stays for the rest.
+
+## list
+
+Shows every agent offprompt can reach, whether it was found on this machine, the file a project
+declares it in, and how `-g` installs it.
+
+```
+agent               name                    found  in a project          with -g
+claude-code         Claude Code             yes    .mcp.json             plugin
+codex               Codex                   yes    .codex/config.toml    plugin
+cursor              Cursor                  -      .cursor/mcp.json      plugin
+pi                  Pi                      -      .pi/mcp-adapter.json  MCP config
+antigravity         Antigravity             -      -                     MCP config
+cline               Cline VSCode Extension  -      -                     MCP config
+…
+```
+
+## mcp
+
+Runs the server on stdio in the folder the command runs in, for an MCP client that starts
+offprompt itself as `npx -y offprompt mcp`. offprompt writes in that folder, or in the workspace
+the client names. `init` is the usual way in: it gives every agent of the project the same
+server, and the project carries it.
+
+## Flags
+
+| Flag | What it does |
+| --- | --- |
+| `--agent <name>` | Only this agent, by the name in the first column of `list`. Repeat it for several |
+| `--project <dir>` | The project, when it is not the folder the command runs in |
+| `-g`, `--global` | For you, in every project, instead of for one project |
+| `--from <dir>` | With `-g`, for development: the folder `pnpm package` made, used as it is |
+| `-h`, `--help` | The usage above |
+
+`init` and `remove` refuse to run in your home folder, at the root of the file system or in
+offprompt's own repository, which are not projects to install into: run them in one, or pass
+`--project`. Naming an agent that has no project config, with `--agent`, is refused too: `-g`
+installs offprompt for it.

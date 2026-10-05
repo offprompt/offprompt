@@ -1,0 +1,17 @@
+---
+description: Kinds of value no one provider issues, such as a Postgres connection string, and how each is checked.
+---
+
+# Formats
+
+A format is a kind of value no one provider issues. The agent asks for one with `format`, such as
+`format: "postgres_url"` for `DATABASE_URL`, and the field says what the value is and checks it. A
+key with no `provider` and no `format`, whose name no provider's key goes by, is `text`.
+
+This page is built from the registry offprompt ships, so it lists exactly what the tool accepts.
+
+::formats
+
+A one-line value is masked unless the agent asks for it with `secret: false`. Formats that take
+several lines are shown in the clear, and a file dropped on one of their fields fills it whole,
+which suits a PEM key or a JSON credentials file.

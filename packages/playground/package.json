@@ -1,0 +1,16 @@
+{
+  "name": "@offprompt/playground",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A small app that needs secrets, made into a project of its own with offprompt installed, for trying agents by hand.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "playground": "node scripts/playground.mjs",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@offprompt/install": "workspace:*",
+    "eslint": "catalog:"
+  }
+}

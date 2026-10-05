@@ -1,0 +1,63 @@
+---
+description: The four emoji on your page and in the agent's reply, and what it means when they match.
+---
+
+# The fingerprint
+
+After a write, the page shows four emoji, and the agent tells you the same four as soon as the
+write lands:
+
+> Fingerprint 🍋 🥝 🌮 🧀
+
+The page took its four from what you typed. offprompt took the agent's from what the file holds
+once the write landed. The same four on both sides mean two things: the file holds exactly what
+you typed, and the write the agent reports is the one you made.
+
+## How it is made
+
+:::steps
+
+### The page makes a key
+
+When you press the write button, the page makes a random key for this one submission.
+
+### The page takes its four
+
+It computes an HMAC-SHA-256 of the names and values under that key, and draws four emoji from
+it, out of sixty-four, each easy to tell apart and to name out loud. This happens before
+anything leaves the browser.
+
+### The key travels with the values
+
+The page sends the key along with the values, inside the encryption when they are
+[sealed](/security/sealed-values).
+
+### offprompt takes its four
+
+Once the write lands, offprompt reads the values back from the file, computes the same HMAC,
+and drops the key. It returns the four as `emoji`, with a note asking the agent to say them to you
+at once, before its next tool call, while your page is still open, after every write. The result
+opens with the line to say, `tell_user: "Fingerprint 🍋 🥝 🌮 🧀"`, so it is the first thing the
+agent reads and the first thing in the call's row.
+
+:::
+
+## When they differ
+
+Should the two differ, the page shows its own four and says the file holds something else. That
+is the moment to look at the file yourself, not to ask the agent to.
+
+## Why it gives nothing away
+
+The key exists only for one submission. No page offprompt serves carries it, and nothing keeps
+it, so the four in the transcript let no one test guesses at a value, however short or guessable
+the value is. Four emoji from sixty-four are 24 bits: enough that two different writes match
+about once in sixteen million, and far too few to say anything about the values.
+
+## Edge cases
+
+- A page without its script sends no key. offprompt makes one, and the four the page shows are
+  offprompt's own.
+- A [generated](/guides/asking-for-values#generated-values) key that offprompt made at write
+  time, because its field came back empty, is not in the fingerprint: the page never had it.
+- A request of generated keys alone opens no page, so there is nothing on your side to compare.

@@ -1,0 +1,112 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: var(--font-geist), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* The site */
+  --color-bg: #fbfbf9;
+  --color-panel: #f3f4f1;
+  --color-card: #ffffff;
+  --color-line: #e4e6e1;
+  --color-ink: #12332a;
+  --color-body: #4d6158;
+  --color-muted: #8a968f;
+  --color-brand: #2b4a3b;
+  --color-eyebrow: #2e7d53;
+  --color-ok: #2f9e5b;
+  --color-ok-bg: #e3f2e8;
+  --color-warn: #c4870f;
+  --color-warn-bg: #fbf0d9;
+  --color-err: #d14b3b;
+  --color-err-bg: #fbe5e1;
+  --color-caption: #6e7a73;
+  --color-faint: #a3ada7;
+  --color-connector: #cdd2cc;
+  --color-tile: #eceeea;
+  /* How it works: the timeline's rail, and the stage each step's picture sits on */
+  --color-rail: #d5d9d3;
+  --color-stage: #ebede8;
+  --color-plus: #b5bdb8;
+
+  /* The dark sections */
+  --color-dark: #111312;
+  --color-dark-card: #161917;
+  --color-dark-line: #2a2e2c;
+  --color-dark-fg: #f1f3f1;
+  --color-dark-body: #a2aaa5;
+  --color-dark-dim: #8c938f;
+  --color-dark-badge: #5b625e;
+  --color-dark-ring: #3a3f3c;
+  --color-dark-icon: #c9cfcb;
+  --color-dark-disc: #1b1f1d;
+
+  /* offprompt's own page, as the mocks show it */
+  --color-paper: #f1eee6;
+  --color-paper-line: #d3cec2;
+  --color-paper-ink: #111111;
+  --color-paper-dim: #6b6760;
+  --color-paper-warn: #9a6400;
+  --color-paper-warn-bg: #f6e8c4;
+  --color-valid: #1f7a45;
+  --color-invalid: #c0392b;
+
+  /* The terminal and transcript mocks */
+  --color-term: #0c0c0c;
+  --color-term-panel: #0a0a0a;
+  --color-term-line: #262626;
+  --color-term-edge: #232623;
+  --color-term-rule: #232323;
+  --color-term-light: #2e2e2e;
+  --color-term-input: #333333;
+  --color-term-fg: #e6e6e6;
+  --color-term-bright: #ededed;
+  --color-term-mid: #8a8a8a;
+  --color-term-soft: #a1a1a1;
+  --color-term-grey: #666666;
+  --color-term-dim: #5c5c5c;
+  --color-claude: #d97757;
+  --color-mint: #7cf5c2;
+
+  --animate-registry: registry 40s linear infinite;
+  --animate-appear: appear 240ms ease-out;
+
+  @keyframes registry {
+    to {
+      transform: translateY(-50%);
+    }
+  }
+
+  @keyframes appear {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+}
+
+@layer base {
+  html {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  ::selection {
+    background: var(--color-ok-bg);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-eyebrow);
+    outline-offset: 2px;
+  }
+}

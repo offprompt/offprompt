@@ -1,0 +1,64 @@
+name: Bug report
+description: offprompt did something it should not have, or did not do what the docs say.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never paste a real secret here. offprompt's checks only look at a value's shape, so a made-up value in the right shape shows the same thing.
+
+        A security problem goes through the [security policy](https://github.com/offprompt/offprompt/security/policy), not an issue.
+
+  - type: input
+    id: agent
+    attributes:
+      label: Agent and its version
+      placeholder: Claude Code 2.1.289
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: offprompt version
+      description: The version `npx offprompt init` installed, or the commit if you built it from this repository.
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      description: If the agent runs in a cloud sandbox or over SSH, say which, and the system your browser is on.
+      placeholder: macOS 26
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: How offprompt is installed
+      options:
+        - In the project, with npx offprompt init
+        - For me, with npx offprompt init -g
+        - From a checkout of this repository
+        - Declared by hand in the agent's MCP config
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you asked the agent, what you expected, and what happened instead. The tool's result helps, since it holds key names and never values.
+    validations:
+      required: true
+
+  - type: textarea
+    id: stderr
+    attributes:
+      label: offprompt's stderr
+      description: |
+        The lines that start with `offprompt:`. Agents keep what a server writes to stderr in their own logs: Claude Code shows it when started with `claude --debug`, and Cursor under Output, MCP Logs. Take out anything that looks like a value before pasting.
+      render: text

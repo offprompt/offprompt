@@ -1,0 +1,196 @@
+#!/bin/sh
+# The MCP server, as an agent's host starts it: in the project, or in this folder by a host that
+# names the project as an MCP root.
+#
+# The server runs on Node, which holds some 80 MB for as long as a session lasts, and most
+# sessions never ask for a value. So this launcher answers the host's opening messages itself,
+# from what the server said when it was built, and starts the server when the agent first calls
+# one of its tools. Once the server has had nothing open and nothing asked of it for a while, it
+# says so, the launcher stops it, and the next call starts it again. On Windows, and where there
+# is no bash, the server starts at once, as it always did.
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+server="$root/dist/mcp.mjs"
+handshake="$root/dist/handshake"
+if [ ! -f "$server" ]; then
+  echo "offprompt: $server is missing. Run 'npx offprompt@latest init -g' to put it back, or in the offprompt repository 'pnpm package <directory>' and install from that directory." >&2
+  exit 1
+fi
+case "$(uname -s 2>/dev/null)" in
+  MINGW* | MSYS* | CYGWIN*) exec node "$server" "$@" ;;
+esac
+if [ ! -f "$handshake/tools.json" ]; then exec node "$server" "$@"; fi
+if [ -z "$BASH_VERSION" ]; then
+  if command -v bash >/dev/null 2>&1; then exec bash "$0" "$@"; fi
+  exec node "$server" "$@"
+fi
+
+# From here on, bash, out of its POSIX mode, which macOS's /bin/sh starts it in. How long the
+# server waits with nothing to do before it may be stopped, in seconds; tests shorten it. The
+# launcher looks at least once a minute.
+set +o posix
+idle=${OFFPROMPT_IDLE_SECONDS:-300}
+tick=$((idle < 1 ? 1 : idle < 60 ? idle : 60))
+grace=$((tick < 5 ? tick : 5))
+export OFFPROMPT_IDLE_SECONDS=$idle
+args=("$@")
+
+versions=$(<"$handshake/versions")
+latest=${versions%%$'\n'*}
+opening=$(<"$handshake/initialize.json")
+tools=$(<"$handshake/tools.json")
+unknown=$(<"$handshake/unknown")
+not_found=$(<"$handshake/not-found.json")
+
+re_method='"method"[[:space:]]*:[[:space:]]*"([^"]*)"'
+re_id='"id"[[:space:]]*:[[:space:]]*("[^"]*"|-?[0-9]+)'
+re_version='"protocolVersion"[[:space:]]*:[[:space:]]*"([^"]*)"'
+
+line=
+id=
+initialize=
+initialized=
+running=
+state=
+forwarded=0
+
+# Whether a key appears exactly once in the message, so what was read under it is the message's own.
+once() {
+  local rest=${line#*\""$1"\"}
+  [[ $rest != "$line" && $rest != *\""$1"\"* ]]
+}
+
+reply() {
+  printf '{"jsonrpc":"2.0","id":%s,"result":%s}\n' "$id" "$1"
+}
+
+# Whether the server, when it was built, said it does not know this request.
+unknown() {
+  case $'\n'"$unknown"$'\n' in *$'\n'"$1"$'\n'*) return 0 ;; esac
+  return 1
+}
+
+# The opening the server would give: initialize at the version the host asks for where the
+# server speaks it, else the newest, the tool list, and a ping.
+answer() {
+  case $1 in
+    initialize)
+      initialize=$line
+      local asked='' version=$latest
+      [[ $line =~ $re_version ]] && asked=${BASH_REMATCH[1]}
+      if [ -n "$asked" ]; then
+        case $'\n'"$versions"$'\n' in *$'\n'"$asked"$'\n'*) version=$asked ;; esac
+      fi
+      reply "{\"protocolVersion\":\"$version\",$opening}"
+      ;;
+    tools/list) reply "$tools" ;;
+    ping) reply '{}' ;;
+  esac
+}
+
+# Starts the server on a pipe of its own, as a host would, and tells it the opening the host
+# already had. Its answer to that opening is dropped, since the host has had one, and the rest
+# of the opening waits for it, as a host waits; everything after goes to the host as it comes.
+start() {
+  state=$(mktemp "${TMPDIR:-/tmp}/offprompt-state.XXXXXX") || return 1
+  if [ -n "$initialize" ]; then
+    local answered="$state.answered"
+    mkfifo -m 600 "$answered" || return 1
+    exec 3> >(OFFPROMPT_STATE_FILE=$state node "$server" "${args[@]}" | {
+      IFS= read -r _
+      echo >"$answered"
+      exec cat
+    })
+    printf '%s\n' "$initialize" >&3
+    read -r _ <"$answered"
+    rm -f "$answered"
+  else
+    exec 3> >(OFFPROMPT_STATE_FILE=$state exec node "$server" "${args[@]}")
+  fi
+  running=1
+  if [ -n "$initialized" ]; then printf '%s\n' "$initialized" >&3; fi
+}
+
+# Closing its input is how the server is told to finish, as a host ending a session does.
+stop() {
+  exec 3>&-
+  rm -f "$state"
+  running=
+}
+
+# The server says stop once it has nothing open and nothing asked of it. A message handed over
+# in the last few seconds may not have reached it yet, so it gets the time to.
+may_stop() {
+  local said=
+  [ -n "$running" ] || return 1
+  read -r said <"$state" 2>/dev/null
+  [ "$said" = stop ] && ((SECONDS - forwarded >= grace))
+}
+
+forward() {
+  forwarded=$SECONDS
+  if printf '%s\n' "$line" >&3 2>/dev/null; then return; fi
+  # The server is gone without being stopped: start it again for this message.
+  stop
+  start && printf '%s\n' "$line" >&3
+}
+
+handle() {
+  if may_stop; then stop; fi
+  if [ -n "$running" ]; then
+    forward
+    return
+  fi
+  local method=
+  id=
+  [[ $line =~ $re_method ]] && method=${BASH_REMATCH[1]}
+  [[ $line =~ $re_id ]] && id=${BASH_REMATCH[1]}
+  case $method in
+    notifications/initialized)
+      initialized=$line
+      return
+      ;;
+    initialize | tools/list | ping)
+      if [ -n "$id" ] && once id && once method; then
+        answer "$method"
+        return
+      fi
+      ;;
+  esac
+  # A request the server does not know, such as Claude Code's discovery probe ahead of
+  # initialize, gets the answer the server gives, which the host takes as no.
+  if [ -n "$method" ] && [ -n "$id" ] && unknown "$method" && once id && once method; then
+    printf '{"jsonrpc":"2.0","id":%s,"error":%s}\n' "$id" "$not_found"
+    return
+  fi
+  # A notification or a reply means nothing to a server that is not running. Any other
+  # request, a tool call above all, is the server's to answer.
+  if [ -z "$method" ] || [ -z "$id" ]; then return; fi
+  start && forward
+}
+
+trap '' PIPE
+trap 'if [ -n "$running" ]; then stop; fi; exit 0' TERM INT HUP
+
+# bash before 4 says the same of a read that timed out as of the end of input, so the time it
+# took tells them apart: a tick always takes the whole tick.
+while :; do
+  line=
+  started=$SECONDS
+  if IFS= read -r -t "$tick" line; then
+    handle
+  elif ((SECONDS - started >= tick)); then
+    if [ -n "$line" ]; then
+      # The tick came halfway through a message: read the rest of it.
+      IFS= read -r rest
+      line+=$rest
+      handle
+    elif may_stop; then
+      stop
+    fi
+  else
+    # The host closed its side: a last message with no newline, then the end.
+    if [ -n "$line" ]; then handle; fi
+    break
+  fi
+done
+if [ -n "$running" ]; then stop; fi

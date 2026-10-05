@@ -1,0 +1,140 @@
+---
+description: How a provider, its keys and their checks are laid out in offprompt's registry, and how to add one.
+---
+
+# Adding a provider
+
+offprompt's registry is plain data: providers, the keys they issue, and kinds of value no one
+provider owns. The tool's `provider` and `format` values are drawn from it, so the agent can only
+name an entry that exists, and adding a provider is one folder and one line. It lives in
+`packages/offprompt/src/registry/`, and imports nothing from the rest of offprompt.
+
+```
+registry/
+  schema.ts          the shape of every entry, as Zod schemas
+  checks.ts          how a value is checked against a rule
+  formats.ts         kinds of value no one provider owns, such as postgres_url
+  registry.ts        every provider, and lookups by variable name and reference
+  providers/
+    resend/
+      provider.ts    name, category, homepage, logo, colour, domains, keys, and formats it can create
+      api-key.ts     one file per key: label, variable names, where it is made, rules
+      logo.ts        one SVG path
+      resend.test.ts values each key accepts and refuses
+```
+
+:::steps
+
+### Add a folder
+
+Name it after the provider, under `providers/`, with `provider.ts`:
+
+```ts [providers/resend/provider.ts]
+import type { Provider } from '../../schema.js'
+import { apiKey } from './api-key.js'
+import { logo } from './logo.js'
+
+export const resend: Provider = {
+  id: 'resend',
+  name: 'Resend',
+  category: 'messaging',
+  homepage: 'https://resend.com',
+  logo,
+  domains: ['resend.com'],
+  credentials: [apiKey],
+  offers: [],
+}
+```
+
+`category` is the docs' section the provider is listed under, one of `ai`, `payments`,
+`messaging`, `data`, `auth`, `deploy`, `product` and `stores`. Every link in the entry must be
+https and on one of its `domains`, or a subdomain of one. An optional `color`, uppercase hex such
+as `#635BFF`, draws the logo white on a tile of that colour.
+
+### Add a file per key
+
+```ts [providers/resend/api-key.ts]
+import type { Credential } from '../../schema.js'
+
+export const apiKey: Credential = {
+  id: 'api_key',
+  label: 'API key',
+  names: ['RESEND_API_KEY'],
+  url: 'https://resend.com/api-keys',
+  placeholder: 're_…',
+  rules: [
+    { kind: 'prefix', anyOf: ['re_'], message: 'starts with re_' },
+    { kind: 'length', min: 20, max: 80, message: '20 to 80 characters' },
+  ],
+}
+```
+
+`names` are the variables projects conventionally read the key from, without a framework prefix.
+`url` is the page where the key is made. Set `secret: false` on a key meant to be public, such as
+a publishable key.
+
+Where offprompt's page is shown rather than used, as on these docs, each field holds an example
+made from its rules. Set `example` on a key whose rules cannot produce one that passes, such as
+a Telegram bot token's digits, colon and letters. `examples.test.ts` checks that every key's
+example passes its rules.
+
+### Add the logo
+
+One SVG path on a 24×24 grid, drawn in the text colour or white on the provider's colour. Take it
+from [Simple Icons](https://simpleicons.org) where it has one; any other source needs its licence
+in `THIRD_PARTY_NOTICES.md`. Set `evenOdd: true` for a path with holes. `logo` is optional: a
+provider without one shows its initial instead.
+
+### Add a test
+
+Values each key accepts, and the lines a bad one breaks:
+
+```ts [providers/resend/resend.test.ts]
+import { describe, expect, it } from 'vitest'
+
+import { failures } from '../../checks.js'
+import { apiKey } from './api-key.js'
+
+describe('Resend API key', () => {
+  it('accepts a key and reports every rule a bad one breaks, one line each', () => {
+    expect(failures(apiKey.rules, `re_${'a'.repeat(30)}`)).toEqual([])
+    expect(failures(apiKey.rules, 'sk_short')).toEqual(['starts with re_', '20 to 80 characters'])
+  })
+})
+```
+
+### List it
+
+Add it to `providers` in `registry.ts`, and run the tests. `registry.test.ts` parses every entry
+against the schema, and fails when a link leaves the provider's domains, when two keys claim the
+same variable name, or when an offer names a format that does not exist.
+
+:::
+
+## Rules
+
+Each rule carries its own `message`, the line shown under the field. Lines are written by hand
+and never built from the value.
+
+| Kind | Fields | Passes when |
+| --- | --- | --- |
+| `prefix` | `anyOf` | The value starts with one of them |
+| `length` | `min`, `max` | The value is that long |
+| `charset` | `pattern` | The value matches the regular expression |
+| `format` | `format` | The value is an `email`, `url`, `uuid`, `jwt`, `base64`, `json`, `pem` or `postgres` URL |
+| `either` | `options` | The value passes every rule of any one option, such as a new key or a legacy JWT |
+
+Keep rules loose: a prefix and a wide length range. A rule that goes stale blocks a valid key, and
+the prefix alone catches the most common slip, a key from the wrong provider.
+
+## Offers
+
+A provider that can create a value of a format lists it under `offers`, with the page where it is
+done. A field of that format then links there for someone who has none yet:
+
+```ts
+offers: [{ format: 'postgres_url', url: 'https://console.neon.tech/signup' }],
+```
+
+A provider with offers and no keys, such as Neon, is a place to create a value rather than a key
+to ask for.

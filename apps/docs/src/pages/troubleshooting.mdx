@@ -1,0 +1,78 @@
+---
+description: What to do when the page does not open, the agent cannot find offprompt, or a write is refused.
+---
+
+# Troubleshooting
+
+## The agent does not have offprompt
+
+- **Claude Code** asks before it starts a server a project declares. Run `/mcp` to see whether
+  offprompt is listed and approved.
+- **Codex** and **Pi** read a project's config only in a project you trust.
+- Check that `tools/offprompt/mcp.mjs` and the agent's file are in the project, as
+  [Installation](/installation) lists them, and that `node` is on the `PATH` the agent sees.
+- `npx offprompt list` shows which agents offprompt found, and where each is set up.
+
+## "no project to write to"
+
+offprompt was started outside a project, and the agent's host named no workspace. Set offprompt's
+working directory (`cwd`) to the project in the agent's MCP settings. See
+[Where the project is](/installation#where-the-project-is).
+
+## No page opened
+
+When offprompt cannot open a browser, it gives the agent the link to show you, and the result says
+why. On Linux with no display, offprompt takes itself to be in a sandbox, and the agent passes you a
+[sandbox link](/guides/cloud-sandboxes) instead.
+
+## The link from a sandbox does not open
+
+- A `127.0.0.1` link means offprompt started no tunnel, because:
+  - the sandbox sends its traffic through an HTTP proxy, which `cloudflared` ignores, or the
+    tunnel did not reach offprompt within 20 seconds;
+  - `OFFPROMPT_TUNNEL=off` is set;
+  - there is no `cloudflared` on `PATH`, and the pinned download failed, or no release is pinned
+    for the platform, as on Windows. offprompt says why only on its stderr.
+
+  The link opens only if your tool forwards that port to your machine as `localhost` or
+  `127.0.0.1`; if it forwards it under another number, change the port in the link. Forwarding
+  under the vendor's own hostname, such as `*.app.github.dev`, is refused with 421 "Wrong host".
+  Otherwise turn on port forwarding, or allow outbound connections to Cloudflare, and ask the
+  agent to try again.
+- A link is good for 30 minutes and one write. After that, ask the agent to try again.
+
+## The write button stays off
+
+The button says what is left: "Fill 3 values to write", "Fix 1 value to write". Look for red lines
+under the fields. If the file is tracked by git, tick the override by the button, or ask the agent
+to write to a file git ignores. From a sandbox, the button stays off when the link lost its `#k=`
+part; open the link exactly as the agent gave it.
+
+## The page says it is reconnecting
+
+offprompt stopped answering, usually because the agent quit or restarted it. Your values stay on the
+page, and nothing is written until offprompt is back. A request lives only in the process that made
+it, so after a restart, ask the agent to ask again.
+
+## The request expired
+
+A request lives five minutes, or 30 minutes from a sandbox. Ask the agent to ask again; it gets a new
+page.
+
+## A value is refused for the file
+
+A `.env` cannot hold every string exactly: one with a single quote together with a double quote or a
+backslash has no form dotenv reads back unchanged. The page says so under the field. Ask the agent to
+write that value to a file of its own, with a `file` [sink](/reference/sinks).
+
+## The fingerprints differ
+
+The file holds something other than what you typed. Look at the file yourself; do not ask the agent
+to open it.
+
+## The call ends while you are still typing
+
+An agent's own tool timeout can end the call before the request does. `npx offprompt init` sets
+offprompt's timeout to 330 seconds where the agent takes one; set it by hand in a config you wrote
+yourself. The page stays live either way, and the agent can pick the request up with
+[`await_secret`](/reference/await-secret).

@@ -1,0 +1,135 @@
+---
+description: How Claude Code, Codex, Cursor, Pi and other agents load offprompt, find the project and open the page.
+---
+
+# Agents
+
+offprompt is an MCP server, so any agent that speaks MCP can use it. Four get a project config of
+their own from [`npx offprompt init`](/installation); every other agent
+[add-mcp](https://github.com/neondatabase/add-mcp) knows, but Claude Desktop, gets it for you with
+`init -g`.
+
+## Claude Code
+
+In a project, `.mcp.json` declares the server:
+
+```json [.mcp.json]
+{
+  "mcpServers": {
+    "offprompt": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["tools/offprompt/mcp.mjs"],
+      "timeout": 330000
+    }
+  }
+}
+```
+
+Claude Code asks before it starts a server a project declares; approve it once. With `init -g`
+it gets offprompt as a plugin, through `claude plugin`.
+
+Claude Code starts offprompt in the project's folder, which is where values are written. It does
+not take URL elicitation yet, so offprompt opens your browser itself.
+
+## Codex
+
+In a project, `.codex/config.toml` declares the server:
+
+```toml [.codex/config.toml]
+[mcp_servers.offprompt]
+command = "node"
+args = ["tools/offprompt/mcp.mjs"]
+tool_timeout_sec = 330
+env_vars = ["DISPLAY", "WAYLAND_DISPLAY", "SSH_CONNECTION", "CODESPACES", "XDG_RUNTIME_DIR", "XDG_CURRENT_DESKTOP", "XDG_DATA_DIRS", "DBUS_SESSION_BUS_ADDRESS", "BROWSER", "OFFPROMPT_TUNNEL", "XDG_CACHE_HOME", "CONDUCTOR_WORKSPACE_ID"]
+```
+
+Codex reads a project's config only in a project you trust. Its default tool timeout of 60
+seconds would end the call while you are still typing, so offprompt sets its own. Codex gives an
+MCP server only a few of its own variables, such as `PATH` and `HOME`; `env_vars` passes on the
+ones offprompt reads to tell your desktop from a remote machine, and the ones `xdg-open` needs to
+reach your browser on Linux. With `init -g` Codex gets offprompt as a plugin, through
+`codex plugin`, whose Codex manifest sets the same.
+
+Codex starts a plugin in the plugin's own folder and names the project in every tool call, which
+is where offprompt writes. `codex exec`, and the Codex SDK built on it, offer URL elicitation and
+cancel every dialog, since nobody is there to see it; offprompt then opens your browser itself.
+
+## Cursor
+
+In a project, `.cursor/mcp.json` declares the server:
+
+```json [.cursor/mcp.json]
+{
+  "mcpServers": {
+    "offprompt": {
+      "command": "node",
+      "args": ["tools/offprompt/mcp.mjs"]
+    }
+  }
+}
+```
+
+With `init -g`, Cursor gets a copy of the plugin in `~/.cursor/plugins/local/offprompt`.
+
+Cursor starts a server a project's `.cursor/mcp.json` declares in the project's folder, and names
+its workspace folders in `WORKSPACE_FOLDER_PATHS`. It starts the Claude Code plugins it loads,
+offprompt's among them, in your home folder; offprompt then finds the project through the MCP
+roots Cursor names.
+
+## Pi
+
+Pi speaks MCP through [pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter), pinned to
+3.1.0. In a project, `.pi/mcp-adapter.json` declares the server, and `.pi/settings.json` the
+adapter. With `init -g` both go in Pi's agent directory, `~/.pi/agent` unless
+`PI_CODING_AGENT_DIR` moves it.
+
+The adapter would otherwise put every server behind one proxy tool, where the model would have to
+search for `collect_secret` before it could call it, so offprompt is declared with its tools
+exposed directly.
+
+## Every other agent
+
+`npx offprompt init -g` declares offprompt in the MCP config of every other agent add-mcp knows
+and finds on your machine, but Claude Desktop, which has no project to write into: Gemini CLI,
+VS Code, OpenCode, Goose, Kiro CLI, Windsurf, Zed and more.
+`npx offprompt list` shows them all.
+
+An agent that names its workspace as an MCP root works like Codex: offprompt writes there. One
+that neither starts offprompt in the project nor names it gets a refusal, which tells the agent to
+stop and tell you to set offprompt's working directory to the project in its MCP settings.
+
+## Who is asking
+
+The page's heading names the program the agent runs in, "Claude Code is asking", from the name
+the host gives when it connects to offprompt. The host sets it, not the model, so the agent is never
+asked to introduce itself.
+
+These get their own name: Claude Code, Cursor, Codex, GitHub Copilot and Pi with their logo, and
+Windsurf, Cline, Zed, Gemini CLI and OpenCode without one. Any other shows the name it gave. Inside
+a Conductor workspace the line above the heading, with the badge and the project, adds "in
+Conductor".
+
+## How the page reaches you
+
+On your own machine the model never carries the page's address. offprompt tries, in order:
+
+1. **URL elicitation**, where the agent's host supports it: the host shows the link in a dialog of
+   its own. Only an accepted dialog counts, or one still open after a moment, which someone is
+   looking at.
+2. **Opening your browser** itself, with `open` on macOS, `xdg-open` on Linux, or
+   `rundll32 url.dll,FileProtocolHandler` on Windows.
+3. **The link in the tool result**, only when the browser cannot be opened. The agent shows it to
+   you, and the result says so.
+
+So the rule on your own machine is simple: offprompt opens itself. From a
+[cloud sandbox](/guides/cloud-sandboxes) the link always comes through the host's dialog or the
+agent.
+
+## One plugin, three formats
+
+The plugin offprompt installs with `-g` is in three formats at once.
+[Agent Plugins 1.0.0](https://agent-plugins.org): `plugin.json` and `mcp.json` at its root, for
+any agent that loads them. Codex's: `.codex-plugin/plugin.json`, which Codex loads ahead of the
+Agent Plugins files, since only its own format can name variables to pass on. And Claude Code's:
+`.claude-plugin/` and `.mcp.json`, which Claude Code and Cursor load.

@@ -1,0 +1,143 @@
+# Typecheck, lint and test every package on Linux, Windows and macOS, then run the page's
+# browser tests. Every step runs even when an earlier one failed, so one run shows every failure.
+#
+# macOS minutes count ten times over in a private repository, so macOS runs where a change is
+# about to land: on pull requests, on main and master, and when started by hand.
+name: check
+
+on:
+  push:
+    branches: [main, master, monorepo]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(github.event_name == 'push' && github.ref_name != 'main' && github.ref_name != 'master' && '["ubuntu-latest", "windows-latest"]' || '["ubuntu-latest", "windows-latest", "macos-latest"]') }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      # A Windows checkout turns line endings into CRLF unless told otherwise.
+      - name: Keep line endings as committed
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The docs do not build on Windows: Vocs writes a page's path, such as
+      # reference\providers\upstash.mdx, into code where \u reads as an escape. They are built
+      # and served from Linux.
+      - name: Typecheck, lint and test
+        run: pnpm exec turbo run typecheck lint test --continue --concurrency=1 ${{ runner.os == 'Windows' && '--filter=!@offprompt/docs' || '' }}
+
+      - name: Install the browsers
+        if: ${{ !cancelled() }}
+        run: pnpm --filter offprompt exec playwright install --with-deps
+
+      - name: Browser tests
+        if: ${{ !cancelled() }}
+        run: pnpm exec turbo run test:browser --filter offprompt
+
+  # The real Claude Code, Codex and Pi, each against a scripted model, so no account is needed:
+  # each loads offprompt from a project, starts it, and passes the calls and results through.
+  # Then each again with offprompt installed for it by npx offprompt init -g, from the package
+  # as it is packed for npm, and started by the plugin's launcher.
+  hosts:
+    name: hosts on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(github.event_name == 'push' && github.ref_name != 'main' && github.ref_name != 'master' && '["ubuntu-latest", "windows-latest"]' || '["ubuntu-latest", "windows-latest", "macos-latest"]') }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Keep line endings as committed
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Pinned to the versions the runs were written against; Pi comes through npx, pinned too.
+      - name: Install Claude Code and Codex
+        run: npm install --global @anthropic-ai/claude-code@2.1.289 @openai/codex@0.159.3
+
+      - name: Build offprompt and its installer
+        run: pnpm exec turbo run build --filter offprompt --filter @offprompt/install
+
+      - name: Install the browser
+        run: pnpm --filter @offprompt/e2e exec playwright install --with-deps chromium
+
+      - name: The hosts against a scripted model
+        run: pnpm --filter @offprompt/e2e hosts
+
+      - name: The hosts with offprompt installed for them by init -g
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @offprompt/e2e global
+
+      - name: Keep what the runs produced
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hosts-${{ matrix.os }}
+          path: packages/e2e/runs
+
+  # Claude Code against a scripted model on a machine the person reaches over SSH, where
+  # offprompt exposes the page through a real Cloudflare quick tunnel and the run fills it at
+  # its https address. It runs where macOS runs, and its failure fails nothing: a quick tunnel
+  # depends on Cloudflare's free service, which promises no uptime, and on its new hostname
+  # reaching DNS in time, so a red run here can be Cloudflare's rather than offprompt's.
+  tunnel:
+    name: tunnel on ubuntu-latest
+    if: ${{ github.event_name != 'push' || github.ref_name == 'main' || github.ref_name == 'master' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Claude Code
+        run: npm install --global @anthropic-ai/claude-code@2.1.289
+
+      - name: Build offprompt and its installer
+        run: pnpm exec turbo run build --filter offprompt --filter @offprompt/install
+
+      - name: Install the browser
+        run: pnpm --filter @offprompt/e2e exec playwright install --with-deps chromium
+
+      - name: A page through a Cloudflare quick tunnel
+        run: pnpm --filter @offprompt/e2e tunnel
+        env:
+          E2E_TUNNEL: '1'
+
+      - name: Keep what the run produced
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tunnel
+          path: packages/e2e/runs

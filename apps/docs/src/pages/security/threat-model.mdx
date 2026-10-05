@@ -1,0 +1,89 @@
+---
+description: Who offprompt trusts with a value, who it keeps it from, and what it does not protect against.
+---
+
+# Threat model
+
+offprompt keeps a value out of the conversation on the way in. The value travels from your
+browser to offprompt to the file, and never through the agent.
+
+## Who sees the value
+
+| Trusted with it | Kept away from it |
+| --- | --- |
+| You | The model |
+| The browser tab offprompt opened | The agent's host program |
+| offprompt, while it writes | The transcript on disk |
+| The file it writes | The model provider's logs |
+| | Tool arguments and tool results |
+| | Code the agent generates |
+
+What the agent does with the file afterwards is up to the agent, because the agent is trusted.
+offprompt tells it not to read the file, and gives it every key name the file holds so it has no
+reason to.
+
+## What it protects against
+
+- **A value passing through the conversation.** You type it into a page offprompt opened, so it
+  never appears in a prompt, a tool argument or a tool result.
+- **A poisoned prompt redirecting the write.** The file is fixed when the agent asks, resolved
+  inside the project, and shown to you before you type: its path in the project, beside the
+  project's folder, which is shortened past 32 characters, with the full path on hover.
+- **A lookalike page from a poisoned prompt.** On your own machine offprompt offers the page in
+  the host's own URL dialog first, then opens your browser. It hands the agent a link only when
+  neither works, and says why, so an agent passing you a link otherwise is the case to distrust.
+- **A phishing link in the agent's reason.** The page shows the agent's links as text. The only
+  clickable links come from offprompt's registry, on each provider's own domains.
+- **Another tab reaching the local server.** The page's server checks the `Host`, refuses a
+  request the browser marks as coming from another site, serves nothing without the request's
+  128-bit token in the path, and takes a write only with a nonce from the page. See
+  [The local server](/security/local-server).
+- **A secret landing in git.** A file git tracks is written only when you tick the override on
+  the page.
+
+## What it does not protect against
+
+- **Another program running as you.** It can read the file after the write, and reach the local
+  server. Keeping one of your programs from another is the operating system's job.
+- **You typing the value somewhere else**, the chat included.
+- **The file itself.** A `.env` on disk is readable by whatever can read files, the agent
+  included. An agent that opens it with its file-reading tool puts every value into its context,
+  its transcript and its provider's logs. offprompt's instructions and every result tell the agent
+  not to, but nothing short of watching the agent's file reads could enforce it, and offprompt
+  does not watch the agent.
+
+## From a sandbox
+
+From a [cloud sandbox](/guides/cloud-sandboxes) there is a public link and something carrying the
+traffic, and [encryption](/security/sealed-values) keeps the values from both:
+
+| Party | Sees |
+| --- | --- |
+| Your browser | The values, as on your own machine |
+| The tunnel, or the vendor's port forwarding | The page, and ciphertext only |
+| The model, the transcript, the agent's host | The link: its token and public key |
+| Anyone who gets the link within its 30 minutes | Enough to submit, never to read |
+| offprompt in the sandbox | The values; it writes the file, then drops the key |
+| The sandbox's vendor | The written file, like any file in its VM |
+
+Accepted there:
+
+- **The link is a bearer link.** Whoever holds it within the 30 minutes can submit first, for
+  example a `DATABASE_URL` pointing at their own database. It shows: your own submission then
+  fails. The MCP spec asks a server collecting secrets through a link to check that the person
+  opening it started the request; requests from a sandbox do not.
+- **A real link looks like a fake one.** Anyone can create a `trycloudflare.com` address, so trust
+  rests on the agent handing the link over, which offprompt already trusts.
+- **The tunnel serves the page.** An operator who rewrote the page's script could read values
+  before they are sealed. Encryption stops passive exposure, such as logs and inspection, not an
+  active rewrite. The vendor's port forwarding adds no one, since the vendor already runs the
+  sandbox.
+- **The page can be turned on other people.** Anyone can run offprompt and send a stranger a link
+  that looks like an honest request for a key, logos included. The page's defence is saying plainly
+  where values go.
+
+## Reporting a problem
+
+Report security issues privately through the repository's
+[security policy](https://github.com/offprompt/offprompt/security/policy), or by email to
+[info@offprompt.dev](mailto:info@offprompt.dev), not in a public issue.

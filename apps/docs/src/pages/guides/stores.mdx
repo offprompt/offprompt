@@ -1,0 +1,50 @@
+---
+description: Turn a secrets store you already use into a file to drop on the page.
+---
+
+# Values you already keep
+
+Every new project and every new sandbox asks for the same keys, and they are usually already in
+a store. The store's own command line, on your machine, turns them into a file you drop on the
+page, so the store's credential never leaves your laptop:
+
+:::code-group
+
+```sh [Vercel]
+vercel env pull .env.sandbox
+```
+
+```sh [Doppler]
+doppler secrets download --no-file --format env > .env.sandbox
+```
+
+```sh [1Password]
+op inject -i .env.tpl -o .env.sandbox
+```
+
+```sh [Infisical]
+infisical export > .env.sandbox
+```
+
+:::
+
+Drop `.env.sandbox` anywhere on the page, or click **Choose file**. The file is read in the page
+and never uploaded. Only the keys the page asked for are taken; the rest are named in the banner
+and ignored. Delete the file once the page has it.
+
+## A block from a dashboard
+
+Copying works too. Most dashboards copy their variables as `NAME=value` lines. Paste the whole
+block into any field and each value lands in its own field, whatever order the lines are in.
+
+## 1Password templates
+
+`op inject` fills a template of references, so a project can keep one beside its code:
+
+```sh [.env.tpl]
+STRIPE_SECRET_KEY={{ op://Dev/Stripe/secret key }}
+RESEND_API_KEY={{ op://Dev/Resend/credential }}
+```
+
+The template holds no secret and can be committed. `op inject` writes the values on your machine,
+and the page takes them from there.

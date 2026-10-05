@@ -1,0 +1,98 @@
+---
+description: What offprompt does, and how a value gets from you to the project without passing through the agent.
+---
+
+# Introduction
+
+offprompt lets a coding agent ask you for a secret and have it land where the project needs
+it. The agent says what it needs and why; a page opens in your browser; you type the value
+there. The transcript, the model's context and the provider's logs only ever see the
+secret's name.
+
+## Why
+
+An agent that needs an API key usually asks for it in the chat. Whatever you paste there goes
+into the model's context, the transcript on disk and the provider's logs, and stays there.
+offprompt gives the agent another way to ask: a tool call that opens a page in your browser,
+from which the value goes straight into the file.
+
+## How it works
+
+<video
+  className="offprompt-video"
+  src="/videos/how-it-works.mp4"
+  poster="/videos/how-it-works.jpg"
+  controls
+  playsInline
+  preload="metadata"
+  aria-label="Claude Code asks offprompt for a Resend API key. offprompt's page opens in the browser, the key goes in, and Claude Code reports the same four-emoji fingerprint the page shows."
+/>
+
+:::steps
+
+### The agent asks
+
+It calls [`collect_secret`](/reference/collect-secret) with every key it needs, why it needs
+them, and the file they go in. Then it waits: its turn stops inside the call.
+
+### A page opens
+
+offprompt opens a page on `127.0.0.1` in your browser, or, from a
+[cloud sandbox](/guides/cloud-sandboxes), gives the agent a link to it. The page says which agent is asking,
+what for, and which file it writes to. Each field knows what its value should look like, and
+links to where the key is made.
+
+### You insert the values
+
+Each value is checked as it goes in, typed, pasted or imported from a file. When every field passes, you press the write
+button.
+
+### The file is written
+
+offprompt writes the values and answers the agent with their names, the file and a
+[fingerprint](/guides/fingerprint) of what the file now holds. The agent reads them from the
+environment by name from then on.
+
+:::
+
+## What the agent gets back
+
+The whole result of the call, with no value in it. It opens with the line the agent is asked to
+write to you:
+
+```json
+{
+  "tell_user": "Fingerprint 🍋 🥝 🌮 🧀",
+  "request_id": "9f3c1e7a",
+  "status": "written",
+  "expires_in": 271,
+  "names": ["RESEND_API_KEY"],
+  "emoji": "🍋 🥝 🌮 🧀",
+  "file_keys": ["DATABASE_URL", "RESEND_API_KEY"],
+  "sink": { "kind": "dotenv", "path": ".env" },
+  "note": "Write this to the user now, before your next tool call, on a line of its own: \"Fingerprint 🍋 🥝 🌮 🧀\". …"
+}
+```
+
+Hosts that show the result's text, such as Codex and Pi, show one more line above the JSON:
+`Wrote 1 value to .env · fingerprint 🍋 🥝 🌮 🧀`.
+
+The note asks the agent to tell you the fingerprint straight away, so you can check it against
+the four emoji on your page while it is still open, and not to open the file: reading it would
+put the values into the transcript, which is the one thing the page avoided.
+
+## What offprompt does, and when
+
+offprompt acts when the agent calls it, and at no other time. It does not read your prompts,
+watch the agent's tool calls or rewrite what comes back from them. The agent is trusted: the
+problem offprompt solves is narrow, an agent needing a string only you have, in a place the
+project reads.
+
+The one line it holds is at its own write. A value only goes into a file git tracks when you
+tick the override on the page.
+
+## Next
+
+- [Install it](/installation) in a project.
+- [Ask for your first secret](/first-secret).
+- Read what the [agent can ask for](/guides/asking-for-values).

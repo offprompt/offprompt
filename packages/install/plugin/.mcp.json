@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "offprompt": {
+      "type": "stdio",
+      "command": "${CLAUDE_PLUGIN_ROOT}/launcher/offprompt-mcp",
+      "args": [],
+      "timeout": 330000,
+      "env": {
+        "CLAUDE_PLUGIN_DATA": "${CLAUDE_PLUGIN_DATA}"
+      }
+    }
+  }
+}

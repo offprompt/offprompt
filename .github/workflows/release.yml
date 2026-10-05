@@ -1,0 +1,63 @@
+# Releases the version a tag names, such as v0.1.0, once the tag is pushed: the npm package
+# offprompt, then the same version in the MCP Registry, then a GitHub release with its notes.
+# Neither registry holds a token for this: npm's trusted publishing and the MCP Registry's
+# GitHub login both trust this workflow through GitHub's OIDC, and npm records where the
+# package was built.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    # npm marks only a package's bin executable, so it is packed where the launcher's mode
+    # survives.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm install --global npm@latest
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: The tag names the version every manifest declares
+        run: |
+          version=$(node -p "require('./packages/offprompt/package.json').version")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "the tag is $GITHUB_REF_NAME, and the package is $version"
+            exit 1
+          fi
+
+      - name: Typecheck, lint and test
+        run: pnpm exec turbo run typecheck lint test --concurrency=1 --filter=!@offprompt/docs --filter=!@offprompt/site
+
+      - name: Assemble the package
+        run: pnpm package "$RUNNER_TEMP/offprompt"
+
+      - name: Publish to npm
+        run: npm publish "$RUNNER_TEMP/offprompt" --access public
+
+      - name: Publish to the MCP Registry
+        run: |
+          curl -fsSL https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz \
+            | tar -xz mcp-publisher
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish
+
+      - name: A GitHub release with the changes since the last one
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

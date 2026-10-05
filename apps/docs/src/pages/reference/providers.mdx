@@ -1,0 +1,24 @@
+---
+description: Every provider in offprompt's registry, by what it is for, each with a page of its keys, their checks, and the fields offprompt's page shows for them.
+---
+
+import { ProviderCatalogue } from '../../components/provider-catalogue'
+
+# Providers
+
+A key from a provider gets the provider's logo on the page, a link to where the key is made, and
+its checks. The agent asks for one by naming the variable the usual way, such as
+`STRIPE_SECRET_KEY`, and offprompt knows the key from the name, with framework prefixes such as
+`NEXT_PUBLIC_` dropped. Under any other name, the agent says which key with `provider`, as in
+[Asking for values](/guides/asking-for-values#a-providers-key).
+
+The checks are loose on purpose, mostly a prefix and a wide length range, because a rule that goes
+stale blocks a valid key. The prefix catches the most common slip: pasting a key from the wrong
+provider. Two more checks apply to every value and show only when they fail: at most 8,192
+characters, and, for a `.env`, a value the file can hold.
+
+Each provider's page lists its keys, where each is made and the names it is read under, with the
+fields offprompt's page shows for them. This page is built from the registry offprompt ships, so
+it lists exactly what the tool accepts. To add a provider, see [Adding a provider](/adding-a-provider).
+
+<ProviderCatalogue />

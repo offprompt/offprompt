@@ -1,0 +1,46 @@
+name: Provider request
+description: Ask for a provider whose keys offprompt should know.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A provider offprompt knows gets its logo on the page, a link to where its keys are made, and a check on each key as it is typed. The ones it knows are listed at [docs.offprompt.dev/reference/providers](https://docs.offprompt.dev/reference/providers). To add one yourself, see [Adding a provider](https://docs.offprompt.dev/adding-a-provider).
+
+        Never paste a real key here. Describe its shape instead, or make one up.
+
+  - type: input
+    id: provider
+    attributes:
+      label: Provider
+      description: Its name and website.
+      placeholder: Resend, https://resend.com
+    validations:
+      required: true
+
+  - type: textarea
+    id: names
+    attributes:
+      label: Key names
+      description: The variables projects read its keys from, one per line. Say which are secret and which are meant to be public.
+      placeholder: RESEND_API_KEY
+    validations:
+      required: true
+
+  - type: input
+    id: url
+    attributes:
+      label: Where keys are made
+      description: The page in the provider's dashboard where a key is created.
+      placeholder: https://resend.com/api-keys
+    validations:
+      required: true
+
+  - type: textarea
+    id: format
+    attributes:
+      label: Format
+      description: What a key looks like. Its prefix, its length, and the characters in it. Link the provider's documentation if it describes them.
+      placeholder: Starts with re_, about 36 characters, letters, digits and underscores.
+    validations:
+      required: true

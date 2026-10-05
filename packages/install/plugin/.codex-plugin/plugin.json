@@ -1,0 +1,34 @@
+{
+  "name": "offprompt",
+  "version": "0.1.0",
+  "description": "Ask the human for a secret and have it land where the project needs it, while the transcript, the model context and the provider logs only ever see the secret's name.",
+  "author": {
+    "name": "Valerio Leo",
+    "url": "https://github.com/valerioleo"
+  },
+  "homepage": "https://offprompt.dev",
+  "repository": "https://github.com/offprompt/offprompt",
+  "license": "MIT",
+  "keywords": ["secrets", "env", "dotenv", "security"],
+  "mcpServers": {
+    "offprompt": {
+      "command": "./launcher/offprompt-mcp",
+      "cwd": ".",
+      "tool_timeout_sec": 330,
+      "env_vars": [
+        "DISPLAY",
+        "WAYLAND_DISPLAY",
+        "SSH_CONNECTION",
+        "CODESPACES",
+        "XDG_RUNTIME_DIR",
+        "XDG_CURRENT_DESKTOP",
+        "XDG_DATA_DIRS",
+        "DBUS_SESSION_BUS_ADDRESS",
+        "BROWSER",
+        "OFFPROMPT_TUNNEL",
+        "XDG_CACHE_HOME",
+        "CONDUCTOR_WORKSPACE_ID"
+      ]
+    }
+  }
+}

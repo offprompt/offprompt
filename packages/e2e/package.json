@@ -1,0 +1,29 @@
+{
+  "name": "@offprompt/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Real agents against offprompt installed in a scratch project, checked by what lands on disk.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "e2e": "vitest run tests/agents.e2e.ts",
+    "hosts": "vitest run tests/hosts.e2e.ts",
+    "global": "vitest run tests/global.e2e.ts",
+    "tunnel": "vitest run tests/tunnel.e2e.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@offprompt/install": "workspace:*",
+    "@playwright/test": "catalog:",
+    "@types/cross-spawn": "^6.0.6",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "offprompt": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "dependencies": {
+    "cross-spawn": "^7.0.6"
+  }
+}

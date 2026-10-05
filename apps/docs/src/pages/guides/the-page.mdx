@@ -1,0 +1,151 @@
+---
+description: Everything on the page offprompt opens, from who is asking to the Written receipt.
+---
+
+import { TryThePage } from '../../components/try-the-page'
+
+# The page
+
+The page is where you type. offprompt serves it on `127.0.0.1`, wherever the agent runs, and it
+loads nothing from the network. From a [cloud sandbox](/guides/cloud-sandboxes) it reaches you
+through a tunnel, and your values are encrypted before they leave the browser.
+
+## Try it
+
+This is offprompt's own page, running here with a stand-in for its server. Fill it, write, and
+compare the four emoji on the Written page with the agent's side below them.
+
+<TryThePage />
+
+What follows is each part of it, from top to bottom.
+
+## The top bar
+
+offprompt's mark, a line saying whether the page is connected and how long the request has
+left, and the address the page was served from. The page asks offprompt every ten seconds and
+keeps that line true: connected, reconnecting, expired, or answered elsewhere.
+
+When offprompt stops answering, or the request closes, a banner says so and the write button
+waits. Nothing is written until offprompt is back, and nothing once the request is closed.
+
+## Who is asking, and why
+
+"Claude Code is asking for five values." The name comes from the host program, which sets it
+when it connects to offprompt, so the model cannot make it up. Known agents get their own name,
+and some their logo; any other shows the name it gave. See
+[Agents](/guides/agents#who-is-asking).
+
+Below it is the agent's reason, rendered from Markdown and labelled as the agent's claim. It
+can use bold, lists and code. A link in it shows its address as text and is not clickable,
+because this is a page people type secrets into: the only clickable links on it come from
+offprompt's [registry](/reference/providers), on the provider's own domains.
+
+## Where it writes
+
+The file, its project, the full path on hover, and a few words on its state: a new file, one
+that exists and how many of the asked keys it already holds, not gitignored, or tracked by git.
+From a [cloud sandbox](/guides/cloud-sandboxes) it adds that your values are encrypted in the
+browser.
+
+The page also says before you type anything when the file cannot be written: its folder has to
+take new files, since the write goes through a temporary file there, and an existing `.env` has
+to be readable.
+
+## Pasting and importing
+
+A card says a block can be pasted anywhere on the page, with **Choose file** for a `.env`.
+
+Paste a block of `NAME=value` lines into any field and it fills every field it names. Choose a
+file, or drop one anywhere on the page, and it does the same. The file is read in the page and
+never uploaded. The block is read as dotenv, the same way offprompt writes it, so quoting,
+`export` prefixes and any order survive a copy out of a dashboard.
+
+A banner then says what the fill did: how many fields it filled, how many need a fix, and which
+keys it skipped because the request did not ask for them. **Undo** puts the fields back until
+you type over one.
+
+- A paste that names none of the asked keys lands in the field as an ordinary paste, so a bare
+  key that happens to contain `=` stays a bare key.
+- While a file is dragged over the page, an overlay says what dropping it will do and names the
+  keys it will fill.
+- A file that names none of the keys goes whole into the multi-line field it was dropped on,
+  such as a PEM block.
+- A request written to a file of its own has no `.env` card: a file dropped anywhere fills its
+  one field.
+
+[Values you already keep](/guides/stores) turns a password manager or a secrets store into a
+file to drop here.
+
+## The fields
+
+One field per key, in a card headed by the count and a **Show values** switch.
+
+Each field carries its name, the provider's logo, and on the right the address where the key is
+made, or what kind of value it is. The caption the agent gave sits under the name. Under the
+field come its checks, then, where they apply:
+
+- a line for a value nothing checks;
+- links to providers where someone who has no value yet can create one, such as Supabase and
+  Neon for a Postgres connection string;
+- a notice when the file already holds the key, in orange, since writing replaces it.
+
+Formats that allow several lines, such as `pem` and `json`, get a taller field, shown in the
+clear, and a file picker. A [generated](/guides/asking-for-values#generated-values) key gets a
+field the page fills as it opens, with **Regenerate**, or **Generate** once it is cleared. One
+the file already holds gets a row saying it is kept.
+
+### Masking
+
+Secret values are masked as you type. **Show values** reveals every one at once; the eye on a
+field shows or hides that field alone. Values are typed into text areas rather than password
+inputs, so your browser's password manager does not offer to save a secret as a password.
+
+## The checks
+
+Each rule is its own line under the field, such as "starts with re_" or "20 to 80 characters".
+The page checks the value as it changes, and each line turns green when the value keeps the
+rule and red when it breaks it.
+
+- While the field has focus, a value that is only short, or only part of the way into its
+  prefix, is not wrong yet: the line says "14 so far" and waits.
+- Once every rule passes, the lines fold into one, such as "Looks like a Stripe webhook signing
+  secret", or "Matched from .env.production · …" for a value a file filled.
+- A broken line says what it got, such as "got 19" or "got pk_live_", and never more of the value
+  than a prefix that names what it is.
+- Paste the publishable key where the secret one goes and the page says so: "That's the
+  publishable key. Use the secret key from the same page." Paste another provider's key and it
+  says whose: "This looks like an OpenAI API key."
+- Spaces at either end are pointed out, with **Trim**. Left in, they are written as typed.
+- A single-line field drops line breaks, so a key copied with its trailing newline is stored
+  without it.
+
+offprompt runs the same checks again when you write, and a failure keeps the request open for
+another try. Every rule, provider by provider, is in [Providers](/reference/providers) and
+[Formats](/reference/formats).
+
+## Writing
+
+Above the button a bar counts the values ready, and the button says what is left: "Fill 3
+values to write", "Fix 1 value to write", then "Write to .env.local". ⌘ or Ctrl with Enter
+writes from anywhere on the page.
+
+When the file is tracked by git, the page shows an override to tick before the button will
+write there. That is the one write offprompt holds back on its own.
+
+Either every value is written or none is, in one atomic write. If the file cannot be written,
+nothing is: your values stay on the page with the error, and **Try again** writes them once it
+is fixed.
+
+## Written
+
+After the write the page says **Written.** and shows the [fingerprint](/guides/fingerprint),
+four emoji with their names, and how they appear on the agent's side. It lists the file and
+each key in it as added, replaced, generated or kept. It holds no value, and says the tab can be
+closed.
+
+## Without JavaScript
+
+The page works without its script: the form submits the ordinary way and offprompt checks the
+values and marks the broken lines under their fields. It cannot keep values it never echoes, so
+after a failed write it asks for them again. A page opened from a cloud sandbox needs its
+script, which encrypts the values before they leave the browser.
