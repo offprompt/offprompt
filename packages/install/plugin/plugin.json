@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "offprompt",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Ask the human for a secret and have it land where the project needs it, while the transcript, the model context and the provider logs only ever see the secret's name.",
   "author": {
     "name": "Valerio Leo",
