@@ -37,6 +37,12 @@ export const formatList = [
     rules: [{ kind: 'format', format: 'url', message: 'a URL starting with http:// or https://' }],
   },
   {
+    id: 'hostname',
+    label: 'hostname',
+    placeholder: 'example.com',
+    rules: [{ kind: 'format', format: 'hostname', message: 'a hostname, with no https:// or path' }],
+  },
+  {
     id: 'uuid',
     label: 'UUID',
     rules: [{ kind: 'format', format: 'uuid', message: 'a UUID, such as 123e4567-e89b-12d3-a456-426614174000' }],

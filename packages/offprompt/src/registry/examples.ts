@@ -4,6 +4,7 @@ import type { CheckName, Rule } from './schema.js'
 const FORMAT_EXAMPLES: Readonly<Record<CheckName, string>> = {
   email: 'you@example.com',
   url: 'https://example.com',
+  hostname: 'example.com',
   uuid: '123e4567-e89b-12d3-a456-426614174000',
   jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiZXhhbXBsZSJ9.ZXhhbXBsZS1zaWduYXR1cmU',
   base64: 'ZXhhbXBsZQ==',

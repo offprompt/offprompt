@@ -31,11 +31,10 @@ describe('Mailgun sending domain', () => {
     expect(failures(sendingDomain.rules, `sandbox${'0'.repeat(32)}.mailgun.org`)).toEqual([])
   })
 
-  it('refuses a URL and an email address, which are not a domain', () => {
-    const line = 'a domain such as mg.example.com, with no https:// or @'
+  it('refuses a URL, an email address and a bare name, which are not a domain', () => {
+    const line = 'a hostname, with no https:// or path'
     expect(failures(sendingDomain.rules, 'https://mg.example.com')).toEqual([line])
     expect(failures(sendingDomain.rules, 'you@example.com')).toEqual([line])
     expect(failures(sendingDomain.rules, 'mailgun')).toEqual([line])
-    expect(failures(sendingDomain.rules, 'a.b')).toEqual(['4 to 253 characters'])
   })
 })

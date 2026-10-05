@@ -121,7 +121,7 @@ and never built from the value.
 | `prefix` | `anyOf` | The value starts with one of them |
 | `length` | `min`, `max` | The value is that long |
 | `charset` | `pattern` | The value matches the regular expression |
-| `format` | `format` | The value is an `email`, `url`, `uuid`, `jwt`, `base64`, `json`, `pem` or `postgres` URL |
+| `format` | `format` | The value is an `email`, `url`, `hostname`, `uuid`, `jwt`, `base64`, `json`, `pem` or `postgres` URL |
 | `either` | `options` | The value passes every rule of any one option, such as a new key or a legacy JWT |
 
 Keep rules loose: a prefix and a wide length range. A rule that goes stale blocks a valid key, and

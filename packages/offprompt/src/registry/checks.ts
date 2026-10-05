@@ -7,6 +7,13 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+/**
+ * A hostname with at least one dot, as zod's hostname check reads one: labels of letters,
+ * digits and hyphens, none starting or ending with a hyphen. A scheme, a path, a port or an @
+ * fails it, which is what a key asking for a bare host has to catch.
+ */
+const HOSTNAME = /^(?=.{1,253}$)[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/
+
 const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/
 
 const BASE64URL_SEGMENT = /^[A-Za-z0-9_-]+$/
@@ -59,6 +66,7 @@ const isJwt = (value: string) => {
 const CHECKED: Readonly<Record<CheckName, (value: string) => boolean>> = {
   email: value => EMAIL.test(value),
   url: isHttpUrl,
+  hostname: value => HOSTNAME.test(value),
   uuid: value => UUID.test(value),
   jwt: isJwt,
   base64: value => {

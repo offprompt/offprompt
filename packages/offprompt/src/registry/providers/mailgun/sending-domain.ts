@@ -7,13 +7,6 @@ export const sendingDomain: Credential = {
   url: 'https://app.mailgun.com/mg/sending/domains',
   placeholder: 'mg.example.com',
   secret: false,
-  rules: [
-    { kind: 'length', min: 4, max: 253, message: '4 to 253 characters' },
-    {
-      kind: 'charset',
-      pattern: '^[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+$',
-      message: 'a domain such as mg.example.com, with no https:// or @',
-    },
-  ],
+  rules: [{ kind: 'format', format: 'hostname', message: 'a hostname, with no https:// or path' }],
   example: 'mg.example.com',
 }

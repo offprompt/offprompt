@@ -7,7 +7,7 @@ import { z } from 'zod'
  */
 
 /** Named checks a format rule can call on. Each is implemented in `checks.ts`. */
-export const CHECKS = ['email', 'url', 'uuid', 'jwt', 'base64', 'json', 'pem', 'postgres'] as const
+export const CHECKS = ['email', 'url', 'hostname', 'uuid', 'jwt', 'base64', 'json', 'pem', 'postgres'] as const
 
 /** What a provider is for, as the docs group providers. */
 export const CATEGORIES = ['ai', 'payments', 'messaging', 'data', 'auth', 'deploy', 'product', 'stores'] as const

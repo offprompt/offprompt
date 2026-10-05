@@ -26,6 +26,18 @@ describe('formats', () => {
     expect(broken('postgres_url', 'postgres://')).toHaveLength(1)
   })
 
+  it('accepts a hostname with a dot, and refuses a URL, a path, a port or a bare name', () => {
+    const line = 'a hostname, with no https:// or path'
+    expect(broken('hostname', 'smtp.example.com')).toEqual([])
+    expect(broken('hostname', 'db-1.eu-west-2.example.co.uk')).toEqual([])
+    expect(broken('hostname', 'https://smtp.example.com')).toEqual([line])
+    expect(broken('hostname', 'smtp.example.com/')).toEqual([line])
+    expect(broken('hostname', 'smtp.example.com:587')).toEqual([line])
+    expect(broken('hostname', 'localhost')).toEqual([line])
+    expect(broken('hostname', '-smtp.example.com')).toEqual([line])
+    expect(broken('hostname', `${'a'.repeat(64)}.example.com`)).toEqual([line])
+  })
+
   it('accepts hexadecimal and refuses anything else', () => {
     expect(broken('hex', 'deadbeef')).toEqual([])
     expect(broken('hex', 'deadbeeg')).toEqual(['hexadecimal characters only, 0-9 and a-f'])

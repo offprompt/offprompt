@@ -5,7 +5,7 @@ import { clientId } from './client-id.js'
 import { clientSecret } from './client-secret.js'
 import { domain } from './domain.js'
 
-const DOMAIN_MESSAGE = 'a hostname such as example.us.auth0.com, without https://'
+const DOMAIN_MESSAGE = 'a hostname, with no https:// or path'
 
 describe('Auth0 domain', () => {
   it('accepts a tenant domain and a custom one, and is meant to be public', () => {

@@ -29,6 +29,7 @@ const FORMAT_ICONS: Readonly<Record<string, IconName>> = {
   postgres_url: 'database',
   email: 'mail',
   url: 'link',
+  hostname: 'globe',
   pem: 'file-key',
   json: 'braces',
   integer: 'hash',
