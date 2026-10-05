@@ -11,6 +11,9 @@ import { PagePreview } from './page-preview'
 /** How tall the field is drawn until the page says: a key's field at the site's widths. */
 const FIRST_HEIGHT = 260
 
+/** How long one provider takes to drift past, so the list keeps its pace however long it grows. */
+const SECONDS_PER_ENTRY = 5
+
 const isReport = (value: unknown): value is DemoReport =>
   typeof value === 'object' && value !== null && 'offprompt' in value && typeof value.offprompt === 'string'
 
@@ -34,7 +37,7 @@ const List = ({ entries, selected, onSelect, echo = false }: ListProps) => (
           onClick={() => onSelect(entry.id)}
           aria-pressed={entry.id === selected}
           tabIndex={echo ? -1 : undefined}
-          className={`flex w-full cursor-pointer items-center gap-3 rounded-lg border-b border-line px-3 py-2.5 text-left transition-colors lg:py-[11px] ${
+          className={`flex w-full cursor-pointer items-center gap-3 border-b border-line px-3 py-2.5 text-left transition-colors lg:py-[11px] ${
             entry.id === selected ? 'bg-panel' : 'hover:bg-panel/60'
           }`}
         >
@@ -114,7 +117,10 @@ export const RegistryExplorer = ({ entries }: { readonly entries: readonly Regis
       <div className="relative flex min-h-0 w-full flex-1 flex-col gap-1 lg:absolute lg:top-10 lg:right-8 lg:bottom-0 lg:w-[36%] lg:max-w-[390px]">
         <span className="text-[13px] text-muted">From the registry · pick one</span>
         <div className="group min-h-0 flex-1 overflow-hidden pt-1.5 [mask-image:linear-gradient(to_bottom,transparent,black_20px)] motion-reduce:overflow-y-auto">
-          <div className="animate-registry group-focus-within:[animation-play-state:paused] group-hover:[animation-play-state:paused] motion-reduce:animate-none">
+          <div
+            className="animate-registry group-focus-within:[animation-play-state:paused] group-hover:[animation-play-state:paused] motion-reduce:animate-none"
+            style={{ animationDuration: `${String(entries.length * SECONDS_PER_ENTRY)}s` }}
+          >
             <List entries={entries} selected={entry.id} onSelect={pick} />
             <List entries={entries} selected={entry.id} onSelect={pick} echo />
           </div>
