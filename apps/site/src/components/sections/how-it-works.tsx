@@ -93,9 +93,12 @@ const Step = ({ number, name, description, last = false, children }: StepProps) 
       </span>
       {!last && <span className="w-px flex-1 bg-rail" />}
     </div>
-    <div className={`flex min-w-0 flex-1 flex-col gap-5 pt-1.5 lg:flex-row lg:gap-0 lg:pt-0 ${last ? '' : 'pb-11 lg:pb-10'}`}>
-      <div className="flex flex-col gap-2.5 lg:w-[360px] lg:shrink-0 lg:gap-3.5 lg:pt-2 lg:pr-12 lg:pl-4">
-        <h3 className="text-2xl tracking-[-0.6px] text-balance text-ink lg:text-[30px] lg:tracking-[-0.8px]">{name}</h3>
+    <div className={`flex min-w-0 flex-1 flex-col gap-5 lg:flex-row lg:gap-0 ${last ? '' : 'pb-11 lg:pb-10'}`}>
+      <div className="flex flex-col gap-2.5 lg:w-[360px] lg:shrink-0 lg:gap-3.5 lg:pr-12 lg:pl-4">
+        {/* Each line is as tall as the circle, so the first sits level with the number. */}
+        <h3 className="text-2xl leading-7 tracking-[-0.6px] text-balance text-ink lg:text-[30px] lg:leading-10 lg:tracking-[-0.8px]">
+          {name}
+        </h3>
         <p className="text-base leading-[1.55] text-body lg:text-[17px]">{description}</p>
       </div>
       <div
@@ -118,8 +121,8 @@ export const HowItWorks = () => (
           start to finish.
         </h2>
         <p className="max-w-[600px] text-base leading-[25px] text-body lg:text-lg lg:leading-7">
-          The agent pauses, you paste, it continues. Only the key names pass through the transcript, so there&apos;s
-          nothing to redact later.
+          The agent pauses, you enter the values, it continues. Only the key names pass through the transcript, so
+          there&apos;s nothing to redact later.
         </p>
         <Anchor href={PLAYGROUND.href} className="group flex items-center gap-2 text-[15px] font-medium text-ink">
           Try it in the playground
@@ -129,7 +132,7 @@ export const HowItWorks = () => (
       <ol className="flex w-full flex-col">
         <Step
           number="01"
-          name="The agent needs a secret"
+          name="The agent needs secrets"
           description="The agent names the keys it needs and the file they go in, then waits."
         >
           <Asks />
