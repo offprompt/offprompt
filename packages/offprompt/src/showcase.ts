@@ -63,6 +63,11 @@ export type Sample = {
    */
   readonly view?: 'page' | 'compact' | 'brief' | 'fields' | 'fingerprint'
   /**
+   * The view in the middle of whatever height its frame has, for a picture whose frame is
+   * taller than what it shows. A frame sized to the page's reported height leaves it off.
+   */
+  readonly centred?: boolean
+  /**
    * A page to try: its write is answered with the Written page and a fingerprint of what was
    * typed, and the site around it can fill in the examples, paste the mix-up, or pick the one
    * field shown. Fields can start filled in. See `src/web/showcase/demo.ts`.
@@ -181,6 +186,14 @@ ${FLOATING}
 .fingerprint { ${LIFTED} }`),
 } as const
 
+/**
+ * The view in the middle of the frame, with as much room above as below. Taller than the frame,
+ * it starts at the top, as the page does.
+ */
+const CENTRED = style(`html, body { height: 100%; }
+body { display: flex; flex-direction: column; justify-content: safe center; }
+main { padding-top: 34px; padding-bottom: 34px; }`)
+
 /** A page that shows one field at a time hides the others, as the demo's stand-in marks them. */
 const SINGLE = style('.values .field[data-off] { display: none !important; }')
 
@@ -269,5 +282,6 @@ export const samplePage = (sample: Sample) => {
   }
   const html = sample.written === undefined ? formPage(sample) : writtenPage(sample)
   const single = sample.demo?.single === true ? SINGLE : ''
-  return html.replace('</head>', `${VIEWS[view]}${single}</head>`)
+  const centred = sample.centred === true ? CENTRED : ''
+  return html.replace('</head>', `${VIEWS[view]}${single}${centred}</head>`)
 }
