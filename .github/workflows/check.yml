@@ -145,9 +145,12 @@ jobs:
   # A pull request that changes what npm ships, the server or its installer, says how in a
   # changeset: `pnpm changeset`. Changesets versions offprompt alone, so the installer's files
   # are looked for here. The release pull request, on a changeset-release/ branch, uses the
-  # changesets up, so it goes without.
+  # changesets up, so it goes without, and so does Dependabot's, whose bumps the next release's
+  # changeset can mention.
   changeset:
-    if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
+    if: >-
+      github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/') &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
