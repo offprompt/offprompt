@@ -3,12 +3,14 @@
 # with the next version and its changelog entry. Merging it is the release: the version npm
 # does not have yet goes to npm, to a GitHub release with its entry, and to the MCP Registry.
 # npm and the registry trust this workflow through GitHub's OIDC, so no token is stored. It
-# runs once the repository is public, where npm records where each version was built.
+# runs once the repository is public, where npm records where each version was built. Each of
+# the three happens once: a run that stopped partway, run again, finishes the rest.
 name: release
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -43,24 +45,33 @@ jobs:
           title: Release offprompt
           commit: 'chore: release offprompt'
 
-      - name: Whether npm has this version
+      - name: Which parts of this version are due
         id: pending
         if: steps.changesets.outputs.hasChangesets == 'false'
         run: pnpm release pending
-
-      - name: Typecheck, lint and test
-        if: steps.pending.outputs.due == 'true'
-        run: pnpm exec turbo run typecheck lint test --concurrency=1 --filter=!@offprompt/docs --filter=!@offprompt/site
-
-      - name: Publish to npm, with a GitHub release
-        if: steps.pending.outputs.due == 'true'
-        run: pnpm release publish
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: List it in the MCP Registry
-        if: steps.pending.outputs.due == 'true'
+      - name: Typecheck, lint and test
+        if: steps.pending.outputs.npm == 'true'
+        run: pnpm exec turbo run typecheck lint test --concurrency=1 --filter=!@offprompt/docs --filter=!@offprompt/site
+
+      - name: Publish to npm
+        if: steps.pending.outputs.npm == 'true'
+        run: pnpm release npm
+
+      - name: A GitHub release with its changelog entry
+        if: steps.pending.outputs.github == 'true'
+        run: pnpm release github
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      # The registry looks the version up on npm, which takes minutes to serve one it has just
+      # taken.
+      - name: List it in the MCP Registry, once npm serves it
+        if: steps.pending.outputs.registry == 'true'
         run: |
+          pnpm release wait-for-npm
           curl -fsSL https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz \
             | tar -xz mcp-publisher
           ./mcp-publisher login github-oidc
