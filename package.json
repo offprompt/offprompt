@@ -21,9 +21,13 @@
     "e2e": "pnpm --filter offprompt --filter @offprompt/install build && pnpm --filter @offprompt/e2e e2e",
     "playground": "pnpm --filter offprompt --filter @offprompt/install build && pnpm --filter @offprompt/playground playground",
     "site": "pnpm --filter offprompt build && pnpm --filter @offprompt/site dev",
-    "docs": "pnpm --filter offprompt build && pnpm --filter @offprompt/docs dev"
+    "docs": "pnpm --filter offprompt build && pnpm --filter @offprompt/docs dev",
+    "changeset": "changeset",
+    "version-packages": "changeset version && node scripts/sync-versions.mjs",
+    "release": "node scripts/release.mjs"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
     "@eslint/js": "catalog:",
     "eslint": "catalog:",
     "turbo": "catalog:",

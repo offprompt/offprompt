@@ -101,3 +101,25 @@ docs: how a .env value is quoted, so a shell that sources the file reads what do
 Types are `feat`, `fix`, `docs`, `test`, `refactor`, `ci` and `chore`. Scopes are the part
 touched, such as `offprompt`, `page`, `registry`, `install`, `e2e` or `site`. One logical change
 per commit.
+
+## Changesets and releases
+
+npm installs one package, `offprompt`, assembled from `packages/offprompt` and
+`packages/install`. A change to what it ships comes with a changeset, and CI fails a pull request
+that changes either package's source without one:
+
+```sh
+pnpm changeset    # the bump, and the line the changelog gets
+```
+
+Changesets versions `offprompt` alone, the installer's changes included, since that is the
+package its users get. Write the line for them, saying what changed for them, not which files
+moved. Before 1.0, a
+minor bump may break something; a patch bump never does. Changes to the docs, the site and the
+tests need no changeset.
+
+Nobody publishes by hand. On `main`, the release workflow keeps a "Release offprompt" pull
+request open while changesets wait, with the next version and its changelog entry in
+`packages/offprompt/CHANGELOG.md`. Merging it publishes that version to npm, opens a GitHub
+release with its entry, and lists it in the MCP Registry. `pnpm release publish --dry-run`
+shows what would go out.
