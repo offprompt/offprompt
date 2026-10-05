@@ -5,13 +5,20 @@
 
 type MarkProps = { readonly className?: string }
 
+/** offprompt's mark, on a 43×21 grid: a dot, a ring raised above it, and two more dots. */
+export const MARK_PATHS = [
+  'M5 11c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z',
+  'M16 0c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z m0 2.25c1.518 0 2.75 1.232 2.75 2.75 0 1.518-1.232 2.75-2.75 2.75-1.518 0-2.75-1.232-2.75-2.75 0-1.518 1.232-2.75 2.75-2.75z',
+  'M27 11c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z',
+  'M38 11c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z',
+] as const
+
 /** offprompt's mark: three dots and a ring, in the current colour. */
 export const OffpromptMark = ({ className }: MarkProps) => (
   <svg viewBox="0 0 43 21" className={className} fill="currentColor" aria-hidden="true">
-    <path d="M5 11c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z" fillRule="evenodd" />
-    <path d="M16 0c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z m0 2.25c1.518 0 2.75 1.232 2.75 2.75 0 1.518-1.232 2.75-2.75 2.75-1.518 0-2.75-1.232-2.75-2.75 0-1.518 1.232-2.75 2.75-2.75z" fillRule="evenodd" />
-    <path d="M27 11c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z" fillRule="evenodd" />
-    <path d="M38 11c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5-2.76 0-5-2.24-5-5 0-2.76 2.24-5 5-5z" fillRule="evenodd" />
+    {MARK_PATHS.map(path => (
+      <path key={path} d={path} fillRule="evenodd" />
+    ))}
   </svg>
 )
 

@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: 'offprompt',
     type: 'website',
   },
-  twitter: { card: 'summary', title: 'Keep secrets off the prompt.', description: DESCRIPTION },
+  twitter: { card: 'summary_large_image', title: 'Keep secrets off the prompt.', description: DESCRIPTION },
 }
 
 export const viewport: Viewport = { themeColor: '#FBFBF9' }
