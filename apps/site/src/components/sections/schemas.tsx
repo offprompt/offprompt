@@ -5,14 +5,9 @@ import { FRAME } from '../frame'
 import { FLOATING, PagePreview } from '../page-preview'
 import { RegistryExplorer } from '../registry-explorer'
 
-/** offprompt's own fields, where a card's picture goes. */
+/** offprompt's own fields, in the middle of the room a card's picture has. */
 const Fields = ({ sample, usable }: { readonly sample: 'overwrite' | 'generated'; readonly usable?: string }) => (
-  <PagePreview
-    sample={sample}
-    height={360}
-    {...(usable === undefined ? {} : { usable })}
-    className={`absolute top-2.5 lg:top-[21px] ${FLOATING}`}
-  />
+  <PagePreview sample={sample} fill {...(usable === undefined ? {} : { usable })} className={`absolute inset-y-0 ${FLOATING}`} />
 )
 
 export const Schemas = () => (

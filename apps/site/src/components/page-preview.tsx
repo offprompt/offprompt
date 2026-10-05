@@ -13,10 +13,14 @@ const SCALE = '[--s:0.9] lg:[--s:0.75]'
 /** Where a picture of the page's fields or fingerprint sits: its card centred, the page's margin either side. */
 export const FLOATING = `-inset-x-[calc(24px*var(--s))] mx-auto w-[calc(100%+48px*var(--s))] lg:w-[calc(440px+48px*var(--s))] lg:max-w-[calc(100%-2rem+48px*var(--s))]`
 
-type Props = {
+/**
+ * How tall the picture is: the page drawn at a height of its own, in its own pixels before it
+ * is scaled, or filling whatever its place gives it.
+ */
+type Size = { readonly height: number; readonly fill?: never } | { readonly fill: true; readonly height?: never }
+
+type Props = Size & {
   readonly sample: SampleName
-  /** How tall the page is drawn before it is scaled, in its own pixels. */
-  readonly height: number
   readonly className?: string
   /** The hero's page loads at once; the rest wait until they are near. */
   readonly eager?: boolean
@@ -37,6 +41,7 @@ type Props = {
 export const PagePreview = ({
   sample,
   height,
+  fill,
   className = '',
   eager = false,
   usable,
@@ -45,8 +50,8 @@ export const PagePreview = ({
   frameRef,
 }: Props) => (
   <div
-    className={`h-[calc(var(--h)*var(--s))] overflow-hidden ${scale} ${className}`}
-    style={{ '--h': `${String(height)}px` }}
+    className={`${fill === true ? 'h-full' : 'h-[calc(var(--h)*var(--s))]'} overflow-hidden ${scale} ${className}`}
+    style={height === undefined ? undefined : { '--h': `${String(height)}px` }}
     inert={usable === undefined}
   >
     <iframe
@@ -55,7 +60,7 @@ export const PagePreview = ({
       title={usable ?? "offprompt's page"}
       sandbox={links ? 'allow-scripts allow-popups allow-popups-to-escape-sandbox' : 'allow-scripts'}
       loading={eager ? 'eager' : 'lazy'}
-      className="block h-(--h) w-[calc(100%/var(--s))] origin-top-left scale-(--s) border-0 bg-transparent"
+      className={`block ${fill === true ? 'h-[calc(100%/var(--s))]' : 'h-(--h)'} w-[calc(100%/var(--s))] origin-top-left scale-(--s) border-0 bg-transparent`}
     />
   </div>
 )

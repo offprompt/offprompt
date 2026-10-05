@@ -103,7 +103,7 @@ export const RegistryExplorer = ({ entries }: { readonly entries: readonly Regis
   return (
     // Stacked below the large breakpoint, the list takes whatever room the field leaves; side by side, each keeps its place.
     <div className="absolute inset-0 flex flex-col gap-5 pt-3 lg:block lg:pt-0">
-      <div className="relative w-full shrink-0 lg:absolute lg:top-6 lg:left-8 lg:w-[calc(55%-2rem)] lg:max-w-[560px]">
+      <div className="relative w-full shrink-0 lg:absolute lg:top-1/2 lg:left-8 lg:w-[calc(55%-2rem)] lg:max-w-[560px] lg:-translate-y-1/2">
         <PagePreview
           sample="schemas"
           height={height}

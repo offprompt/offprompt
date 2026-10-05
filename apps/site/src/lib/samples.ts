@@ -56,6 +56,7 @@ export const SAMPLES = {
     revealed: true,
     typing: { key: 'VERCEL_TOKEN', keystrokes: [{ wait: 400 }, { random: 24 }] },
     view: 'fields',
+    centred: true,
   },
   /** A secret the page makes itself, in the clear, so Regenerate visibly makes another. */
   generated: {
@@ -65,6 +66,7 @@ export const SAMPLES = {
     file: { kind: 'dotenv', path: '.env.local', holds: [] },
     revealed: true,
     view: 'fields',
+    centred: true,
   },
   /** The page once the two keys are written: the fingerprint, and the agent's side of it. */
   receipt: {
