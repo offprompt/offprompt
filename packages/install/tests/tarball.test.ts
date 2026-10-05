@@ -30,6 +30,7 @@ const SHIPPED = [
   '.claude-plugin/plugin.json',
   '.codex-plugin/plugin.json',
   '.mcp.json',
+  'CHANGELOG.md',
   'DESIGN.md',
   'LICENSE',
   'README.md',

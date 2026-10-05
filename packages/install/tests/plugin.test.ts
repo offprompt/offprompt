@@ -130,6 +130,7 @@ it('packages a directory that starts the server from its own launcher', async ()
     '.claude-plugin/plugin.json',
     '.codex-plugin/plugin.json',
     '.mcp.json',
+    'CHANGELOG.md',
     'DESIGN.md',
     'LICENSE',
     'README.md',

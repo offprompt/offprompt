@@ -45,6 +45,7 @@ const SHIPPED = [
     from: join(server, 'dist/handshake', name),
   })),
   { file: 'THIRD_PARTY_NOTICES.md', from: join(server, 'THIRD_PARTY_NOTICES.md') },
+  { file: 'CHANGELOG.md', from: join(server, 'CHANGELOG.md') },
   ...['README.md', 'DESIGN.md', 'LICENSE'].map(file => ({ file, from: join(repository, file) })),
 ]
 
