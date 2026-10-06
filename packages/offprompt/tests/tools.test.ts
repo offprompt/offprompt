@@ -49,10 +49,13 @@ const waitFor = async (ready: () => boolean): Promise<void> => {
 const setupTest = async ({
   git = false,
   ttlMs,
+  awaitMs,
   project,
 }: {
   git?: boolean
   ttlMs?: number
+  /** How long await_secret holds a call open. */
+  awaitMs?: number
   /** How the project is found; the workspace by default. */
   project?: () => Promise<Result<string>>
 } = {}) => {
@@ -74,6 +77,7 @@ const setupTest = async ({
       opened.push(url)
       return Promise.resolve(channels.shift() ?? { channel: 'browser' })
     },
+    ...(awaitMs === undefined ? {} : { awaitMs }),
   })
 
   const client = new Client({ name: 'test-client', version: 'test' })
@@ -364,6 +368,29 @@ describe('await_secret', () => {
     await typeIntoPage({ request, value: RESEND_KEY })
 
     expect(payloadOf(await waiting)).toMatchObject({ status: 'written' })
+  })
+
+  it('hands back the URL the model relays while the request waits', async () => {
+    const { relayed, call } = await setupTest({ awaitMs: 20 })
+    const opened = payloadOf(await relayed())
+
+    const waiting = payloadOf(await call('await_secret', { request_id: opened.request_id }))
+
+    expect(waiting).toMatchObject({ status: 'awaiting', url: 'http://127.0.0.1:1/r/relayed' })
+    expect(String(waiting.note)).toContain('your last message included, put this link in it on its own line: http://127.0.0.1:1/r/relayed')
+  })
+
+  it('carries no URL while it waits on a page offprompt opened itself', async () => {
+    const { collect, call, opened, lastRequest } = await setupTest({ awaitMs: 20 })
+    const collecting = collect()
+    await waitFor(() => opened.length === 1)
+
+    const waiting = payloadOf(await call('await_secret', { request_id: lastRequest().id }))
+
+    expect(waiting).toMatchObject({ status: 'awaiting', note: 'Still waiting for the human. Call await_secret again with this request_id.' })
+    expect(waiting.url).toBeUndefined()
+    await call('cancel_secret', { request_id: lastRequest().id })
+    await collecting
   })
 
   it('reports an unknown request id as an error rather than a status', async () => {

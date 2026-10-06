@@ -54,6 +54,18 @@ it('finds a request by its token and ignores a token of the wrong length', () =>
   expect(store.byToken('0'.repeat(32))).toBeUndefined()
 })
 
+it('keeps the link the agent passes on while the request is open, and takes none once it closes', () => {
+  const { store, open } = setupTest()
+  const request = open()
+  const link = 'https://some-words.trycloudflare.com/r/abc#k=key'
+
+  expect(store.relay(request.id, link)?.link).toBe(link)
+  expect(store.get(request.id)?.link).toBe(link)
+
+  store.expire(request.id)
+  expect(store.relay(request.id, 'https://elsewhere.example/r/abc')?.link).toBe(link)
+})
+
 it('closes the record on a successful write', () => {
   const { store, open } = setupTest()
   const request = open()

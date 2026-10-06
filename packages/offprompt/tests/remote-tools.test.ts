@@ -29,23 +29,39 @@ type Answer = {
   emoji?: string
 }
 
+/** How the agent is asked to wait on a link it passed on. */
+const WAIT_IN_VIEW =
+  "Then call await_secret, and again while it says awaiting, with no other work in between, so the link stays the last thing the user sees: a host can fold a turn's earlier messages away. Do not end your turn to wait: the page lasts only as long as this offprompt server, which the host may stop once your turn ends."
+
 const setupTest = async ({
   where = 'remote',
   tunnelComesUp = true,
   elicitation = false,
+  remoteTtlMs,
+  awaitMs,
 }: {
   where?: Whereabouts
   tunnelComesUp?: boolean
   elicitation?: boolean
+  remoteTtlMs?: number
+  awaitMs?: number
 } = {}) => {
   const workspace = await setupWorkspace()
-  const store = createRequestStore()
+  const store = createRequestStore(remoteTtlMs === undefined ? {} : { remoteTtlMs })
   const loopback = await startLoopbackServer({ store })
   const server = new McpServer({ name: 'offprompt', version: 'test' }, { capabilities: { tools: {} } })
   const openUrl = vi.fn<(url: string) => Promise<boolean>>(() => Promise.resolve(true))
   const tunnelUrl = vi.fn(() => Promise.resolve(tunnelComesUp ? TUNNEL : undefined))
   const present = createPresenter({ server: server.server, loopback, tunnelUrl, openUrl, settleMs: 10 })
-  registerTools({ server, store, loopback, present, project: () => Promise.resolve(ok(workspace.root)), where })
+  registerTools({
+    server,
+    store,
+    loopback,
+    present,
+    project: () => Promise.resolve(ok(workspace.root)),
+    where,
+    ...(awaitMs === undefined ? {} : { awaitMs }),
+  })
   /** The page as served on the loopback, whatever address the link carried. */
   const pageOf = async (link: string) => {
     const { pathname } = new URL(link)
@@ -118,7 +134,7 @@ describe('collect_secret from a sandbox', () => {
     expect(answer.url).toMatch(new RegExp(`^${TUNNEL}/r/[0-9a-f]{32}#k=[\\w-]{87}$`))
     expect(answer.expires_in).toBe(1800)
     expect(answer.note).toBe(
-      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} Say nothing else about it. Then call await_secret.`,
+      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} Say nothing else about it. ${WAIT_IN_VIEW}`,
     )
     expect(openUrl).not.toHaveBeenCalled()
   })
@@ -133,6 +149,39 @@ describe('collect_secret from a sandbox', () => {
     expect(response.status).toBe(200)
     expect(settled.status).toBe('written')
     expect(await read('.env')).toBe(`RESEND_API_KEY=${RESEND_KEY}\n`)
+  })
+
+  it('hands the link back on every wait until the values are written, and not after', async () => {
+    const { collect, writeThrough, awaitSecret } = await setupTest({ awaitMs: 20 })
+    const answer = await collect()
+    const link = answer.url ?? ''
+
+    const waiting = await awaitSecret(answer.request_id)
+
+    expect(waiting.status).toBe('awaiting')
+    expect(waiting.url).toBe(link)
+    expect(waiting.note).toBe(
+      `The user has not typed the values yet. Call await_secret again with this request_id, with no other work in between. Whenever you write to the user while this request is open, your last message included, put this link in it on its own line: ${link}`,
+    )
+
+    await writeThrough({ link, value: RESEND_KEY })
+    const settled = await awaitSecret(answer.request_id)
+
+    expect(settled.status).toBe('written')
+    expect(settled.url).toBeUndefined()
+  })
+
+  it('says the link no longer opens once its time is up, and how to get a new one', async () => {
+    const { collect, awaitSecret } = await setupTest({ remoteTtlMs: 30 })
+    const answer = await collect()
+
+    const closed = await awaitSecret(answer.request_id)
+
+    expect(closed.status).toBe('expired')
+    expect(closed.url).toBeUndefined()
+    expect(closed.note).toBe(
+      'RESEND_API_KEY was not collected, and the link no longer opens. Tell the user so, and call collect_secret again if it is still needed: that makes a new link.',
+    )
   })
 
   it('shows the same four emoji on the Saved page and in the result', async () => {
@@ -172,7 +221,7 @@ describe('collect_secret from a sandbox', () => {
     expect(answer.status).toBe('awaiting')
     expect(answer.url).toMatch(new RegExp(`^${loopback.origin}/r/[0-9a-f]{32}#k=[\\w-]{87}$`))
     expect(answer.note).toBe(
-      `offprompt could not open a tunnel from this sandbox. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} It opens only if their tool forwards port ${String(loopback.port)} to their machine; if it forwards to another port, they change the port in the link. If nothing forwards it, this sandbox cannot expose a page: they can turn on port forwarding or allow outbound connections to Cloudflare, then ask you to try again. Then call await_secret.`,
+      `offprompt could not open a tunnel from this sandbox. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} It opens only if their tool forwards port ${String(loopback.port)} to their machine; if it forwards to another port, they change the port in the link. If nothing forwards it, this sandbox cannot expose a page: they can turn on port forwarding or allow outbound connections to Cloudflare, then ask you to try again. ${WAIT_IN_VIEW}`,
     )
   })
 
@@ -184,7 +233,7 @@ describe('collect_secret from a sandbox', () => {
     expect(answer.status).toBe('awaiting')
     expect(answer.url).toMatch(/^https:\/\/[\w.-]+\/r\/[0-9a-f]{32}#k=[\w-]{87}$/)
     expect(answer.note).toBe(
-      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} Say nothing else about it. Then call await_secret.`,
+      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} Say nothing else about it. ${WAIT_IN_VIEW}`,
     )
   })
 
