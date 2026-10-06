@@ -43,8 +43,8 @@ written or the request has expired, so there is nothing to poll and nothing to d
 In a cloud sandbox or a remote VM, a browser opened there is one the user cannot see. Set \`sandbox: true\` only when your
 environment tells you that is where you run, as your instructions or the platform you run on do. A temporary folder, or a
 run with nobody at the terminal, is not a sign of one, and offprompt detects the common environments itself. The call then
-returns at once with a link: show it to the user in your reply, then call await_secret.
-The user types in their own browser, and the values are encrypted there so that only the sandbox can read them.
+returns at once with a link: show it to the user, then wait with await_secret and do nothing else until the values are
+written. The user types in their own browser, and the values are encrypted there so that only the sandbox can read them.
 
 You never receive a value. You get back the key names and the file they landed in, and you reference them by name from
 then on, for example process.env.RESEND_API_KEY. Never open, cat, grep or print that file afterwards: reading it puts
@@ -58,14 +58,17 @@ end of your task or for your next call to offprompt.
 
 When the result carries a \`url\`, the human has to open it and nothing can happen until they do. Put the link in your
 reply to them, on its own line, where they will see it. A link mentioned only in your reasoning, or buried in a
-paragraph, is a request the human never receives.
+paragraph, is a request the human never receives. Until the values are written, put it again in whatever you write to
+them, your last message included: a host can fold a turn's earlier messages away and show only its last.
 
 State the intent once: \`reason\` is shown to the human as your claim about why the values are needed, so write it for
 them, not for yourself.`
 
 const AWAIT_DESCRIPTION = `Wait for a collect_secret request that came back still "awaiting" — which happens when
 offprompt runs in a cloud sandbox, or had no browser to open and handed you the page URL to pass on. Long-polls for up to 60 seconds and returns
-"written", "awaiting" or "expired". Call it again while the status is "awaiting".`
+"written", "awaiting" or "expired". Call it again while the status is "awaiting", with no other work in between. When
+you were given a link to pass on, an "awaiting" result carries it again: keep it in whatever you write to the user
+until the values are written.`
 
 const CANCEL_DESCRIPTION = `Close a collect_secret request that is no longer needed. Anything already typed on the
 page is discarded.`
@@ -174,12 +177,15 @@ const statusOutput = {
     .describe('Every key the file holds after the write, names only, so the file never needs opening.'),
   sink: sinkOutput,
   note: z.string(),
+  url: z
+    .string()
+    .optional()
+    .describe('The page the user has to open, while the request is awaiting and the link is yours to pass on.'),
 }
 
 const collectOutput = {
   ...statusOutput,
   expires_in: z.number(),
-  url: z.string().optional(),
 }
 
 const sinkReport = (request: SecretRequest) => ({
@@ -259,31 +265,57 @@ const writtenNote = ({ request, fileKeys }: { request: SecretRequest; fileKeys: 
   ].join(' ')
 }
 
+/** A request whose link the agent passed on, closed unused: the human may still have the page open. */
+const closedLinkNote = (request: SecretRequest) => {
+  const many = request.secrets.length > 1
+  return `${listed(namesOf(request))} ${many ? 'were' : 'was'} not collected, and the link no longer opens. Tell the user so, and call collect_secret again if ${many ? 'they are' : 'it is'} still needed: that makes a new link.`
+}
+
+/**
+ * Every wait hands the link back. Under Conductor an agent showed the link once, partway
+ * through its turn, then said it was waiting with no link in sight, and the turn's earlier
+ * messages were folded away by the time the human looked.
+ */
+const awaitingNote = (link: string) =>
+  `The user has not typed the values yet. Call await_secret again with this request_id, with no other work in between. Whenever you write to the user while this request is open, your last message included, put this link in it on its own line: ${link}`
+
 const statusNote = ({ request, fileKeys }: { request: SecretRequest; fileKeys: readonly string[] }) => {
   if (request.status === 'written') return writtenNote({ request, fileKeys })
-  if (request.status === 'expired')
-    return `${listed(namesOf(request))} was not collected. Call collect_secret again if still needed.`
-  return `Still waiting for the human. Call await_secret again with this request_id.`
+  if (request.status === 'expired') {
+    return request.link === undefined
+      ? `${listed(namesOf(request))} was not collected. Call collect_secret again if still needed.`
+      : closedLinkNote(request)
+  }
+  return request.link === undefined
+    ? `Still waiting for the human. Call await_secret again with this request_id.`
+    : awaitingNote(request.link)
 }
 
 /** The human must see the link: a link only in the agent's reasoning is a request that never arrives. */
 const SHOW_LINK =
   'Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do:'
 
+/**
+ * How the agent waits on a link it passed on. Work done between polls pushes the link out of
+ * view, and the page lives in this process, which a host may stop between turns.
+ */
+const WAIT_IN_VIEW =
+  "Then call await_secret, and again while it says awaiting, with no other work in between, so the link stays the last thing the user sees: a host can fold a turn's earlier messages away. Do not end your turn to wait: the page lasts only as long as this offprompt server, which the host may stop once your turn ends."
+
 const remoteNote = (presentation: Extract<Presentation, { channel: 'remote' }>) => {
   const { url, via } = presentation
   const port = String(presentation.port)
   if (via === 'loopback') {
-    return `offprompt could not open a tunnel from this sandbox. ${SHOW_LINK} ${url} It opens only if their tool forwards port ${port} to their machine; if it forwards to another port, they change the port in the link. If nothing forwards it, this sandbox cannot expose a page: they can turn on port forwarding or allow outbound connections to Cloudflare, then ask you to try again. Then call await_secret.`
+    return `offprompt could not open a tunnel from this sandbox. ${SHOW_LINK} ${url} It opens only if their tool forwards port ${port} to their machine; if it forwards to another port, they change the port in the link. If nothing forwards it, this sandbox cannot expose a page: they can turn on port forwarding or allow outbound connections to Cloudflare, then ask you to try again. ${WAIT_IN_VIEW}`
   }
   const exposed = 'offprompt is running in a cloud sandbox and exposed its page through a tunnel.'
-  return `${exposed} ${SHOW_LINK} ${url} Say nothing else about it. Then call await_secret.`
+  return `${exposed} ${SHOW_LINK} ${url} Say nothing else about it. ${WAIT_IN_VIEW}`
 }
 
 const noteFor = (presentation: Presentation) => {
   if (presentation.channel === 'remote') return remoteNote(presentation)
   if (presentation.channel === 'result') {
-    return `offprompt could not open the page itself: ${presentation.reason}. ${SHOW_LINK} ${presentation.url} Say nothing else about it. Then call await_secret.`
+    return `offprompt could not open the page itself: ${presentation.reason}. ${SHOW_LINK} ${presentation.url} Say nothing else about it. ${WAIT_IN_VIEW}`
   }
   return "An offprompt page is open in the user's browser. Do not paste or repeat any URL for it."
 }
@@ -298,6 +330,7 @@ export const registerTools = ({
   where = 'unsure',
   clientInfo = () => server.server.getClientVersion(),
   during = unreported,
+  awaitMs = AWAIT_TIMEOUT_MS,
 }: {
   server: McpServer
   store: RequestStore
@@ -314,6 +347,8 @@ export const registerTools = ({
   clientInfo?: () => { readonly name: string } | undefined
   /** Runs each call, so the launcher in front of the server knows when it is busy. */
   during?: IdleReport['during']
+  /** How long await_secret holds a call open; tests shorten it. */
+  awaitMs?: number
 }) => {
   /** Names only, and only once something was written: an open request has nothing to report. */
   const fileKeysOf = async (request: SecretRequest) =>
@@ -343,6 +378,7 @@ export const registerTools = ({
         ...fileKeysReport(fileKeys),
         sink: sinkReport(request),
         note: statusNote({ request, fileKeys }),
+        ...(request.status === 'awaiting' && request.link !== undefined ? { url: request.link } : {}),
       },
       lead: headline(request),
     })
@@ -466,10 +502,11 @@ export const registerTools = ({
 
       // The call waits for the human, except where the model has to relay the URL itself:
       // blocking there would hold back the one message that gets them to the page. A remote
-      // request never waits either, since it outlives any one call. Both poll with await_secret.
+      // request never waits either, since it outlives any one call. Both poll with await_secret,
+      // which hands the link back each time.
       const settled =
         presentation.channel === 'result' || presentation.channel === 'remote'
-          ? request
+          ? (store.relay(request.id, presentation.url) ?? request)
           : (await store.waitFor(request.id, store.ttlMs + WAIT_SLACK_MS)) ?? request
 
       return answer({ request: settled, presentation })
@@ -487,7 +524,7 @@ export const registerTools = ({
     },
     async input =>
       during(async () => {
-        const settled = await store.waitFor(input.request_id, AWAIT_TIMEOUT_MS)
+        const settled = await store.waitFor(input.request_id, awaitMs)
         if (settled === undefined) return missing(input.request_id)
         return report(settled)
       }),

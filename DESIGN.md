@@ -137,7 +137,17 @@ outright: reading the file puts the values into the transcript, and nothing need
 
 The note also tells the agent to show a link in its reply, on its own line, whenever the
 result carries one. A link that appears only in the agent's reasoning is a request the
-human never receives; that happened in a Conductor cloud session on 2026-09-21.
+human never receives; that happened in a Conductor cloud session on 2026-09-21. A link
+shown once, partway through a turn, can go missing as well. In a Conductor cloud session
+on 2026-10-06 the agent showed it, then called `await_secret` between pieces of other work
+until the request expired, and its later messages said it was waiting with no link in them.
+Conductor folds a turn's earlier messages away once the turn ends, so the human never saw
+the link. So while a request whose link the agent passes on is open, every `await_secret`
+hands the link back, and the notes ask for it in whatever the agent writes to the human,
+its last message included, with no other work between waits. The agent does not end its
+turn to wait either: the page lives in the server's process, and a host may stop that
+between turns. Conductor kept the agent's process through a nine-minute pause between
+turns, and had replaced it after a longer one.
 
 Claude Code's MCP tool timeout defaults to about 28 hours and its stdio idle window to
 30 minutes, so the 300 second TTL bounds the wait long before either does. The manifest
@@ -153,7 +163,10 @@ the URL.
 
 Long-polls one request for up to 60 seconds. Returns `written`, `awaiting` or `expired`.
 Needed only after a `collect_secret` that came back `awaiting`, or to re-attach to a
-request whose blocking call the human interrupted.
+request whose blocking call the human interrupted. While a request whose link the agent
+passes on is `awaiting`, the result carries its `url` again; once that request closes
+unwritten, the note says the link no longer opens and that `collect_secret` makes a new
+one.
 
 ### `cancel_secret`
 
@@ -164,7 +177,7 @@ Expires a request. Any value already typed on the page is discarded.
 - Created by `collect_secret`, held in process memory, keyed by request id.
 - Fields: the requested secrets, reason, resolved sink, token, page nonce, expiry, whether
   it was made from a sandbox and, while such a request is open, the private half of its
-  key pair.
+  key pair, and the link the agent passes on, where no page opened by itself.
 - TTL is 300 seconds, and 30 minutes for a request made from a sandbox, where the human may
   not be watching when the link appears. One successful write closes the record. A value that fails
   validation leaves it open, however many times: the human is trusted.

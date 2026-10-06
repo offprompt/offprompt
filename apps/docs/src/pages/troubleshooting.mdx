@@ -25,6 +25,12 @@ When offprompt cannot open a browser, it gives the agent the link to show you, a
 why. On Linux with no display, offprompt takes itself to be in a sandbox, and the agent passes you a
 [sandbox link](/guides/cloud-sandboxes) instead.
 
+## The agent is waiting and you see no link
+
+From a sandbox the agent waits for you with the link in whatever it writes meanwhile. A host can
+fold a turn's earlier messages away: open them, or ask the agent for the link. A link is good for
+30 minutes; after that the agent makes a new one.
+
 ## The link from a sandbox does not open
 
 - A `127.0.0.1` link means offprompt started no tunnel, because:

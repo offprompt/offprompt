@@ -62,6 +62,8 @@ export type SecretRequest = {
   readonly fingerprinted?: readonly string[]
   /** The program the agent runs in, as it introduced itself to the MCP server. */
   readonly asker?: Asker
+  /** The link the agent passes on to the human, where no page opened by itself. */
+  readonly link?: string
 }
 
 export const DEFAULT_TTL_MS = 300_000
@@ -202,6 +204,16 @@ export const createRequestStore = ({
     })
   }
 
+  /**
+   * Keeps the link the agent was given to pass on, so every wait can hand it back while the
+   * request is open: a host can fold away the message that first showed it.
+   */
+  const relay = (id: string, link: string) => {
+    const record = current(id)
+    if (record?.status !== 'awaiting') return record
+    return replace({ ...record, link })
+  }
+
   const byToken = (token: string) =>
     [...records.keys()]
       .map(current)
@@ -291,6 +303,7 @@ export const createRequestStore = ({
   return {
     create,
     get: current,
+    relay,
     byToken,
     claim,
     release,

@@ -23,8 +23,9 @@ When a task needs one, call collect_secret with every key you need at once. It w
 returns once the values are written, with the key names and the file, never the values.
 
 When your environment tells you that you run in a cloud sandbox or a remote VM, set sandbox: true. The call returns a
-link: show it to the user in your reply, on its own line, since nothing happens until they open it. Then await_secret
-waits for the values.
+link: show it to the user on its own line, since nothing happens until they open it. Then wait with await_secret,
+doing nothing else until the values are written, and put the link in anything you write to the user meanwhile, your
+last message included.
 
 Never open, cat, grep or print the file the values landed in. Reading it puts the values into the transcript.
 
