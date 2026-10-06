@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod'
 
 /**
  * The shape of every registry entry. Providers, their credentials and value formats are

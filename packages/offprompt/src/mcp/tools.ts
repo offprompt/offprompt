@@ -1,5 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { z } from 'zod'
+import * as z from 'zod'
 
 import { fail, ok, type Result } from '../core/result.js'
 import { newSealPair } from '../core/sealing.js'

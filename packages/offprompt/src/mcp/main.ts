@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { z } from 'zod'
+import * as z from 'zod'
 
 import { note } from '../core/log.js'
 import { createRequestStore, type SecretRequest } from '../core/store.js'
