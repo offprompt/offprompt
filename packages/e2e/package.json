@@ -19,7 +19,6 @@
     "@types/cross-spawn": "^6.0.6",
     "@types/node": "catalog:",
     "eslint": "catalog:",
-    "offprompt": "workspace:*",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
