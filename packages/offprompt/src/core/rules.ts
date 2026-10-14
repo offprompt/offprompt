@@ -5,8 +5,12 @@ import { dotenvCanHold } from './dotenv.js'
 /** offprompt's own check that a `.env` file can hold the value at all. */
 type StorableRule = { readonly kind: 'storable'; readonly message: string }
 
-/** A rule a field is checked against. A quiet one shows only once it fails, because it almost never does. */
-export type FieldRule = (Rule | StorableRule) & { readonly quiet?: boolean }
+/**
+ * A rule a field is checked against. A quiet one shows only once it fails, because it almost
+ * never does. A binding one holds even for a value the human writes anyway, because without it
+ * the destination could not take the value.
+ */
+export type FieldRule = (Rule | StorableRule) & { readonly quiet?: boolean; readonly binding?: boolean }
 
 const WITHIN_CAP: FieldRule = {
   kind: 'length',
@@ -14,12 +18,14 @@ const WITHIN_CAP: FieldRule = {
   max: MAX_VALUE_LENGTH,
   message: `no more than ${String(MAX_VALUE_LENGTH)} characters`,
   quiet: true,
+  binding: true,
 }
 
 const STORABLE_IN_DOTENV: FieldRule = {
   kind: 'storable',
   message: 'cannot be stored in a .env file: it mixes single and double quotes, or a single quote and a backslash',
   quiet: true,
+  binding: true,
 }
 
 /**
@@ -42,6 +48,20 @@ export const checkField = (rules: readonly FieldRule[], value: string) => rules.
 /** The messages of the rules the value breaks, in order. Empty when it passes them all. */
 export const fieldFailures = (rules: readonly FieldRule[], value: string) =>
   rules.filter(rule => !holds(rule, value)).map(rule => rule.message)
+
+/**
+ * The rules a value is held to. Once the human writes it anyway, only the binding ones: a
+ * provider may have changed a key's format since the registry learnt it, and the human is
+ * trusted to know, but the file still has to hold the value.
+ */
+export const heldTo = ({ rules, anyway }: { rules: readonly FieldRule[]; anyway: boolean }) =>
+  anyway ? rules.filter(rule => rule.binding === true) : rules
+
+/** Whether a value breaking these rules can be written anyway: it breaks only rules of its own. */
+export const writableAnyway = (rules: readonly FieldRule[], value: string) => {
+  const broken = rules.filter(rule => !holds(rule, value))
+  return broken.length > 0 && broken.every(rule => rule.binding !== true)
+}
 
 /** Whether data handed over by the server has the shape of a field rule. */
 export const isFieldRule = (value: unknown): value is FieldRule =>

@@ -27,11 +27,12 @@ type Answer = {
   url?: string
   file_keys?: string[]
   emoji?: string
+  written_anyway?: string[]
 }
 
 /** How the agent is asked to wait on a link it passed on. */
 const WAIT_IN_VIEW =
-  "Then call await_secret, and again while it says awaiting, with no other work in between, so the link stays the last thing the user sees: a host can fold a turn's earlier messages away. Do not end your turn to wait: the page lasts only as long as this offprompt server, which the host may stop once your turn ends."
+  "If you have a tool that asks the user a question and waits for the answer, ask there too, with the link in the question: a host can fold a turn's earlier messages away, and a question stays in front of the user until they answer. Then call await_secret, and again while it says awaiting, with no other work in between, so the link stays the last thing the user sees. Do not end your turn to wait: the page lasts only as long as this offprompt server, which the host may stop once your turn ends."
 
 const setupTest = async ({
   where = 'remote',
@@ -97,14 +98,14 @@ const setupTest = async ({
   }
 
   /** What the human does with the link: open it, type, and press Write it. */
-  const writeThrough = async ({ link, value }: { link: string; value: string }) => {
+  const writeThrough = async ({ link, value, anyway = [] }: { link: string; value: string; anyway?: readonly number[] }) => {
     const { pathname, hash } = new URL(link)
     const token = pathname.split('/').at(-1) ?? ''
     const request = store.byToken(token)
     if (request === undefined) throw new Error('the link names no request')
     const sealer = await sealerFor({ hash, token, nonce: request.nonce })
     if (typeof sealer === 'string') throw new Error(sealer)
-    const sealed = await sealer(plaintextFor({ values: new Map([['value0', value]]), allowTracked: false }))
+    const sealed = await sealer(plaintextFor({ values: new Map([['value0', value]]), allowTracked: false, anyway }))
     return fetch(loopback.urlFor(request), {
       method: 'POST',
       body: new URLSearchParams({ nonce: request.nonce, sealed }),
@@ -134,7 +135,7 @@ describe('collect_secret from a sandbox', () => {
     expect(answer.url).toMatch(new RegExp(`^${TUNNEL}/r/[0-9a-f]{32}#k=[\\w-]{87}$`))
     expect(answer.expires_in).toBe(1800)
     expect(answer.note).toBe(
-      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} Say nothing else about it. ${WAIT_IN_VIEW}`,
+      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, with a short line telling them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} ${WAIT_IN_VIEW}`,
     )
     expect(openUrl).not.toHaveBeenCalled()
   })
@@ -151,6 +152,22 @@ describe('collect_secret from a sandbox', () => {
     expect(await read('.env')).toBe(`RESEND_API_KEY=${RESEND_KEY}\n`)
   })
 
+  it('tells the agent which keys the user wrote anyway, and no longer that every value passed', async () => {
+    const { collect, writeThrough, awaitSecret, read } = await setupTest()
+    const answer = await collect()
+
+    const response = await writeThrough({ link: answer.url ?? '', value: 'sk_live_wrong_provider_key_here', anyway: [0] })
+    const settled = await awaitSecret(answer.request_id)
+
+    expect(response.status).toBe(200)
+    expect(await read('.env')).toBe('RESEND_API_KEY=sk_live_wrong_provider_key_here\n')
+    expect(settled.written_anyway).toEqual(['RESEND_API_KEY'])
+    expect(settled.note).toContain(
+      "The user wrote RESEND_API_KEY anyway, although it did not pass offprompt's checks: the provider may have changed the format, or the value may be wrong. If the service refuses it, tell the user and call collect_secret again for it.",
+    )
+    expect(settled.note).toContain('Nothing needs checking; the write was atomic.')
+  })
+
   it('hands the link back on every wait until the values are written, and not after', async () => {
     const { collect, writeThrough, awaitSecret } = await setupTest({ awaitMs: 20 })
     const answer = await collect()
@@ -161,7 +178,7 @@ describe('collect_secret from a sandbox', () => {
     expect(waiting.status).toBe('awaiting')
     expect(waiting.url).toBe(link)
     expect(waiting.note).toBe(
-      `The user has not typed the values yet. Call await_secret again with this request_id, with no other work in between. Whenever you write to the user while this request is open, your last message included, put this link in it on its own line: ${link}`,
+      `The user has not typed the values yet. Call await_secret again with this request_id, with no other work in between. Whenever you write to the user or ask them a question while this request is open, your last message included, put this link in it on its own line: ${link}`,
     )
 
     await writeThrough({ link, value: RESEND_KEY })
@@ -221,7 +238,7 @@ describe('collect_secret from a sandbox', () => {
     expect(answer.status).toBe('awaiting')
     expect(answer.url).toMatch(new RegExp(`^${loopback.origin}/r/[0-9a-f]{32}#k=[\\w-]{87}$`))
     expect(answer.note).toBe(
-      `offprompt could not open a tunnel from this sandbox. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} It opens only if their tool forwards port ${String(loopback.port)} to their machine; if it forwards to another port, they change the port in the link. If nothing forwards it, this sandbox cannot expose a page: they can turn on port forwarding or allow outbound connections to Cloudflare, then ask you to try again. ${WAIT_IN_VIEW}`,
+      `offprompt could not open a tunnel from this sandbox. Show the user this link in your reply, on its own line, with a short line telling them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} It opens only if their tool forwards port ${String(loopback.port)} to their machine; if it forwards to another port, they change the port in the link. If nothing forwards it, this sandbox cannot expose a page: they can turn on port forwarding or allow outbound connections to Cloudflare, then ask you to try again. ${WAIT_IN_VIEW}`,
     )
   })
 
@@ -233,7 +250,7 @@ describe('collect_secret from a sandbox', () => {
     expect(answer.status).toBe('awaiting')
     expect(answer.url).toMatch(/^https:\/\/[\w.-]+\/r\/[0-9a-f]{32}#k=[\w-]{87}$/)
     expect(answer.note).toBe(
-      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} Say nothing else about it. ${WAIT_IN_VIEW}`,
+      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, with a short line telling them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} ${WAIT_IN_VIEW}`,
     )
   })
 

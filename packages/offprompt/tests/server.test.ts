@@ -517,6 +517,53 @@ it('offers the override and writes only after it is ticked for a tracked file', 
   expect(await read('.env')).toBe(`PORT=3000\nRESEND_API_KEY=${RESEND_KEY}\n`)
 })
 
+describe('writing a value anyway', () => {
+  const WRONG = 'sk_live_wrong_provider_key_here'
+
+  it('offers the box once a value breaks its own checks, and writes the value once it is ticked', async () => {
+    const { submitValue, read, store, request } = await setupTest()
+
+    const refused = await submitValue(WRONG)
+    expect(refused.status).toBe(422)
+    expect(withoutIcons(await refused.text())).toContain(
+      '<label class="override anyway" data-anyway><input type="checkbox" name="anyway0" value="yes"><span>Write it anyway. The agent is told it did not pass these checks.</span></label>',
+    )
+
+    const allowed = await submitValue(WRONG, { anyway0: 'yes' })
+    expect(allowed.status).toBe(200)
+    expect(await read('.env')).toBe(`RESEND_API_KEY=${WRONG}\n`)
+    expect(store.get(request.id)?.writtenAnyway).toEqual(['RESEND_API_KEY'])
+  })
+
+  it('draws the box hidden for the page script to show, and none for a value with no checks of its own', async () => {
+    const checked = await setupTest()
+    expect(await (await checked.get()).text()).toContain('data-anyway hidden>')
+
+    const unchecked = await setupTest({ names: ['NOTE'], ask: {} })
+    expect(await (await unchecked.get()).text()).not.toContain('<label class="override anyway"')
+  })
+
+  it('never lifts the checks that let the file hold the value', async () => {
+    const { submitValue, exists, store, request } = await setupTest({ names: ['GCP_SA'], ask: { format: 'json' } })
+
+    const response = await submitValue(`it's "here"`, { anyway0: 'yes' })
+
+    expect(response.status).toBe(422)
+    expect(await response.text()).toContain('data-anyway hidden>')
+    expect(await exists('.env')).toBe(false)
+    expect(store.get(request.id)?.status).toBe('awaiting')
+  })
+
+  it('names no key written anyway when the value passed its checks', async () => {
+    const { submitValue, store, request } = await setupTest()
+
+    const response = await submitValue(RESEND_KEY, { anyway0: 'yes' })
+
+    expect(response.status).toBe(200)
+    expect(store.get(request.id)?.writtenAnyway).toBeUndefined()
+  })
+})
+
 it('refuses a submission once the request has expired', async () => {
   const { submitValue, exists } = await setupTest({ ttlMs: 1 })
   await new Promise(resolve => setTimeout(resolve, 5))

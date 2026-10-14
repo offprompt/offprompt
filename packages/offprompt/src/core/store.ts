@@ -60,6 +60,8 @@ export type SecretRequest = {
   readonly emoji?: string
   /** The keys the fingerprint covers: every value that came from the page. */
   readonly fingerprinted?: readonly string[]
+  /** Keys the human wrote although their values broke the registry's checks for them. */
+  readonly writtenAnyway?: readonly string[]
   /** The program the agent runs in, as it introduced itself to the MCP server. */
   readonly asker?: Asker
   /** The link the agent passes on to the human, where no page opened by itself. */
@@ -243,7 +245,13 @@ export const createRequestStore = ({
     if (cancelled.delete(id)) close(id)
   }
 
-  const markWritten = (id: string, fingerprint?: { emoji: string; names: readonly string[] }) => {
+  const markWritten = (
+    id: string,
+    {
+      fingerprint,
+      anyway = [],
+    }: { fingerprint?: { emoji: string; names: readonly string[] } | undefined; anyway?: readonly string[] } = {},
+  ) => {
     const record = current(id)
     claims.delete(id)
     cancelled.delete(id)
@@ -252,6 +260,7 @@ export const createRequestStore = ({
       ...record,
       status: 'written',
       ...(fingerprint === undefined ? {} : { emoji: fingerprint.emoji, fingerprinted: fingerprint.names }),
+      ...(anyway.length === 0 ? {} : { writtenAnyway: anyway }),
     })
   }
 

@@ -34,7 +34,7 @@ export const formatList = [
   {
     id: 'url',
     label: 'URL',
-    rules: [{ kind: 'format', format: 'url', message: 'a URL starting with http:// or https://' }],
+    rules: [{ kind: 'format', format: 'url', message: 'a URL with a scheme and a host, such as https:// or wss://' }],
   },
   {
     id: 'hostname',

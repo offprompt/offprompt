@@ -158,6 +158,22 @@ const revealButton = (secret: RequestedSecret) =>
     secret.name,
   )}">${icon('eye', 'when-off')}${icon('eye-off', 'when-on')}</button>`
 
+/**
+ * Lets the human write a value its own checks refuse, since a provider may have changed a key's
+ * format since the registry learnt it. Checks of where the value goes are never lifted. The
+ * page script shows the box once a value breaks the field's own checks and nothing else, and
+ * unticks it when it hides it; a refused write without the script comes back with it showing.
+ */
+const anywayBox = (field: FieldArguments) => {
+  const rules = rulesOf(field)
+  if (rules.every(rule => rule.binding === true)) return ''
+  const broken = rules.filter(rule => field.broken.includes(rule.message))
+  const shown = broken.length > 0 && broken.every(rule => rule.binding !== true)
+  return `\n<label class="override anyway" data-anyway${shown ? '' : ' hidden'}><input type="checkbox" name="anyway${String(
+    field.index,
+  )}" value="yes"><span>Write it anyway. ${escapeHtml(askerSubject(field.request))} is told it did not pass these checks.</span></label>`
+}
+
 /** Said under a value no rule checks, so an empty list does not read as a page that forgot. */
 const UNCHECKED = 'Not in the registry, so there is nothing to check. Written as typed.'
 
@@ -232,7 +248,7 @@ const replaceNotice = ({ request, secret }: { request: SecretRequest; secret: Re
 }
 
 const below = (field: FieldArguments) =>
-  `${ruleLines(field)}${scriptLines(field)}${generateHint(field)}${uncheckedLine(field.value)}${offersLine(
+  `${ruleLines(field)}${scriptLines(field)}${anywayBox(field)}${generateHint(field)}${uncheckedLine(field.value)}${offersLine(
     field.value,
   )}${replaceNotice(field)}`
 

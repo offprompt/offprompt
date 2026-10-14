@@ -35,6 +35,8 @@ const test = base.extend<{
     answerElsewhere: () => Promise<void>
     /** The fingerprint the server took from the file, as the agent is given it. */
     emoji: () => string | undefined
+    /** The keys the human wrote although they broke their checks, as the agent is told. */
+    writtenAnyway: () => readonly string[] | undefined
   }
 }>({
   remote: async ({ browserName }, use) => {
@@ -67,6 +69,7 @@ const test = base.extend<{
       read: workspace.read,
       answerElsewhere,
       emoji: () => store.get(request.id)?.emoji,
+      writtenAnyway: () => store.get(request.id)?.writtenAnyway,
     })
 
     await server.close()
@@ -97,6 +100,38 @@ test('a remote page on a loopback address fills, seals and writes', async ({ pag
   expect(body).not.toContain(RESEND_KEY)
   expect(body).not.toContain(FROM_ADDRESS)
   expect(decodeURIComponent(body ?? '')).not.toContain(FROM_ADDRESS)
+})
+
+test('a value its checks refuse is written anyway once the box under it is ticked', async ({ page, remote }) => {
+  const wrong = 'sk_live_wrong_provider_key_here'
+  const anyway = page.locator('#value0').locator('xpath=ancestor::div[contains(@class, "field")]').locator('[data-anyway]')
+  const write = page.locator('[data-submit]')
+
+  await page.goto(remote.link)
+  await expect(anyway).toBeHidden()
+
+  await page.locator('#value0').fill(wrong)
+  await page.locator('#value1').fill(FROM_ADDRESS)
+  await expect(anyway).toBeVisible()
+  await expect(write).toBeDisabled()
+
+  // A value that passes takes the box away, unticked, and one that breaks the checks again brings it back.
+  await anyway.locator('input').check()
+  await page.locator('#value0').fill(RESEND_KEY)
+  await expect(anyway).toBeHidden()
+  await page.locator('#value0').fill(wrong)
+  await page.locator('#value1').focus()
+  await expect(anyway).toBeVisible()
+  await expect(anyway.locator('input')).not.toBeChecked()
+  await expect(write).toBeDisabled()
+
+  await anyway.locator('input').check()
+  await expect(write).toBeEnabled()
+  await write.click()
+
+  await expect(page.getByRole('heading', { name: 'Written.' })).toBeVisible()
+  expect(await remote.read('.env')).toBe(`RESEND_API_KEY=${wrong}\nRESEND_FROM_ADDRESS=${FROM_ADDRESS}\n`)
+  expect(remote.writtenAnyway()).toEqual(['RESEND_API_KEY'])
 })
 
 test('a pasted .env block fills the fields and still leaves sealed', async ({ page, remote, browserName }) => {

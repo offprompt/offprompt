@@ -59,7 +59,9 @@ end of your task or for your next call to offprompt.
 When the result carries a \`url\`, the human has to open it and nothing can happen until they do. Put the link in your
 reply to them, on its own line, where they will see it. A link mentioned only in your reasoning, or buried in a
 paragraph, is a request the human never receives. Until the values are written, put it again in whatever you write to
-them, your last message included: a host can fold a turn's earlier messages away and show only its last.
+them, your last message included: a host can fold a turn's earlier messages away and show only its last. If you have a
+tool that asks the user a question and waits for the answer, put the link in a question as well, since a question stays
+in front of them.
 
 State the intent once: \`reason\` is shown to the human as your claim about why the values are needed, so write it for
 them, not for yourself.`
@@ -67,8 +69,8 @@ them, not for yourself.`
 const AWAIT_DESCRIPTION = `Wait for a collect_secret request that came back still "awaiting" — which happens when
 offprompt runs in a cloud sandbox, or had no browser to open and handed you the page URL to pass on. Long-polls for up to 60 seconds and returns
 "written", "awaiting" or "expired". Call it again while the status is "awaiting", with no other work in between. When
-you were given a link to pass on, an "awaiting" result carries it again: keep it in whatever you write to the user
-until the values are written.`
+you were given a link to pass on, an "awaiting" result carries it again: keep it in whatever you write to the user, or
+ask them, until the values are written.`
 
 const CANCEL_DESCRIPTION = `Close a collect_secret request that is no longer needed. Anything already typed on the
 page is discarded.`
@@ -175,6 +177,12 @@ const statusOutput = {
     .array(z.string())
     .optional()
     .describe('Every key the file holds after the write, names only, so the file never needs opening.'),
+  written_anyway: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Keys the user wrote although their values did not pass offprompt's checks: the provider may have changed the format, or the value may be wrong.",
+    ),
   sink: sinkOutput,
   note: z.string(),
   url: z
@@ -254,14 +262,23 @@ const writtenNote = ({ request, fileKeys }: { request: SecretRequest; fileKeys: 
       ? []
       : [`${listed(kept)} ${kept.length > 1 ? 'were' : 'was'} already set and left as ${kept.length > 1 ? 'they were' : 'it was'}.`]
   const holds = fileKeys.length === 0 ? [] : [`The file now holds ${listed(fileKeys)}.`]
+  const anyway = request.writtenAnyway ?? []
+  const anywayLine =
+    anyway.length === 0
+      ? []
+      : [
+          `The user wrote ${listed(anyway)} anyway, although ${anyway.length > 1 ? 'they' : 'it'} did not pass offprompt's checks: the provider may have changed the format, or the value may be wrong. If the service refuses ${anyway.length > 1 ? 'one' : 'it'}, tell the user and call collect_secret again for ${anyway.length > 1 ? 'that key' : 'it'}.`,
+        ]
+  const checked = anyway.length === 0 ? 'the write was atomic and every value passed its checks' : 'the write was atomic'
   return [
     ...fingerprint,
     request.sink.kind === 'file'
       ? `${listed(names)} is the whole of ${path}. Have the project read it from that path.`
       : `${listed(names)} ${many ? 'are' : 'is'} in ${path}. Read ${many ? 'them' : 'it'} from the environment by name.`,
     ...keptLine,
+    ...anywayLine,
     ...holds,
-    `Do not open, cat, grep or print ${path}: reading it puts the values into the transcript. Nothing needs checking; the write was atomic and every value passed its checks.`,
+    `Do not open, cat, grep or print ${path}: reading it puts the values into the transcript. Nothing needs checking; ${checked}.`,
   ].join(' ')
 }
 
@@ -277,7 +294,7 @@ const closedLinkNote = (request: SecretRequest) => {
  * messages were folded away by the time the human looked.
  */
 const awaitingNote = (link: string) =>
-  `The user has not typed the values yet. Call await_secret again with this request_id, with no other work in between. Whenever you write to the user while this request is open, your last message included, put this link in it on its own line: ${link}`
+  `The user has not typed the values yet. Call await_secret again with this request_id, with no other work in between. Whenever you write to the user or ask them a question while this request is open, your last message included, put this link in it on its own line: ${link}`
 
 const statusNote = ({ request, fileKeys }: { request: SecretRequest; fileKeys: readonly string[] }) => {
   if (request.status === 'written') return writtenNote({ request, fileKeys })
@@ -293,14 +310,16 @@ const statusNote = ({ request, fileKeys }: { request: SecretRequest; fileKeys: r
 
 /** The human must see the link: a link only in the agent's reasoning is a request that never arrives. */
 const SHOW_LINK =
-  'Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do:'
+  'Show the user this link in your reply, on its own line, with a short line telling them to open it and type the values there. Nothing happens until they do:'
 
 /**
- * How the agent waits on a link it passed on. Work done between polls pushes the link out of
- * view, and the page lives in this process, which a host may stop between turns.
+ * How the agent waits on a link it passed on. Conductor folds a turn's earlier messages away,
+ * so a link shown partway through a turn is gone by the time the human looks, and a host's own
+ * question stays in front of them. Work done between polls pushes the link out of view, and
+ * the page lives in this process, which a host may stop between turns.
  */
 const WAIT_IN_VIEW =
-  "Then call await_secret, and again while it says awaiting, with no other work in between, so the link stays the last thing the user sees: a host can fold a turn's earlier messages away. Do not end your turn to wait: the page lasts only as long as this offprompt server, which the host may stop once your turn ends."
+  "If you have a tool that asks the user a question and waits for the answer, ask there too, with the link in the question: a host can fold a turn's earlier messages away, and a question stays in front of the user until they answer. Then call await_secret, and again while it says awaiting, with no other work in between, so the link stays the last thing the user sees. Do not end your turn to wait: the page lasts only as long as this offprompt server, which the host may stop once your turn ends."
 
 const remoteNote = (presentation: Extract<Presentation, { channel: 'remote' }>) => {
   const { url, via } = presentation
@@ -309,13 +328,13 @@ const remoteNote = (presentation: Extract<Presentation, { channel: 'remote' }>) 
     return `offprompt could not open a tunnel from this sandbox. ${SHOW_LINK} ${url} It opens only if their tool forwards port ${port} to their machine; if it forwards to another port, they change the port in the link. If nothing forwards it, this sandbox cannot expose a page: they can turn on port forwarding or allow outbound connections to Cloudflare, then ask you to try again. ${WAIT_IN_VIEW}`
   }
   const exposed = 'offprompt is running in a cloud sandbox and exposed its page through a tunnel.'
-  return `${exposed} ${SHOW_LINK} ${url} Say nothing else about it. ${WAIT_IN_VIEW}`
+  return `${exposed} ${SHOW_LINK} ${url} ${WAIT_IN_VIEW}`
 }
 
 const noteFor = (presentation: Presentation) => {
   if (presentation.channel === 'remote') return remoteNote(presentation)
   if (presentation.channel === 'result') {
-    return `offprompt could not open the page itself: ${presentation.reason}. ${SHOW_LINK} ${presentation.url} Say nothing else about it. ${WAIT_IN_VIEW}`
+    return `offprompt could not open the page itself: ${presentation.reason}. ${SHOW_LINK} ${presentation.url} ${WAIT_IN_VIEW}`
   }
   return "An offprompt page is open in the user's browser. Do not paste or repeat any URL for it."
 }
@@ -358,6 +377,9 @@ export const registerTools = ({
 
   const emojiReport = (request: SecretRequest) => (request.emoji === undefined ? {} : { emoji: request.emoji })
 
+  const anywayReport = (request: SecretRequest) =>
+    request.writtenAnyway === undefined ? {} : { written_anyway: request.writtenAnyway }
+
   /**
    * The line to say, first in the result: Claude Code hands the model, and draws under the call,
    * the structured result alone, so what comes first there is what is read and seen first.
@@ -376,6 +398,7 @@ export const registerTools = ({
         ...keptReport(request),
         ...emojiReport(request),
         ...fileKeysReport(fileKeys),
+        ...anywayReport(request),
         sink: sinkReport(request),
         note: statusNote({ request, fileKeys }),
         ...(request.status === 'awaiting' && request.link !== undefined ? { url: request.link } : {}),
@@ -399,6 +422,7 @@ export const registerTools = ({
         ...keptReport(request),
         ...emojiReport(request),
         ...fileKeysReport(fileKeys),
+        ...anywayReport(request),
         sink: sinkReport(request),
         note: relayed === undefined ? statusNote({ request, fileKeys }) : noteFor(relayed),
         ...(relayed === undefined ? {} : { url: relayed.url }),

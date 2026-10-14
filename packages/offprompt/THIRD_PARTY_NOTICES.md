@@ -210,7 +210,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 `mcp.mjs` carries the code of these npm packages inside it.
 Each is under the licence named with it, whose text follows.
 
-### @modelcontextprotocol/sdk 1.30.0
+### @modelcontextprotocol/sdk 1.32.1
 
 Licence: MIT
 

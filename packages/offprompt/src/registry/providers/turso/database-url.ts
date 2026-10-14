@@ -12,7 +12,7 @@ export const databaseUrl: Credential = {
       kind: 'either',
       options: [
         [{ kind: 'prefix', anyOf: ['libsql://', 'wss://', 'ws://'], message: 'starts with libsql://' }],
-        [{ kind: 'format', format: 'url', message: 'an https:// URL' }],
+        [{ kind: 'format', format: 'http_url', message: 'an https:// URL' }],
       ],
       message: 'a libsql:// or https:// URL',
     },

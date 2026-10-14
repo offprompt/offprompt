@@ -50,7 +50,8 @@ const gotPrefix = ({ value, prefixes }: { value: string; prefixes: readonly stri
 }
 
 /** A URL-shaped check says which scheme it got; the others have nothing short and safe to say. */
-const namesItsScheme = (rule: FieldRule) => rule.kind === 'format' && (rule.format === 'postgres' || rule.format === 'url')
+const namesItsScheme = (rule: FieldRule) =>
+  rule.kind === 'format' && (rule.format === 'postgres' || rule.format === 'url' || rule.format === 'http_url')
 
 /**
  * The state of one rule's line for a value, and what it adds after its message: how long

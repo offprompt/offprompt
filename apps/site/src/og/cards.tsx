@@ -179,7 +179,7 @@ const MockPage = () => (
           />
         )}
         {vercel.logo === undefined ? null : (
-          <MockField mark={<LogoMark logo={vercel.logo} size={12} color="#111111" />} name="VERCEL_TOKEN" placeholder="24 characters" />
+          <MockField mark={<LogoMark logo={vercel.logo} size={12} color="#111111" />} name="VERCEL_TOKEN" placeholder="vcp_…" />
         )}
       </div>
       <div

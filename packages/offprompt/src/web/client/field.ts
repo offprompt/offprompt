@@ -1,6 +1,6 @@
 import { asWritten } from '../../core/as-written.js'
 import { ENCODINGS, encodeBytes, type Encoding } from '../../core/generated.js'
-import { checkField, isFieldRule, type FieldRule } from '../../core/rules.js'
+import { checkField, heldTo, isFieldRule, writableAnyway, type FieldRule } from '../../core/rules.js'
 import { hintFor, lineFor, spaceNote, type KnownKey, type Line } from './lines.js'
 import { setText } from './render.js'
 
@@ -53,7 +53,28 @@ const knownKeys = (() => {
 
 const knownPrefixes = knownKeys.flatMap(key => key.prefixes)
 
-export const isValid = (field: HTMLTextAreaElement) => field.value !== '' && checkField(rulesOf(field), field.value).every(Boolean)
+/** The box under a field that writes its value although it breaks the field's own checks. */
+const anywayBoxOf = (field: HTMLTextAreaElement) => field.closest('.field')?.querySelector<HTMLLabelElement>('[data-anyway]')
+
+/** Whether the human chose to write this field's value although it breaks its own checks. */
+const writesAnyway = (field: HTMLTextAreaElement) => {
+  const box = anywayBoxOf(field)
+  return box !== null && box !== undefined && !box.hidden && box.querySelector('input')?.checked === true
+}
+
+/** The fields to write anyway, by their place in the request, as the server counts them. */
+export const anywayPlaces = () =>
+  valueFields()
+    .filter(writesAnyway)
+    .map(field => Number(field.name.replace(/^value/, '')))
+
+const passesEveryRule = (field: HTMLTextAreaElement) =>
+  field.value !== '' && checkField(rulesOf(field), field.value).every(Boolean)
+
+/** Whether the field can be written: it passes its rules, or the human chose to write it anyway. */
+export const isValid = (field: HTMLTextAreaElement) =>
+  field.value !== '' &&
+  checkField(heldTo({ rules: rulesOf(field), anyway: writesAnyway(field) }), field.value).every(Boolean)
 
 /** The file each field was last filled from, until the human changes it by hand. */
 const filledFrom = new WeakMap<HTMLTextAreaElement, string>()
@@ -108,9 +129,23 @@ const show = ({ element, text }: { element: HTMLElement | null; text: string }) 
 }
 
 /**
+ * The box that writes a value anyway shows once a value breaks only the field's own checks,
+ * and not while one is still being typed. Hidden, it is unticked, so a value that breaks them
+ * again is asked about again.
+ */
+const offerAnyway = ({ field, failing }: { field: HTMLTextAreaElement; failing: boolean }) => {
+  const box = anywayBoxOf(field)
+  if (box === null || box === undefined) return
+  box.hidden = !(failing && writableAnyway(rulesOf(field), field.value))
+  const tick = box.querySelector('input')
+  if (box.hidden && tick !== null) tick.checked = false
+}
+
+/**
  * Redraws one field from its value: each rule's line, the summary once every rule passes,
  * the key a wrong value looks like, and spaces at either end. While the field has focus a
- * value that is only short, or only part of the way into its prefix, is not yet wrong.
+ * value that is only short, or only part of the way into its prefix, is not yet wrong. A
+ * value written anyway keeps its broken lines, so the human sees what it breaks.
  * Returns whether the field can be written.
  */
 export const evaluate = (field: HTMLTextAreaElement) => {
@@ -121,21 +156,24 @@ export const evaluate = (field: HTMLTextAreaElement) => {
     if (line.hasAttribute('data-required')) line.remove()
     else drawLine({ line, result: lines[Number(line.dataset.rule)] })
   })
-  const valid = isValid(field)
   const failing = lines.some(line => line.state === 'fail')
-  field.classList.toggle('valid', valid)
-  field.classList.toggle('invalid', failing)
-  field.toggleAttribute('aria-invalid', failing)
+  offerAnyway({ field, failing })
+  const valid = isValid(field)
+  const passed = passesEveryRule(field)
+  field.classList.toggle('valid', passed)
+  field.classList.toggle('invalid', failing && !valid)
+  field.classList.toggle('anyway', failing && valid)
+  field.toggleAttribute('aria-invalid', failing && !valid)
 
   const box = field.closest('.field')
   if (box === null) return valid
-  if (drawSummary({ box, field, valid }) && list !== null) list.hidden = valid
+  if (drawSummary({ box, field, valid: passed }) && list !== null) list.hidden = passed
   // Said as soon as a value that is not yet right starts like another key, rather than only
   // once it fails on blur, so the page does not shift under a click that caused the blur.
   const own = knownKeys.find(key => key.ref === field.dataset.source)
   show({
     element: box.querySelector<HTMLElement>('[data-hint]'),
-    text: !valid && field.value !== '' ? hintFor({ value: field.value, own, known: knownKeys }) : '',
+    text: !passed && field.value !== '' ? hintFor({ value: field.value, own, known: knownKeys }) : '',
   })
   const spaces = isSingleLine(field) ? spaceNote(field.value) : ''
   show({ element: box.querySelector<HTMLElement>('[data-space]'), text: spaces })

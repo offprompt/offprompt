@@ -7,5 +7,5 @@ export const redisRestUrl: Credential = {
   url: 'https://console.upstash.com/redis',
   placeholder: 'https://…',
   secret: false,
-  rules: [{ kind: 'format', format: 'url', message: 'a URL starting with http:// or https://' }],
+  rules: [{ kind: 'format', format: 'http_url', message: 'a URL starting with http:// or https://' }],
 }

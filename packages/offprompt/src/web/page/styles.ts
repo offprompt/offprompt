@@ -191,7 +191,8 @@ const RULES = `
     textarea.secret { color: transparent; caret-color: var(--ink); }
     form:has(#reveal-all:checked) textarea.secret, textarea.secret.shown { color: inherit; }
   }
-  .input:has(textarea.spaced):not(:has(textarea.invalid)) { box-shadow: inset 0 0 0 1px var(--warn); }
+  .input:has(textarea.spaced):not(:has(textarea.invalid)),
+  .input:has(textarea.anyway) { box-shadow: inset 0 0 0 1px var(--warn); }
   .reveal { display: flex; padding: 4px; margin: 0 -4px; border: 0; border-radius: 6px; background: none;
             color: var(--ink-3); cursor: pointer; }
   .reveal:hover { color: var(--ink-2); }
@@ -256,6 +257,8 @@ const RULES = `
   .banner.warn > .icon { color: var(--warn); }
   .override { display: flex; align-items: flex-start; gap: 8px; margin-top: 4px; font-weight: 500; cursor: pointer; }
   .override input { margin: 3px 0 0; accent-color: var(--bad); }
+  .override.anyway { margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+  .override.anyway input { margin-top: 2px; accent-color: var(--warn); }
 
   .actions { display: flex; flex-direction: column; gap: 12px; }
   .progress { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 4px 0;

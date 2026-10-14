@@ -6,7 +6,7 @@ import { asWritten } from '../core/as-written.js'
 import { generatedRules } from '../core/generated.js'
 import { fingerprintOf } from '../core/fingerprint.js'
 import { isRecord } from '../core/guards.js'
-import { fieldFailures, fieldRules } from '../core/rules.js'
+import { fieldFailures, fieldRules, heldTo, writableAnyway } from '../core/rules.js'
 import { open } from '../core/sealing.js'
 import { fail } from '../core/result.js'
 import { refusalFor, sinkValues, sinkWritable, writeToSink } from '../core/sinks.js'
@@ -153,6 +153,8 @@ const normalise = (value: string) => value.replace(/\r\n/g, '\n')
 type Submission = {
   readonly nonce: string
   readonly allowTracked: boolean
+  /** The fields, by their place in the request, the human chose to write although they broke their checks. */
+  readonly anyway: ReadonlySet<number>
   readonly typed: ReadonlyMap<string, string>
   /** What a remote page posts in place of the values. */
   readonly sealed?: string
@@ -173,6 +175,19 @@ const fingerprintKeyOf = (submission: Submission) =>
     ? submission.fingerprintKey
     : randomBytes(32).toString('base64url')
 
+const ANYWAY_FIELD = /^anyway(\d+)$/
+
+/** The boxes a plain POST ticked to write a field anyway, by the field's place in the request. */
+const anywayIn = (fields: ReadonlyMap<string, string>) =>
+  new Set(
+    [...fields].flatMap(([name, value]) => {
+      const place = ANYWAY_FIELD.exec(name)?.[1]
+      return place === undefined || value !== 'yes' ? [] : [Number(place)]
+    }),
+  )
+
+const isPlace = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 0
+
 const fieldsOf = (form: URLSearchParams) =>
   new Map([...form.entries()].map(([name, value]) => [name, normalise(value)]))
 
@@ -190,10 +205,12 @@ const parseBody = ({ body, contentType }: { body: Buffer; contentType: string })
     if (nonce === null) return undefined
     const sealed = form.get('sealed')
     const fingerprintKey = form.get('fingerprint')
+    const typed = fieldsOf(form)
     return {
       nonce,
       allowTracked: form.get('allowTracked') === 'yes',
-      typed: fieldsOf(form),
+      anyway: anywayIn(typed),
+      typed,
       ...(sealed === null ? {} : { sealed }),
       ...(fingerprintKey === null ? {} : { fingerprintKey }),
     }
@@ -204,10 +221,12 @@ const parseBody = ({ body, contentType }: { body: Buffer; contentType: string })
   const parts = parseMultipart({ body, boundary })
   const nonce = fieldValue(parts, 'nonce')
   if (nonce === undefined) return undefined
+  const typed = multipartFieldsOf(parts)
   return {
     nonce,
     allowTracked: fieldValue(parts, 'allowTracked') === 'yes',
-    typed: multipartFieldsOf(parts),
+    anyway: anywayIn(typed),
+    typed,
   }
 }
 
@@ -216,6 +235,7 @@ const VALUE_FIELD = /^value\d+(-file)?$/
 /** Whether the body carries anything in the clear that a sealed one keeps inside the seal. */
 const carriesPlainFields = (submission: Submission) =>
   submission.allowTracked ||
+  submission.anyway.size > 0 ||
   submission.fingerprintKey !== undefined ||
   [...submission.typed.keys()].some(name => VALUE_FIELD.test(name))
 
@@ -228,10 +248,11 @@ const submissionFrom = ({ plaintext, nonce }: { plaintext: string; nonce: string
   const typed = Object.entries(parsed.values).flatMap(([name, value]): [string, string][] =>
     typeof value === 'string' ? [[name, normalise(value)]] : [],
   )
-  const { fingerprint } = parsed
+  const { fingerprint, anyway } = parsed
   return {
     nonce,
     allowTracked: parsed.allowTracked,
+    anyway: new Set(Array.isArray(anyway) ? anyway.filter(isPlace) : []),
     typed: new Map(typed),
     ...(typeof fingerprint === 'string' ? { fingerprintKey: fingerprint } : {}),
   }
@@ -277,20 +298,48 @@ const collect = ({ request, submission }: { request: SecretRequest; submission: 
     return [{ index, secret, rules, optional: false, value: asWritten({ name: secret.name, value: sent, multiline }) }]
   })
 
+/**
+ * The rules a field is held to: all of them, or, where the human ticked to write it anyway,
+ * only those its destination needs.
+ */
+const rulesFor = ({ request, entry, anyway }: { request: SecretRequest; entry: Collected; anyway: ReadonlySet<number> }) =>
+  heldTo({ rules: fieldRules({ rules: entry.rules, sinkKind: request.sink.kind }), anyway: anyway.has(entry.index) })
+
 const problemsWith = ({
   request,
   collected,
+  anyway,
 }: {
   request: SecretRequest
   collected: readonly Collected[]
+  anyway: ReadonlySet<number>
 }): FieldProblems =>
   new Map(
     collected.flatMap((entry): [number, readonly string[]][] => {
       if (entry.value === '') return entry.optional ? [] : [[entry.index, [REQUIRED]]]
-      const broken = fieldFailures(fieldRules({ rules: entry.rules, sinkKind: request.sink.kind }), entry.value)
+      const broken = fieldFailures(rulesFor({ request, entry, anyway }), entry.value)
       return broken.length === 0 ? [] : [[entry.index, broken]]
     }),
   )
+
+/** The keys written anyway: ticked, and with a value that does break the registry's checks. */
+const anywayNames = ({
+  request,
+  collected,
+  anyway,
+}: {
+  request: SecretRequest
+  collected: readonly Collected[]
+  anyway: ReadonlySet<number>
+}) =>
+  collected
+    .filter(
+      entry =>
+        anyway.has(entry.index) &&
+        entry.value !== '' &&
+        writableAnyway(fieldRules({ rules: entry.rules, sinkKind: request.sink.kind }), entry.value),
+    )
+    .map(entry => entry.secret.name)
 
 const OUT_OF_DATE = 'This page is out of date.'
 
@@ -345,7 +394,7 @@ const handlePost = async ({
   }
 
   const collected = collect({ request, submission })
-  const problems = problemsWith({ request, collected })
+  const problems = problemsWith({ request, collected, anyway: submission.anyway })
   // A value that does not validate leaves the request open for as long as it lives: the
   // human is trusted, so there is nothing to ration.
   if (problems.size > 0) {
@@ -386,7 +435,10 @@ const handlePost = async ({
   const emoji = await fingerprintOfFile({ request, key: fingerprintKeyOf(submission), names: fromPage }).catch(
     () => undefined,
   )
-  const closed = store.markWritten(request.id, emoji === undefined ? undefined : { emoji, names: fromPage })
+  const closed = store.markWritten(request.id, {
+    fingerprint: emoji === undefined ? undefined : { emoji, names: fromPage },
+    anyway: anywayNames({ request, collected, anyway: submission.anyway }),
+  })
   if (closed === undefined) {
     sendClosed({
       response,
