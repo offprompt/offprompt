@@ -23,7 +23,9 @@ When a task needs one, call collect_secret with every key you need at once. It w
 returns once the values are written, with the key names and the file, never the values.
 
 When your environment tells you that you run in a cloud sandbox or a remote VM, set sandbox: true. The call returns a
-link: show it to the user on its own line, since nothing happens until they open it. Then wait with await_secret,
+link: show it to the user on its own line, with a short line saying what it is for, since nothing happens until they
+open it. If you have a tool that asks the user a question and waits for the answer, put the link in a question too: a
+host can fold a turn's earlier messages away, and a question stays in front of the user. Then wait with await_secret,
 doing nothing else until the values are written, and put the link in anything you write to the user meanwhile, your
 last message included.
 

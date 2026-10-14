@@ -32,7 +32,7 @@ type Answer = {
 
 /** How the agent is asked to wait on a link it passed on. */
 const WAIT_IN_VIEW =
-  "Then call await_secret, and again while it says awaiting, with no other work in between, so the link stays the last thing the user sees: a host can fold a turn's earlier messages away. Do not end your turn to wait: the page lasts only as long as this offprompt server, which the host may stop once your turn ends."
+  "If you have a tool that asks the user a question and waits for the answer, ask there too, with the link in the question: a host can fold a turn's earlier messages away, and a question stays in front of the user until they answer. Then call await_secret, and again while it says awaiting, with no other work in between, so the link stays the last thing the user sees. Do not end your turn to wait: the page lasts only as long as this offprompt server, which the host may stop once your turn ends."
 
 const setupTest = async ({
   where = 'remote',
@@ -135,7 +135,7 @@ describe('collect_secret from a sandbox', () => {
     expect(answer.url).toMatch(new RegExp(`^${TUNNEL}/r/[0-9a-f]{32}#k=[\\w-]{87}$`))
     expect(answer.expires_in).toBe(1800)
     expect(answer.note).toBe(
-      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} Say nothing else about it. ${WAIT_IN_VIEW}`,
+      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, with a short line telling them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} ${WAIT_IN_VIEW}`,
     )
     expect(openUrl).not.toHaveBeenCalled()
   })
@@ -178,7 +178,7 @@ describe('collect_secret from a sandbox', () => {
     expect(waiting.status).toBe('awaiting')
     expect(waiting.url).toBe(link)
     expect(waiting.note).toBe(
-      `The user has not typed the values yet. Call await_secret again with this request_id, with no other work in between. Whenever you write to the user while this request is open, your last message included, put this link in it on its own line: ${link}`,
+      `The user has not typed the values yet. Call await_secret again with this request_id, with no other work in between. Whenever you write to the user or ask them a question while this request is open, your last message included, put this link in it on its own line: ${link}`,
     )
 
     await writeThrough({ link, value: RESEND_KEY })
@@ -238,7 +238,7 @@ describe('collect_secret from a sandbox', () => {
     expect(answer.status).toBe('awaiting')
     expect(answer.url).toMatch(new RegExp(`^${loopback.origin}/r/[0-9a-f]{32}#k=[\\w-]{87}$`))
     expect(answer.note).toBe(
-      `offprompt could not open a tunnel from this sandbox. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} It opens only if their tool forwards port ${String(loopback.port)} to their machine; if it forwards to another port, they change the port in the link. If nothing forwards it, this sandbox cannot expose a page: they can turn on port forwarding or allow outbound connections to Cloudflare, then ask you to try again. ${WAIT_IN_VIEW}`,
+      `offprompt could not open a tunnel from this sandbox. Show the user this link in your reply, on its own line, with a short line telling them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} It opens only if their tool forwards port ${String(loopback.port)} to their machine; if it forwards to another port, they change the port in the link. If nothing forwards it, this sandbox cannot expose a page: they can turn on port forwarding or allow outbound connections to Cloudflare, then ask you to try again. ${WAIT_IN_VIEW}`,
     )
   })
 
@@ -250,7 +250,7 @@ describe('collect_secret from a sandbox', () => {
     expect(answer.status).toBe('awaiting')
     expect(answer.url).toMatch(/^https:\/\/[\w.-]+\/r\/[0-9a-f]{32}#k=[\w-]{87}$/)
     expect(answer.note).toBe(
-      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, and tell them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} Say nothing else about it. ${WAIT_IN_VIEW}`,
+      `offprompt is running in a cloud sandbox and exposed its page through a tunnel. Show the user this link in your reply, on its own line, with a short line telling them to open it and type the values there. Nothing happens until they do: ${answer.url ?? ''} ${WAIT_IN_VIEW}`,
     )
   })
 

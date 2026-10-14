@@ -152,6 +152,15 @@ turn to wait either: the page lives in the server's process, and a host may stop
 between turns. Conductor kept the agent's process through a nine-minute pause between
 turns, and had replaced it after a longer one.
 
+That was not enough in Conductor. On 0.1.3 an agent showed the link twice, each time in a
+message followed by `await_secret` calls, never ended its turn as told, and both messages
+were folded away under the calls that came after them. Every wait is itself something the
+human sees after the link. So the notes also ask an agent with a tool that puts a question
+to the user and waits for the answer, as Conductor, Claude Code and Claude Code on the web
+give one, to put the link in a question as well: a question stays in front of the human
+until they answer it, and the turn stays open meanwhile. The link comes with a short line
+saying what it is for, rather than alone, which is easy to skim past.
+
 Claude Code's MCP tool timeout defaults to about 28 hours and its stdio idle window to
 30 minutes, so the 300 second TTL bounds the wait long before either does. The manifest
 declares the per-server timeout anyway, so a lower `MCP_TOOL_TIMEOUT` cannot cut it short.

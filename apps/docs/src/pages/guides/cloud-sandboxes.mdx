@@ -24,7 +24,9 @@ details.
 The link is good for 30 minutes and for one write. The agent shows it to you on its own line,
 then waits with [`await_secret`](/reference/await-secret), and puts the link in whatever it writes
 to you until you have written, its last message included, so a host that folds a turn's earlier
-messages away still shows it.
+messages away still shows it. Where the host gives the agent a way to ask you a question, as
+Conductor and Claude Code do, the link comes in a question too, which stays in front of you until
+you answer it.
 
 :::warning
 The link is a bearer link: whoever holds it within the 30 minutes can submit first. Open it
