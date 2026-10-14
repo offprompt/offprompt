@@ -9,7 +9,7 @@ export const dsn: Credential = {
   placeholder: 'https://…',
   secret: false,
   rules: [
-    { kind: 'format', format: 'url', message: 'a URL starting with http:// or https://' },
+    { kind: 'format', format: 'http_url', message: 'a URL starting with http:// or https://' },
     { kind: 'charset', pattern: '^https?://[^@\\s/]+@[^\\s]+$', message: 'the key, @, then the host, as Sentry shows it' },
   ],
   example: 'https://examplePublicKey@o0.ingest.sentry.io/0',

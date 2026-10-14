@@ -29,6 +29,13 @@ const parses = (text: string) => {
   }
 }
 
+/**
+ * A scheme, `://` and a host, whatever the scheme: wss, redis and amqp alike. Read by pattern
+ * rather than by `URL`, which refuses the several hosts a MongoDB or Redis cluster string
+ * lists. `wss://` alone is only the start of one.
+ */
+const ANY_URL = /^[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s/?#]+[^\s]*$/
+
 const isHttpUrl = (value: string) => {
   try {
     const url = new URL(value)
@@ -65,7 +72,8 @@ const isJwt = (value: string) => {
 
 const CHECKED: Readonly<Record<CheckName, (value: string) => boolean>> = {
   email: value => EMAIL.test(value),
-  url: isHttpUrl,
+  url: value => ANY_URL.test(value),
+  http_url: isHttpUrl,
   hostname: value => HOSTNAME.test(value),
   uuid: value => UUID.test(value),
   jwt: isJwt,

@@ -49,13 +49,23 @@ describe('formats', () => {
     expect(broken('base64', 'not base64 !!')).toEqual(['base64, padded to a multiple of 4 characters'])
   })
 
-  it('accepts an email address, an http URL and a UUID', () => {
+  it('accepts an email address, a URL of any scheme and a UUID', () => {
     expect(broken('email', 'ada@example.com')).toEqual([])
     expect(broken('email', 'ada@')).toEqual(['an email address'])
     expect(broken('url', 'https://example.com/hook')).toEqual([])
-    expect(broken('url', 'ftp://example.com')).toEqual(['a URL starting with http:// or https://'])
+    expect(broken('url', 'wss://realtime.example.com/socket?v=2')).toEqual([])
+    expect(broken('url', 'redis://default:pass@cache.example.com:6379/0')).toEqual([])
+    expect(broken('url', 'mongodb://u:p@h1.example.com:27017,h2.example.com:27017/app')).toEqual([])
     expect(broken('uuid', '4b1c0cf0-7a3f-4c2a-9a4b-1d7d9f0a2e11')).toEqual([])
     expect(broken('uuid', 'not-a-uuid')).toHaveLength(1)
+  })
+
+  it('refuses a URL with no scheme, a scheme with no host, and one with a space', () => {
+    const line = ['a URL with a scheme and a host, such as https:// or wss://']
+    expect(broken('url', 'example.com/hook')).toEqual(line)
+    expect(broken('url', 'localhost:3000')).toEqual(line)
+    expect(broken('url', 'wss://')).toEqual(line)
+    expect(broken('url', 'https://example.com/a b')).toEqual(line)
   })
 
   it('accepts a JWT, a PEM block and a JSON document', () => {
