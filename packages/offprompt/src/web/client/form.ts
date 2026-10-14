@@ -4,6 +4,7 @@ import { encodeBytes } from '../../core/generated.js'
 import { distribute } from './distribute.js'
 import { watchConnection, type Connection } from './connection.js'
 import {
+  anywayPlaces,
   evaluate,
   fieldOf,
   filledFileOf,
@@ -246,6 +247,12 @@ const onChange = (event: Event) => {
     refresh()
     return
   }
+  if (target.closest('[data-anyway]') !== null) {
+    const field = document.getElementById(target.name.replace(/^anyway/, 'value'))
+    if (field instanceof HTMLTextAreaElement) evaluate(field)
+    refresh()
+    return
+  }
   // The one switch decides for every field again, so no field keeps its own choice. It sets
   // each field too, for a browser whose stylesheet cannot follow the switch on its own.
   if (target.id === 'reveal-all') {
@@ -367,7 +374,10 @@ const nonceOf = (sent: HTMLFormElement) => sent.querySelector<HTMLInputElement>(
  */
 const fingerprintKey = () => encodeBytes(crypto.getRandomValues(new Uint8Array(32)), 'base64url')
 
-/** The nonce, each value, the override and the fingerprint key. A file picked for a field has already been read into it. */
+/**
+ * The nonce, each value, the overrides and the fingerprint key. A file picked for a field has
+ * already been read into it.
+ */
 const plainBodyFor = ({ sent, key }: { sent: HTMLFormElement; key: string }) =>
   new URLSearchParams([
     ['nonce', nonceOf(sent)],
@@ -375,6 +385,7 @@ const plainBodyFor = ({ sent, key }: { sent: HTMLFormElement; key: string }) =>
     ...(sent.querySelector<HTMLInputElement>('input[name=allowTracked]')?.checked === true
       ? [['allowTracked', 'yes'] as [string, string]]
       : []),
+    ...anywayPlaces().map((place): [string, string] => [`anyway${String(place)}`, 'yes']),
     ['fingerprint', key],
   ])
 
@@ -382,7 +393,7 @@ const plainBodyFor = ({ sent, key }: { sent: HTMLFormElement; key: string }) =>
 const sealedBodyFor = async ({ sent, sealer, key }: { sent: HTMLFormElement; sealer: Sealer; key: string }) => {
   const values = new Map(valueFields().map(field => [field.name, field.value]))
   const allowTracked = sent.querySelector<HTMLInputElement>('input[name=allowTracked]')?.checked === true
-  const sealed = await sealer(plaintextFor({ values, allowTracked, fingerprint: key }))
+  const sealed = await sealer(plaintextFor({ values, allowTracked, anyway: anywayPlaces(), fingerprint: key }))
   return new URLSearchParams([
     ['nonce', nonceOf(sent)],
     ['sealed', sealed],
@@ -425,9 +436,15 @@ const showProblems = (next: Document) => {
       return
     }
     field.classList.add('invalid')
-    field.classList.remove('valid')
+    field.classList.remove('valid', 'anyway')
     const summary = field.closest('.field')?.querySelector<HTMLElement>('[data-summary]')
     if (summary !== null && summary !== undefined) summary.hidden = true
+    // Offered as the server offers it, for a value that breaks only rules of its own.
+    const offered = next.getElementById(field.id)?.closest('.field')?.querySelector('[data-anyway]')
+    const box = field.closest('.field')?.querySelector<HTMLElement>('[data-anyway]')
+    if (offered !== null && offered !== undefined && box !== null && box !== undefined) {
+      box.hidden = offered.hasAttribute('hidden')
+    }
   })
   document.querySelector('.error')?.remove()
   // The server says afresh whether the file can be written.

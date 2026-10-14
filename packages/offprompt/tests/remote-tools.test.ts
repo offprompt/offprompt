@@ -27,6 +27,7 @@ type Answer = {
   url?: string
   file_keys?: string[]
   emoji?: string
+  written_anyway?: string[]
 }
 
 /** How the agent is asked to wait on a link it passed on. */
@@ -97,14 +98,14 @@ const setupTest = async ({
   }
 
   /** What the human does with the link: open it, type, and press Write it. */
-  const writeThrough = async ({ link, value }: { link: string; value: string }) => {
+  const writeThrough = async ({ link, value, anyway = [] }: { link: string; value: string; anyway?: readonly number[] }) => {
     const { pathname, hash } = new URL(link)
     const token = pathname.split('/').at(-1) ?? ''
     const request = store.byToken(token)
     if (request === undefined) throw new Error('the link names no request')
     const sealer = await sealerFor({ hash, token, nonce: request.nonce })
     if (typeof sealer === 'string') throw new Error(sealer)
-    const sealed = await sealer(plaintextFor({ values: new Map([['value0', value]]), allowTracked: false }))
+    const sealed = await sealer(plaintextFor({ values: new Map([['value0', value]]), allowTracked: false, anyway }))
     return fetch(loopback.urlFor(request), {
       method: 'POST',
       body: new URLSearchParams({ nonce: request.nonce, sealed }),
@@ -149,6 +150,22 @@ describe('collect_secret from a sandbox', () => {
     expect(response.status).toBe(200)
     expect(settled.status).toBe('written')
     expect(await read('.env')).toBe(`RESEND_API_KEY=${RESEND_KEY}\n`)
+  })
+
+  it('tells the agent which keys the user wrote anyway, and no longer that every value passed', async () => {
+    const { collect, writeThrough, awaitSecret, read } = await setupTest()
+    const answer = await collect()
+
+    const response = await writeThrough({ link: answer.url ?? '', value: 'sk_live_wrong_provider_key_here', anyway: [0] })
+    const settled = await awaitSecret(answer.request_id)
+
+    expect(response.status).toBe(200)
+    expect(await read('.env')).toBe('RESEND_API_KEY=sk_live_wrong_provider_key_here\n')
+    expect(settled.written_anyway).toEqual(['RESEND_API_KEY'])
+    expect(settled.note).toContain(
+      "The user wrote RESEND_API_KEY anyway, although it did not pass offprompt's checks: the provider may have changed the format, or the value may be wrong. If the service refuses it, tell the user and call collect_secret again for it.",
+    )
+    expect(settled.note).toContain('Nothing needs checking; the write was atomic.')
   })
 
   it('hands the link back on every wait until the values are written, and not after', async () => {

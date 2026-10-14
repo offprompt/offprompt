@@ -124,8 +124,9 @@ and never built from the value.
 | `format` | `format` | The value is an `email`, a `url` of any scheme with a host, an `http_url`, a `hostname`, `uuid`, `jwt`, `base64`, `json`, `pem` or `postgres` URL |
 | `either` | `options` | The value passes every rule of any one option, such as a new key or a legacy JWT |
 
-Keep rules loose: a prefix and a wide length range. A rule that goes stale blocks a valid key, and
-the prefix alone catches the most common slip, a key from the wrong provider.
+Keep rules loose: a prefix and a wide length range. A rule that goes stale refuses a valid key, which
+the human then has to write anyway, and the prefix alone catches the most common slip, a key from
+the wrong provider.
 
 ## Offers
 

@@ -175,6 +175,12 @@ const statusOutput = {
     .array(z.string())
     .optional()
     .describe('Every key the file holds after the write, names only, so the file never needs opening.'),
+  written_anyway: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Keys the user wrote although their values did not pass offprompt's checks: the provider may have changed the format, or the value may be wrong.",
+    ),
   sink: sinkOutput,
   note: z.string(),
   url: z
@@ -254,14 +260,23 @@ const writtenNote = ({ request, fileKeys }: { request: SecretRequest; fileKeys: 
       ? []
       : [`${listed(kept)} ${kept.length > 1 ? 'were' : 'was'} already set and left as ${kept.length > 1 ? 'they were' : 'it was'}.`]
   const holds = fileKeys.length === 0 ? [] : [`The file now holds ${listed(fileKeys)}.`]
+  const anyway = request.writtenAnyway ?? []
+  const anywayLine =
+    anyway.length === 0
+      ? []
+      : [
+          `The user wrote ${listed(anyway)} anyway, although ${anyway.length > 1 ? 'they' : 'it'} did not pass offprompt's checks: the provider may have changed the format, or the value may be wrong. If the service refuses ${anyway.length > 1 ? 'one' : 'it'}, tell the user and call collect_secret again for ${anyway.length > 1 ? 'that key' : 'it'}.`,
+        ]
+  const checked = anyway.length === 0 ? 'the write was atomic and every value passed its checks' : 'the write was atomic'
   return [
     ...fingerprint,
     request.sink.kind === 'file'
       ? `${listed(names)} is the whole of ${path}. Have the project read it from that path.`
       : `${listed(names)} ${many ? 'are' : 'is'} in ${path}. Read ${many ? 'them' : 'it'} from the environment by name.`,
     ...keptLine,
+    ...anywayLine,
     ...holds,
-    `Do not open, cat, grep or print ${path}: reading it puts the values into the transcript. Nothing needs checking; the write was atomic and every value passed its checks.`,
+    `Do not open, cat, grep or print ${path}: reading it puts the values into the transcript. Nothing needs checking; ${checked}.`,
   ].join(' ')
 }
 
@@ -358,6 +373,9 @@ export const registerTools = ({
 
   const emojiReport = (request: SecretRequest) => (request.emoji === undefined ? {} : { emoji: request.emoji })
 
+  const anywayReport = (request: SecretRequest) =>
+    request.writtenAnyway === undefined ? {} : { written_anyway: request.writtenAnyway }
+
   /**
    * The line to say, first in the result: Claude Code hands the model, and draws under the call,
    * the structured result alone, so what comes first there is what is read and seen first.
@@ -376,6 +394,7 @@ export const registerTools = ({
         ...keptReport(request),
         ...emojiReport(request),
         ...fileKeysReport(fileKeys),
+        ...anywayReport(request),
         sink: sinkReport(request),
         note: statusNote({ request, fileKeys }),
         ...(request.status === 'awaiting' && request.link !== undefined ? { url: request.link } : {}),
@@ -399,6 +418,7 @@ export const registerTools = ({
         ...keptReport(request),
         ...emojiReport(request),
         ...fileKeysReport(fileKeys),
+        ...anywayReport(request),
         sink: sinkReport(request),
         note: relayed === undefined ? statusNote({ request, fileKeys }) : noteFor(relayed),
         ...(relayed === undefined ? {} : { url: relayed.url }),

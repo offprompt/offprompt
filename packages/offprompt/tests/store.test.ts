@@ -180,7 +180,7 @@ it('holds a record while its write is under way, and tells no one until it lands
   expect(heard).toEqual([])
   expect(store.get(request.id)?.status).toBe('awaiting')
 
-  store.markWritten(request.id, { emoji: '🦊 🌵 🎈 🧭', names: ['RESEND_API_KEY'] })
+  store.markWritten(request.id, { fingerprint: { emoji: '🦊 🌵 🎈 🧭', names: ['RESEND_API_KEY'] } })
   await new Promise(resolve => setTimeout(resolve, 0))
   expect(heard).toEqual(['written'])
 })

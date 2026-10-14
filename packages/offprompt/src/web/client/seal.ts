@@ -8,16 +8,20 @@ export const NO_WEBCRYPTO = 'This browser cannot encrypt the values. Open the li
 export const plaintextFor = ({
   values,
   allowTracked,
+  anyway = [],
   fingerprint,
 }: {
   values: ReadonlyMap<string, string>
   allowTracked: boolean
+  /** The fields, by their place in the request, to write although they break their own checks. */
+  anyway?: readonly number[]
   /** The key the page took the fingerprint with, sealed along with the values. */
   fingerprint?: string | undefined
 }) =>
   JSON.stringify({
     values: Object.fromEntries(values),
     allowTracked,
+    ...(anyway.length === 0 ? {} : { anyway }),
     ...(fingerprint === undefined ? {} : { fingerprint }),
   })
 

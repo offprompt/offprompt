@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { fromBase64Url, newSealPair, toBase64Url } from '../src/core/sealing.js'
 import { resolveSink } from '../src/core/sinks.js'
 import { createRequestStore, type SecretRequest } from '../src/core/store.js'
-import { requestedSecrets } from '../src/mcp/requested.js'
+import { requestedSecrets, type AskedSecret } from '../src/mcp/requested.js'
 import { MISSING_KEY, NO_WEBCRYPTO, plaintextFor, sealerFor } from '../src/web/client/seal.js'
 import { startLoopbackServer } from '../src/web/server.js'
 import { setupWorkspace } from './helpers/workspace.js'
@@ -14,7 +14,11 @@ const RESEND_KEY = `re_${'a'.repeat(30)}`
 
 const OUT_OF_DATE = 'This page is out of date.'
 
-const setupTest = async ({ names = ['RESEND_API_KEY'], tracked = false } = {}) => {
+const setupTest = async ({
+  names = ['RESEND_API_KEY'],
+  tracked = false,
+  format = 'text',
+}: { names?: readonly string[]; tracked?: boolean; format?: AskedSecret['format'] } = {}) => {
   const workspace = await setupWorkspace({ git: tracked })
   if (tracked) {
     await workspace.write('.env', '')
@@ -29,7 +33,7 @@ const setupTest = async ({ names = ['RESEND_API_KEY'], tracked = false } = {}) =
 
   const sink = await resolveSink({ root: workspace.root, spec: { kind: 'dotenv', path: '.env' } })
   if (!sink.ok) throw new Error(sink.message)
-  const secrets = await requestedSecrets({ sink: sink.value, asks: names.map(name => ({ name, format: 'text' })) })
+  const secrets = await requestedSecrets({ sink: sink.value, asks: names.map(name => ({ name, format })) })
   if (!secrets.ok) throw new Error(secrets.message)
 
   const open = async () => {
@@ -46,16 +50,18 @@ const setupTest = async ({ names = ['RESEND_API_KEY'], tracked = false } = {}) =
     nonce = target.nonce,
     values = { value0: RESEND_KEY },
     allowTracked = false,
+    anyway = [],
   }: {
     target?: SecretRequest
     key?: string
     nonce?: string
     values?: Record<string, string>
     allowTracked?: boolean
+    anyway?: readonly number[]
   } = {}) => {
     const sealer = await sealerFor({ hash: `#k=${key}`, token: target.token, nonce })
     if (typeof sealer === 'string') throw new Error(sealer)
-    return sealer(plaintextFor({ values: new Map(Object.entries(values)), allowTracked }))
+    return sealer(plaintextFor({ values: new Map(Object.entries(values)), allowTracked, anyway }))
   }
 
   const post = (fields: Record<string, string>, target = request) =>
@@ -109,6 +115,19 @@ describe('a sealed submission', () => {
     const allowed = await postSealed(await sealFor({ allowTracked: true }))
     expect(allowed.status).toBe(200)
     expect(await read('.env')).toContain(RESEND_KEY)
+  })
+
+  it('carries a value written anyway inside the seal', async () => {
+    const { sealFor, postSealed, read, store, request } = await setupTest({ format: 'url' })
+    const values = { value0: 'not-a-url' }
+
+    const refused = await postSealed(await sealFor({ values }))
+    expect(refused.status).toBe(422)
+
+    const allowed = await postSealed(await sealFor({ values, anyway: [0] }))
+    expect(allowed.status).toBe(200)
+    expect(await read('.env')).toBe('RESEND_API_KEY=not-a-url\n')
+    expect(store.get(request.id)?.writtenAnyway).toEqual(['RESEND_API_KEY'])
   })
 
   it('redraws the rule lines of a value that fails, and never the value', async () => {
@@ -256,6 +275,15 @@ describe('a plain submission to a remote request', () => {
     const { post, sealFor, request, exists } = await setupTest()
 
     const response = await post({ nonce: request.nonce, sealed: await sealFor(), value0: RESEND_KEY })
+
+    expect(response.status).toBe(400)
+    expect(await exists('.env')).toBe(false)
+  })
+
+  it('is refused when it carries a box ticked to write a value anyway in the clear', async () => {
+    const { post, sealFor, request, exists } = await setupTest({ format: 'url' })
+
+    const response = await post({ nonce: request.nonce, sealed: await sealFor(), anyway0: 'yes' })
 
     expect(response.status).toBe(400)
     expect(await exists('.env')).toBe(false)

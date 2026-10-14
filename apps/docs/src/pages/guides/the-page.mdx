@@ -120,7 +120,15 @@ rule and red when it breaks it.
   without it.
 
 offprompt runs the same checks again when you write, and a failure keeps the request open for
-another try. Every rule, provider by provider, is in [Providers](/reference/providers) and
+another try.
+
+## Writing a value anyway
+
+Providers change their key formats, and the registry can be behind. When a value breaks only
+the checks of its own field, a box under it reads **Write it anyway**. Ticked, the field counts
+as ready and its red lines stay, so you can still see what it breaks. The agent is told which
+keys you wrote anyway, so it knows where to look if the service refuses one. The box never
+lifts offprompt's own checks of the file, the length cap and whether a `.env` can hold the value. Every rule, provider by provider, is in [Providers](/reference/providers) and
 [Formats](/reference/formats).
 
 ## Writing

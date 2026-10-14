@@ -134,6 +134,9 @@ folder must take new files, since the write goes through a temporary file there,
 Generated keys the sink already held are listed under `kept`, and `file_keys` names every key
 the file holds after the write, so the agent has no reason to open it. The note says so
 outright: reading the file puts the values into the transcript, and nothing needs checking.
+Keys the human wrote anyway, past checks they broke, are listed under `written_anyway`, and
+the note says the provider may have changed the format or the value may be wrong: if the
+service refuses one, the agent tells the human and asks for it again.
 
 The note also tells the agent to show a link in its reply, on its own line, whenever the
 result carries one. A link that appears only in the agent's reasoning is a request the
@@ -177,12 +180,14 @@ Expires a request. Any value already typed on the page is discarded.
 - Created by `collect_secret`, held in process memory, keyed by request id.
 - Fields: the requested secrets, reason, resolved sink, token, page nonce, expiry, whether
   it was made from a sandbox and, while such a request is open, the private half of its
-  key pair, and the link the agent passes on, where no page opened by itself.
+  key pair, and the link the agent passes on, where no page opened by itself. Once written,
+  the fingerprint and the keys the human wrote anyway.
 - TTL is 300 seconds, and 30 minutes for a request made from a sandbox, where the human may
   not be watching when the link appears. One successful write closes the record. A value that fails
   validation leaves it open, however many times: the human is trusted.
 - The POST handler writes through the sink stored in the record. The page submits the
-  value and the nonce and nothing else is read from it.
+  values, the nonce and the human's own choices — the overrides and the fingerprint key — and
+  nothing else is read from it.
 
 ## Presenting the URL
 
@@ -479,6 +484,19 @@ with script off relies on. A problem that is not about one field — a git-track
 destination without the override — shows by the button. Nothing is written unless every
 key has a valid value, and the write is one atomic pass.
 
+A value that breaks the field's own rules can be written anyway. Providers change their
+formats: Vercel's tokens grew a `vcp_` prefix and underscores in February 2026, and until
+the registry caught up, a human holding a working token could not write it. So once a value
+breaks only rules of its own, a box under the field reads "Write it anyway. Claude Code is
+told it did not pass these checks." Ticked, the field counts as ready and its broken lines
+stay red, so the human still sees what it breaks. The box hides again, unticked, once the
+value passes or changes into one that breaks the checks again, so each refusal is decided
+afresh. It never lifts offprompt's own checks of where the value goes, the length cap and
+whether a `.env` can hold it, since the file could not take the value without them. The
+choice travels as `anyway<n>` in a plain POST and inside the seal from a sandbox, and the
+server writes past a field's own rules only where it was ticked. The agent hears which keys
+were written anyway.
+
 The heading names the program the agent runs in — "Claude Code is asking" — taken from
 the `clientInfo` every MCP client sends at `initialize`. The host program sets it, not the
 model, so the agent is never asked to introduce itself. Known hosts get their proper name
@@ -598,7 +616,8 @@ ordinary identifiers such as `score_calculation_module_v2`. Guarding an agent ag
 itself, or a human against their own clipboard, is a different tool.
 
 The line offprompt does hold is at its own write: a value only goes into a git-tracked file
-when the human ticks the override on the form.
+when the human ticks the override on the form, and a value that breaks its checks only when
+the human ticks to write it anyway.
 
 **Exposing a port is the environment's job.** From a sandbox, offprompt serves its page the
 way `pnpm dev` serves an app: on a local port, carried out by a quick tunnel or by the
