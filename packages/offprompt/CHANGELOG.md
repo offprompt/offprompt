@@ -1,5 +1,17 @@
 # offprompt
 
+## 0.2.0
+
+### Minor Changes
+
+- 0745122: A value its checks refuse can be written anyway. Providers change their key formats, and until offprompt catches up a working key could not be written. Once a value breaks only its own field's checks, a box under it reads "Write it anyway"; ticked, the field counts as ready and its broken checks stay in view. The agent hears which keys were written anyway, under `written_anyway`, so it knows where to look if the service refuses one. offprompt's own checks of the file, its length cap and whether a `.env` can hold the value, still hold.
+
+### Patch Changes
+
+- 0745122: From a cloud sandbox, an agent whose host lets it ask you a question, as Conductor and Claude Code do, puts the page's link in a question as well as in its message. A question stays in front of you until you answer it; in a Conductor cloud workspace the agent's messages with the link were folded away under the waits that followed them. The link also comes with a short line saying what it is for, rather than alone.
+- 0745122: A value asked for as a URL may use any scheme followed by a host, such as `wss://` for a websocket or `redis://`, where only `http://` and `https://` passed before. A provider's URL that is always a web address, such as a Sentry DSN, still has to start with `http://` or `https://`.
+- 0745122: A Vercel token passes its checks in the form Vercel has issued since February 2026, `vcp_` followed by letters, numbers and underscores, as well as the older tokens of 24 letters and numbers. Until now only the older form passed, so a new token could not be written.
+
 ## 0.1.3
 
 ### Patch Changes
