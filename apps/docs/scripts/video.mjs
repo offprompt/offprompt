@@ -2,7 +2,8 @@
  * Records the video the introduction shows, into public/videos/: Claude Code asks offprompt for
  * a key, offprompt's page opens, the key goes in, and the agent gets back the fingerprint the
  * page shows. The page is offprompt's own, as its showcase renders it, so the video changes when
- * the page does: run `pnpm video` again. Needs Playwright's Chromium and ffmpeg.
+ * the page does: run `pnpm video` again. Needs Playwright's Chromium and ffmpeg. offprompt.dev's
+ * link previews play it too, from its address on the docs (apps/site/src/app/layout.tsx).
  */
 import { chromium } from '@playwright/test'
 import { Buffer } from 'node:buffer'
