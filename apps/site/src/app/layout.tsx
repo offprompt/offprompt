@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, JetBrains_Mono } from 'next/font/google'
 import type { ReactNode } from 'react'
 
+import { Analytics } from '@/components/analytics'
 import { SITE } from '@/lib/site'
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'swap' })
@@ -31,7 +32,10 @@ export const viewport: Viewport = { themeColor: '#FBFBF9' }
 
 const RootLayout = ({ children }: { readonly children: ReactNode }) => (
   <html lang="en" className={`${geist.variable} ${mono.variable}`}>
-    <body className="font-sans">{children}</body>
+    <body className="font-sans">
+      {children}
+      <Analytics />
+    </body>
   </html>
 )
 
