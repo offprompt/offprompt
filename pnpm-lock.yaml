@@ -10,8 +10,8 @@ catalogs:
       specifier: ^10.0.1
       version: 10.0.1
     '@modelcontextprotocol/sdk':
-      specifier: ^1.31.0
-      version: 1.32.1
+      specifier: ^1.32.2
+      version: 1.32.2
     '@playwright/test':
       specifier: ^1.63.0
       version: 1.63.0
@@ -206,7 +206,7 @@ importers:
     devDependencies:
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
-        version: 1.32.1(supports-color@8.1.1)(zod@4.6.5)
+        version: 1.32.2(supports-color@8.1.1)(zod@4.6.6)
       '@types/cross-spawn':
         specifier: ^6.0.6
         version: 6.0.6
@@ -236,7 +236,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
-        version: 1.32.1(supports-color@8.1.1)(zod@4.6.6)
+        version: 1.32.2(supports-color@8.1.1)(zod@4.6.6)
       zod:
         specifier: ^4.6.6
         version: 4.6.6
@@ -1088,8 +1088,8 @@ packages:
       '@cfworker/json-schema':
         optional: true
 
-  '@modelcontextprotocol/sdk@1.32.1':
-    resolution: {integrity: sha512-2DdE+SJDtzLEEWzY1ZjY7Q+VcPhcV1KisD3zI4u0XZyktsjHum1mwbMI+JaulUBi2OZk+KJAi2uPXzxichPkdw==}
+  '@modelcontextprotocol/sdk@1.32.2':
+    resolution: {integrity: sha512-SWsVtH/0vULSQStoZ6xxH2K09Li8fXYTMC64ZeogCdpZ3XSi1eCPOByV1OpuJxuI3OcmHhosDWYyii07tpPsLw==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cfworker/json-schema': ^4.1.1
@@ -6035,29 +6035,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@modelcontextprotocol/sdk@1.32.1(supports-color@8.1.1)(zod@4.6.5)':
-    dependencies:
-      '@hono/node-server': 2.1.1(hono@4.13.8)
-      ajv: 8.20.0
-      ajv-formats: 3.0.1(ajv@8.20.0)
-      content-type: 1.0.5
-      cors: 2.8.6
-      cross-spawn: 7.0.6
-      eventsource: 3.0.7
-      eventsource-parser: 3.1.1
-      express: 5.2.1(supports-color@8.1.1)
-      express-rate-limit: 8.7.0(express@5.2.1(supports-color@8.1.1))(supports-color@8.1.1)
-      hono: 4.13.8
-      jose: 6.2.12
-      json-schema-typed: 8.0.2
-      pkce-challenge: 5.0.1
-      raw-body: 3.0.2
-      zod: 4.6.5
-      zod-to-json-schema: 3.25.2(zod@4.6.5)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@modelcontextprotocol/sdk@1.32.1(supports-color@8.1.1)(zod@4.6.6)':
+  '@modelcontextprotocol/sdk@1.32.2(supports-color@8.1.1)(zod@4.6.6)':
     dependencies:
       '@hono/node-server': 2.1.1(hono@4.13.8)
       ajv: 8.20.0
