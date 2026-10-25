@@ -42,14 +42,24 @@ const Privacy = () => (
         </Part>
         <Part title="offprompt.dev">
           <p>
-            This site sets no cookies and runs no analytics. Vercel hosts it, and keeps the request logs any web server
-            keeps.
+            This site sets no cookies. It counts visits with{' '}
+            <a
+              href="https://umami.is/privacy"
+              className="text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+            >
+              Umami
+            </a>
+            , which keeps nothing in your browser. For each page you open, Umami records its address, campaign tags
+            included, the site that sent you there, your browser, operating system, device, screen size and language,
+            how quickly the page loaded, and your country, region and city, worked out from your IP address, which it
+            does not store. It does not run when your browser sends Do Not Track.
           </p>
+          <p>Vercel hosts the site, and keeps the request logs any web server keeps.</p>
         </Part>
         <Part title="docs.offprompt.dev">
           <p>
-            The documentation sets no cookies and runs no analytics either. It remembers whether you chose light or
-            dark, and your recent searches, in your browser&apos;s own storage, which it never sends anywhere.
+            The documentation sets no cookies and runs no analytics. It remembers whether you chose light or dark, and
+            your recent searches, in your browser&apos;s own storage, which it never sends anywhere.
           </p>
         </Part>
         <Part title="Questions">
