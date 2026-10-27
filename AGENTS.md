@@ -32,6 +32,12 @@ assembles it; the folder it makes is both the npm package and the plugin.
 
 ## Rules that are easy to break
 
+- **A change starts from an issue.** Find the issue a change answers, or open one first through
+  the bug report, provider request or feature request form, saying the problem before the fix.
+  The pull request closes it with "Closes #n" in its description and in the commit that fixes
+  it. Something found along the way, such as a flaky test, gets an issue of its own rather than
+  a line in someone else's pull request. Work that reached `main` without one gets its issue
+  afterwards, closed with a link to the pull request that did it.
 - **Releases.** A change to the source of `packages/offprompt` or `packages/install` comes with a
   changeset (`pnpm changeset`); CI fails a pull request without one. Never edit a version by
   hand, and never publish by hand: merging the "Release offprompt" pull request does both.

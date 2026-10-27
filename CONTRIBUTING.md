@@ -88,6 +88,14 @@ ESLint enforces most of this; `pnpm lint` checks it.
 
 Messages, results and docs say what happens in plain sentences, as the page does.
 
+## Issues
+
+Every change starts from an issue: a [bug report](https://github.com/offprompt/offprompt/issues/new?template=bug_report.yml),
+a [provider request](https://github.com/offprompt/offprompt/issues/new?template=provider_request.yml)
+or a [feature request](https://github.com/offprompt/offprompt/issues/new?template=feature_request.yml).
+It says the problem; the pull request is the fix, and closes it with "Closes #n". Something you
+find while working on another change gets an issue of its own.
+
 ## Commits
 
 A type, a scope where one fits, and a lowercase subject that says what is now true:
