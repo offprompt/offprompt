@@ -1,10 +1,11 @@
 # Releases offprompt from main. Each change that reaches npm says what it is in a changeset
 # (`pnpm changeset`); while any wait, Changesets keeps a "Release offprompt" pull request open
 # with the next version and its changelog entry. Merging it is the release: the version npm
-# does not have yet goes to npm, to a GitHub release with its entry, and to the MCP Registry.
-# npm and the registry trust this workflow through GitHub's OIDC, so no token is stored. It
-# runs once the repository is public, where npm records where each version was built. Each of
-# the three happens once: a run that stopped partway, run again, finishes the rest.
+# does not have yet goes to npm, to a GitHub release with its entry, to the MCP Registry, and
+# to the plugin branch, which Anthropic's plugin directory follows. npm and the registry trust
+# this workflow through GitHub's OIDC, so no token is stored. It runs once the repository is
+# public, where npm records where each version was built. Each of the four happens once: a run
+# that stopped partway, run again, finishes the rest.
 name: release
 
 on:
@@ -73,3 +74,14 @@ jobs:
             | tar -xz mcp-publisher
           ./mcp-publisher login github-oidc
           ./mcp-publisher publish
+
+      # The directory reads a plugin's folder from GitHub, so the package npm has goes on a branch
+      # of its own too, where it is the whole tree. The directory picks each push up from there.
+      - name: The package on the plugin branch, for Anthropic's plugin directory
+        if: steps.pending.outputs.plugin == 'true'
+        run: pnpm release plugin
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898283+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898283+github-actions[bot]@users.noreply.github.com
