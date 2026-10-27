@@ -1,0 +1,56 @@
+{
+  "name": "offprompt",
+  "version": "0.2.0",
+  "description": "Hand a secret to a coding agent without the secret entering the transcript.",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "secrets",
+    "api-keys",
+    "env",
+    "dotenv",
+    "security",
+    "claude-code",
+    "codex",
+    "cursor",
+    "ai-agents"
+  ],
+  "homepage": "https://offprompt.dev",
+  "bugs": {
+    "url": "https://github.com/offprompt/offprompt/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/offprompt/offprompt.git"
+  },
+  "license": "MIT",
+  "author": "Valerio Leo",
+  "bin": {
+    "offprompt": "dist/offprompt-install.mjs"
+  },
+  "files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".mcp.json",
+    "CHANGELOG.md",
+    "DESIGN.md",
+    "LICENSE",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md",
+    "dist/handshake/initialize.json",
+    "dist/handshake/not-found.json",
+    "dist/handshake/tools.json",
+    "dist/handshake/unknown",
+    "dist/handshake/versions",
+    "dist/mcp.mjs",
+    "dist/offprompt-install.mjs",
+    "launcher/offprompt-mcp",
+    "mcp.json",
+    "plugin.json"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "mcpName": "io.github.offprompt/offprompt"
+}

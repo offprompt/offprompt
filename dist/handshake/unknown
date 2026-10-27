@@ -1,0 +1,6 @@
+server/discover
+prompts/list
+resources/list
+resources/templates/list
+logging/setLevel
+completion/complete
