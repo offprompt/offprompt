@@ -161,6 +161,36 @@ const RULES = `
   .get { flex: none; text-decoration: none; }
   .get:hover span { text-decoration: underline; text-underline-offset: 3px; }
   .get .icon { width: 14px; height: 14px; }
+  /* The agent's own link has a line of its own under "Get it", on the same side, so "Get it" never moves. */
+  .field-head:has(.suggestion) { display: grid; grid-template-columns: minmax(0, 1fr) auto; row-gap: 8px; }
+  .suggestion { display: flex; grid-column: 1 / -1; justify-self: end; min-width: 0; max-width: 100%; }
+  .suggested { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-width: 0; max-width: 100%;
+               margin: 0; padding: 2px 10px 2px 8px; font: 12.5px/18px var(--sans); color: var(--warn-ink); text-align: left;
+               background: var(--warn-bg); border: 1px dashed #DDBB6E; border-radius: 9px; }
+  .suggested > span { white-space: nowrap; }
+  button.suggested { cursor: pointer; }
+  button.suggested:hover { border-style: solid; }
+  button.suggested:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .suggested .icon { width: 13px; height: 13px; color: var(--warn); }
+  .suggested-host { font: 500 12px/18px var(--mono); color: var(--ink); overflow-wrap: anywhere; }
+  dialog.confirm { width: min(440px, 100% - 32px); max-width: none; padding: 24px; border: 1px solid var(--line);
+                   border-radius: 16px; background: var(--surface); color: var(--ink); box-shadow: 0 24px 56px #12332A33; }
+  dialog.confirm[open] { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+  dialog.confirm::backdrop { background: #12332A40; }
+  .confirm-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+                  border-radius: 12px; background: var(--warn-bg); color: var(--warn); }
+  .confirm-icon .icon { width: 20px; height: 20px; }
+  .confirm-title { margin: 0; font-size: 18px; line-height: 25px; font-weight: 500; overflow-wrap: anywhere; }
+  .confirm-title strong { font: 600 16px/25px var(--mono); }
+  .confirm-said { font-size: 13.5px; line-height: 20px; color: var(--ink-2); }
+  .confirm-url { display: block; align-self: stretch; padding: 8px 10px; border-radius: 8px; background: var(--sunken);
+                 font-size: 12px; line-height: 18px; color: var(--ink-2); word-break: break-all; }
+  .confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-self: stretch; margin-top: 4px; }
+  .confirm-open { display: inline-flex; align-items: center; gap: 7px; min-width: 0; padding: 8px 12px; font: 500 13px var(--sans);
+                  color: #fff; text-decoration: none; overflow-wrap: anywhere; background: var(--brand); border-radius: 8px; }
+  .confirm-open:hover { background: var(--brand-2); }
+  .confirm-open:focus-visible, .confirm .secondary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .confirm-open .icon { width: 14px; height: 14px; }
   .caption { font-size: 13px; line-height: 18px; color: var(--ink-2); }
 
   .input { display: flex; align-items: center; gap: 8px; padding: 0 12px 0 14px; background: var(--surface);
@@ -416,6 +446,8 @@ const RULES = `
     .emoji { flex-wrap: wrap; justify-content: center; gap: 8px; }
     .emoji .glyph { width: 56px; height: 56px; font-size: 30px; }
     .fingerprint { padding: 20px 16px; }
+    dialog.confirm { padding: 20px; }
+    .confirm-actions > * { flex: 1 1 auto; justify-content: center; }
   }
 `
 

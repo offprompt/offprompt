@@ -1003,6 +1003,85 @@ describe('errors under the field they belong to', () => {
   })
 })
 
+describe('the links beside a field', () => {
+  const REF = 'abcdefghijklmnopqrst'
+  const VAULT = 'https://vault.acme.internal/ui/tokens/new?a=1&b=2'
+
+  /** The page with every box the agent's links open taken out, to see what shows on the page itself. */
+  const outsideBoxes = (html: string) => html.replace(/<dialog[\s\S]*?<\/dialog>/g, '')
+
+  it("opens the agent's project as the key's own Get it", async () => {
+    const { get } = await setupTest({ names: ['SUPABASE_SECRET_KEY'], ask: { provider: 'supabase', link: { project: REF } } })
+    const html = await (await get()).text()
+
+    expect(html).toContain(
+      `<a class="get" href="https://supabase.com/dashboard/project/${REF}/settings/api-keys" target="_blank" rel="noopener noreferrer" aria-label="Get a Supabase secret key at supabase.com/dashboard/project/${REF}/settings/api-keys">`,
+    )
+    expect(html).not.toContain('<button type="button" class="suggested"')
+  })
+
+  it("keeps the key's usual page when a parameter does not fit", async () => {
+    const { get } = await setupTest({ names: ['SUPABASE_SECRET_KEY'], ask: { provider: 'supabase', link: { project: '../../x' } } })
+    const html = await (await get()).text()
+
+    expect(html).toContain('<a class="get" href="https://supabase.com/dashboard/project/_/settings/api-keys"')
+    expect(html).not.toContain('../../x')
+  })
+
+  it("shows the agent's own link as its suggestion, naming the whole host, and never as a link on the page", async () => {
+    const { get } = await setupTest({ names: ['VAULT_TOKEN'], ask: { link: VAULT } })
+    const html = await (await get()).text()
+    const page = outsideBoxes(html)
+
+    expect(page).toContain('<button type="button" class="suggested" data-suggested="suggested0" aria-haspopup="dialog" data-needs-script hidden>')
+    expect(page).toContain('<span>Suggested by the agent</span><strong class="suggested-host">vault.acme.internal</strong>')
+    expect(page).not.toContain('href="https://vault.acme.internal')
+    expect(page).not.toContain('class="get"')
+  })
+
+  it('names the host and says offprompt has not checked it before the link opens, in a new tab with no referrer', async () => {
+    const { get } = await setupTest({ names: ['VAULT_TOKEN'], ask: { link: VAULT } })
+    const html = await (await get()).text()
+    const box = /<dialog class="confirm" id="suggested0"[\s\S]*?<\/dialog>/.exec(html)?.[0] ?? ''
+
+    expect(box).toContain('<h2 class="confirm-title" id="suggested0-title">Open <strong>vault.acme.internal</strong>?</h2>')
+    expect(box).toContain('This link was proposed by your agent and not verified by offprompt.')
+    expect(box).toContain('<code class="confirm-url">https://vault.acme.internal/ui/tokens/new?a=1&amp;b=2</code>')
+    expect(box).toContain(
+      '<a class="confirm-open" href="https://vault.acme.internal/ui/tokens/new?a=1&amp;b=2" target="_blank" rel="noopener noreferrer" data-dismiss>',
+    )
+    expect(box).not.toContain(' open')
+  })
+
+  it("puts the agent's link beside a provider key's Get it, never in its place", async () => {
+    const { get } = await setupTest({
+      names: ['STRIPE_SECRET_KEY'],
+      ask: { provider: 'stripe', link: 'https://dashboard.stripe.com/test/apikeys' },
+    })
+    const page = outsideBoxes(await (await get()).text())
+
+    expect(page).toContain('<a class="get" href="https://dashboard.stripe.com/apikeys"')
+    expect(page).toContain('<strong class="suggested-host">dashboard.stripe.com</strong>')
+    expect(page).not.toContain('href="https://dashboard.stripe.com/test/apikeys"')
+  })
+
+  it('reads as text with the page script off, as a link in the reason does', async () => {
+    const { get } = await setupTest({ names: ['VAULT_TOKEN'], ask: { link: VAULT } })
+    const html = await (await get()).text()
+
+    expect(html).toContain('<noscript><span class="suggested">')
+    expect(html).toContain('<strong class="suggested-host">vault.acme.internal/ui/tokens/new</strong></span></noscript>')
+  })
+
+  it('shows nothing for a link it could not use', async () => {
+    const { get } = await setupTest({ names: ['VAULT_TOKEN'], ask: { link: 'http://vault.acme.internal/' } })
+    const html = await (await get()).text()
+
+    expect(html).not.toContain('vault.acme.internal')
+    expect(html).not.toContain('<dialog')
+  })
+})
+
 describe('the agent reason', () => {
   it('renders the Markdown the agent wrote', async () => {
     const { get } = await setupTest({
