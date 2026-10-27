@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import { failures } from '../../checks.js'
+import { fill } from '../../template.js'
 import { accountId } from './account-id.js'
 import { apiToken } from './api-token.js'
 import { r2AccessKeyId } from './r2-access-key-id.js'
+import { cloudflare } from './provider.js'
 import { r2SecretAccessKey } from './r2-secret-access-key.js'
+import { r2TokensPage } from './r2-tokens-page.js'
 
 const API_TOKEN_LINE = 'starts with cfut_ or cfat_, or is 40 characters'
 const ID = '023e105f4ecef8ad9ca31a8372d0c353'
@@ -40,5 +43,23 @@ describe('Cloudflare R2 keys', () => {
   it('refuses the key ID where the secret goes, and the secret where the ID goes', () => {
     expect(failures(r2SecretAccessKey.rules, ID)).toEqual(['64 characters'])
     expect(failures(r2AccessKeyId.rules, ID.repeat(2))).toEqual(['32 characters'])
+  })
+})
+
+describe("the R2 keys' page", () => {
+  it('opens the R2 API tokens of the account the agent names, for both keys', () => {
+    expect(r2AccessKeyId.template).toBe(r2TokensPage)
+    expect(r2SecretAccessKey.template).toBe(r2TokensPage)
+    expect(fill({ template: r2TokensPage, values: { account: ID }, domains: cloudflare.domains })).toEqual({
+      ok: true,
+      value: { url: `https://dash.cloudflare.com/${ID}/r2/api-tokens`, ignored: [] },
+    })
+  })
+
+  it('takes an account ID and nothing else, such as an account name', () => {
+    expect(fill({ template: r2TokensPage, values: { account: 'my-account' }, domains: cloudflare.domains })).toEqual({
+      ok: false,
+      problems: ['account must be 32 hexadecimal digits'],
+    })
   })
 })

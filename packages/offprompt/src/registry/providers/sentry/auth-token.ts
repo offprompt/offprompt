@@ -8,6 +8,19 @@ export const authToken: Credential = {
   label: 'Auth token',
   names: ['SENTRY_AUTH_TOKEN'],
   url: 'https://sentry.io/settings/auth-tokens/',
+  // Sentry's docs link a signed-in reader to their organization's tokens this way, and say
+  // the slug is the part of the dashboard's address before .sentry.io.
+  template: {
+    url: 'https://sentry.io/settings/{org}/auth-tokens/',
+    params: {
+      org: {
+        label: 'the organization slug',
+        found:
+          'org under [defaults] in .sentryclirc, defaults.org in sentry.properties, SENTRY_ORG, or the part before .sentry.io in its dashboard address',
+        max: 64,
+      },
+    },
+  },
   placeholder: 'sntrys_…',
   rules: [
     {

@@ -1,5 +1,7 @@
 import * as z from 'zod'
 
+import { LABEL_MAX, onDomains, PARAM_MAX, PARAM_NAME, shapeOf, substituted } from './template.js'
+
 /**
  * The shape of every registry entry. Providers, their credentials and value formats are
  * plain data of these types, and the registry test parses each one against these schemas,
@@ -76,6 +78,65 @@ export const logoSchema = z
   })
   .readonly()
 
+/**
+ * One parameter of a key's templated page. Every value is held to letters, digits, `.`, `_`
+ * and `-` before this rule is read, so the rule can narrow that and never widen it.
+ */
+export const templateParamSchema = z
+  .object({
+    /** What the value is, inside a sentence the agent reads: "the project ref". */
+    label: z.string().min(1),
+    /** Where a project usually keeps it, so the agent reads it rather than guessing. */
+    found: z.string().min(1),
+    /** A narrower shape, such as `^[a-z]{20}$` for a Supabase project ref. */
+    pattern: z.string().refine(compiles, 'must be a valid regular expression').optional(),
+    /** The shape in words, said when a value does not have it: "20 lowercase letters". */
+    message: z.string().min(1).optional(),
+    max: z.int().min(1).max(PARAM_MAX),
+  })
+  .readonly()
+  .refine(param => (param.pattern === undefined) === (param.message === undefined), 'a pattern comes with the message that says it')
+
+/**
+ * The page where a key is made inside one account, organisation or project, with a parameter
+ * for each part of its address that names it: `https://sentry.io/settings/{org}/auth-tokens/`.
+ * A parameter is a whole path segment or a whole leading label of the host, and every one has
+ * a rule. A host label may only be templated under a domain whose every subdomain the provider
+ * runs itself, never one that serves its customers' own pages.
+ */
+export const templateSchema = z
+  .object({
+    url: z.string(),
+    params: z.record(z.string().regex(PARAM_NAME), templateParamSchema).readonly(),
+  })
+  .readonly()
+  .superRefine((template, context) => {
+    const shape = shapeOf(template.url)
+    if (!shape.ok) {
+      shape.problems.forEach(problem => context.addIssue({ code: 'custom', message: problem }))
+      return
+    }
+    const named = [...shape.value.places.keys()]
+    const ruled = Object.keys(template.params)
+    named
+      .filter(name => !ruled.includes(name))
+      .forEach(name => context.addIssue({ code: 'custom', message: `${template.url} has no rule for {${name}}` }))
+    ruled
+      .filter(name => !named.includes(name))
+      .forEach(name => context.addIssue({ code: 'custom', message: `${template.url} never uses its parameter ${name}` }))
+    named
+      .filter(name => shape.value.places.get(name) === 'host' && (template.params[name]?.max ?? 0) > LABEL_MAX)
+      .forEach(name =>
+        context.addIssue({ code: 'custom', message: `{${name}} fills a host label, which is ${String(LABEL_MAX)} characters at most` }),
+      )
+  })
+
+/** The address a template makes with a stand-in for each parameter, to be checked like any plain link. */
+export const standInFor = (url: string) => {
+  const shape = shapeOf(url)
+  return shape.ok ? substituted({ url, values: new Map([...shape.value.places.keys()].map(name => [name, 'a'])) }) : url
+}
+
 /** A key, token or signing secret a provider issues, and where a person gets one. */
 export const credentialSchema = z
   .object({
@@ -86,6 +147,11 @@ export const credentialSchema = z
     names: z.array(z.string().regex(ENV_NAME)).min(1).readonly(),
     /** The page where it is created or copied. */
     url: httpsUrl,
+    /**
+     * The same page inside the account, organisation or project the agent names, where the
+     * address says which. Without every parameter, the key links to `url`.
+     */
+    template: templateSchema.optional(),
     placeholder: z.string().min(1).optional(),
     /** False for a key meant to be public, such as a publishable key. True when absent. */
     secret: z.boolean().optional(),
@@ -102,10 +168,8 @@ export const credentialSchema = z
 /** Where someone who has no value of a format yet can create one with the provider. */
 export const offerSchema = z.object({ format: z.string().min(1), url: httpsUrl }).readonly()
 
-const onDomains = ({ url, domains }: { url: string; domains: readonly string[] }) => {
-  const { hostname } = new URL(url)
-  return domains.some(domain => hostname === domain || hostname.endsWith(`.${domain}`))
-}
+const linkOnDomains = ({ url, domains }: { url: string; domains: readonly string[] }) =>
+  onDomains({ hostname: new URL(url).hostname, domains })
 
 export const providerSchema = z
   .object({
@@ -129,7 +193,23 @@ export const providerSchema = z
   .superRefine((provider, context) => {
     const links = [provider.homepage, ...provider.credentials.map(key => key.url), ...provider.offers.map(offer => offer.url)]
     links
-      .filter(url => isHttpsUrl(url) && !onDomains({ url, domains: provider.domains }))
+      .filter(url => isHttpsUrl(url) && !linkOnDomains({ url, domains: provider.domains }))
+      .forEach(url => context.addIssue({ code: 'custom', message: `${url} is not on ${provider.name}'s domains` }))
+    // A template's fixed part is checked as a plain link is: https, on the provider's domains.
+    // Its host without the labels parameters fill must be on them too, so no value can pick
+    // which domain the link is on.
+    const templates = provider.credentials.flatMap(key => (key.template === undefined ? [] : [key.template.url]))
+    templates
+      .filter(url => {
+        const shape = shapeOf(url)
+        if (!shape.ok) return false
+        const standIn = standInFor(url)
+        return (
+          !isHttpsUrl(standIn) ||
+          !linkOnDomains({ url: standIn, domains: provider.domains }) ||
+          !onDomains({ hostname: shape.value.fixedHost, domains: provider.domains })
+        )
+      })
       .forEach(url => context.addIssue({ code: 'custom', message: `${url} is not on ${provider.name}'s domains` }))
     const ids = provider.credentials.map(key => key.id)
     ids
@@ -158,6 +238,7 @@ export type Category = (typeof CATEGORIES)[number]
 export type Rule = z.infer<typeof ruleSchema>
 export type Logo = z.infer<typeof logoSchema>
 export type Credential = z.infer<typeof credentialSchema>
+export type Template = z.infer<typeof templateSchema>
 export type Offer = z.infer<typeof offerSchema>
 export type Provider = z.infer<typeof providerSchema>
 export type Format = z.infer<typeof formatSchema>

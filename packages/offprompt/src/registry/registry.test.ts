@@ -4,8 +4,9 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 import { formatList } from './formats.js'
-import { providerRefs, providers } from './registry.js'
-import { formatSchema, providerSchema } from './schema.js'
+import { providerRefs, providers, templatedPages } from './registry.js'
+import { formatSchema, providerSchema, standInFor } from './schema.js'
+import { onDomains, shapeOf } from './template.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
@@ -49,6 +50,31 @@ describe('the registry as a whole', () => {
     expect(providerRefs).toEqual(expect.arrayContaining(['stripe', 'stripe/webhook_secret', 'resend']))
     expect(providerRefs).not.toContain('resend/api_key')
     expect(providerRefs).not.toContain('neon')
+  })
+
+  it('checks the fixed part of every templated page as it checks a plain link, and gives every parameter a rule', () => {
+    const templated = providers.flatMap(provider =>
+      provider.credentials.flatMap(key => (key.template === undefined ? [] : [{ provider, template: key.template }])),
+    )
+    expect(templated.length).toBeGreaterThan(0)
+    const problems = templated.flatMap(({ provider, template }) => {
+      const shape = shapeOf(template.url)
+      if (!shape.ok) return shape.problems
+      const standIn = new URL(standInFor(template.url))
+      return [
+        ...(standIn.protocol === 'https:' ? [] : [`${template.url} is not https`]),
+        ...(onDomains({ hostname: shape.value.fixedHost, domains: provider.domains }) ? [] : [`${template.url} is off its domains`]),
+        ...[...shape.value.places.keys()]
+          .filter(name => template.params[name] === undefined)
+          .map(name => `${template.url} has no rule for ${name}`),
+      ]
+    })
+    expect(problems).toEqual([])
+  })
+
+  it('lists each templated page once, with every key that links to it', () => {
+    expect(templatedPages.map(page => page.refs)).toContainEqual(['supabase/secret_key', 'supabase/publishable_key'])
+    expect(duplicates(templatedPages.map(page => page.template.url))).toEqual([])
   })
 
   it('imports nothing from outside its own folder, so it can move to a repository of its own', () => {
