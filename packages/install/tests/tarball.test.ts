@@ -26,6 +26,7 @@ const PACKING_MS = 60_000
  * claude.ai refuses in a plugin. Its root is the plugin's root, with each client's manifest.
  */
 const SHIPPED = [
+  '.claude-plugin/icon.png',
   '.claude-plugin/marketplace.json',
   '.claude-plugin/plugin.json',
   '.codex-plugin/plugin.json',

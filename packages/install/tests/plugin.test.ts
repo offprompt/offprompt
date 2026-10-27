@@ -126,6 +126,7 @@ it('packages a directory that starts the server from its own launcher', async ()
   await run(process.execPath, [PACKAGE, plugin])
 
   expect(await filesIn(plugin)).toEqual([
+    '.claude-plugin/icon.png',
     '.claude-plugin/marketplace.json',
     '.claude-plugin/plugin.json',
     '.codex-plugin/plugin.json',
