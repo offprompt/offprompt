@@ -1,0 +1,128 @@
+---
+description: Four ways to get an API key to Claude Code or another coding agent, and what each one keeps out of the chat and the transcript.
+---
+
+# How to give Claude Code an API key
+
+Sooner or later the agent needs a key: to call Stripe, send mail through Resend, or run the tests
+that hit OpenAI. There are four ways to get one to it, and they differ in where the value ends
+up. This page uses Claude Code for its examples. The ways are the same for Codex, Cursor and
+other agents; the settings that keep an agent out of a file are each agent's own.
+
+| | In the chat and transcript | In a file the agent can read | From a cloud sandbox |
+| --- | --- | --- | --- |
+| [Paste it into the chat](#pasting-it-into-the-chat) | Yes | If the agent writes it to one | Works |
+| [Write the `.env` yourself](#writing-the-env-yourself) | No | Yes | Only where you can reach its files |
+| [Run the agent through a secrets manager](#running-the-agent-through-a-secrets-manager) | Only if a command prints it | No, it is in the environment | Needs the store's login there |
+| [Let the agent ask, with offprompt](#letting-the-agent-ask-with-offprompt) | No | Yes | Works, through a link |
+
+## Pasting it into the chat
+
+It is the quickest, and an agent that needs a key usually asks for it this way. The value then
+goes into the model's context, the transcript Claude Code keeps on disk, and every request to the
+model provider from then on, whose logs keep it as long as they keep anything. A later turn can
+repeat it, in a summary or in code the agent writes.
+
+A pasted key cannot be taken back out. If one has been, rotate it at the provider.
+
+## Writing the `.env` yourself
+
+Ask the agent which variable it reads and from which file, then open the file in your editor and
+add the line:
+
+```sh [.env]
+STRIPE_SECRET_KEY=sk_test_…
+```
+
+The value never passes through the chat. Two things are left to you: getting the name and the
+file right, which the agent knows better than you do, and keeping the agent from opening the file
+afterwards, which would put the value into the transcript after all. In Claude Code, a deny rule
+keeps its file tools out of it:
+
+```json [.claude/settings.json]
+{
+  "permissions": {
+    "deny": ["Read(./.env)", "Read(./.env.local)"]
+  }
+}
+```
+
+The rule covers Claude Code's own file tools and the shell commands it recognises as reading a
+file, such as `cat` and `head`. It does not cover a command that reads files without naming them,
+such as `grep -r` run from the project's folder, or a script that opens the file itself. Claude
+Code's [sandbox](https://code.claude.com/docs/en/sandboxing) blocks the path for every process.
+
+With the agent in a cloud sandbox, such as Claude Code on the web, Codex cloud or a codespace, the
+file is on a machine your editor may not reach.
+
+## Running the agent through a secrets manager
+
+If the keys already live in a store, its command line can start the agent with them in its
+environment:
+
+:::code-group
+
+```sh [Doppler]
+doppler run -- claude
+```
+
+```sh [1Password]
+op run --env-file=.env.tpl -- claude
+```
+
+```sh [Infisical]
+infisical run -- claude
+```
+
+:::
+
+Nothing is written to disk, and nothing passes through the chat. But every command the agent runs
+inherits that environment, so `env`, `printenv` or a debug line that logs the configuration prints
+every value into the transcript. And the store's login has to be where the agent runs, which in a
+cloud sandbox means handing the sandbox a credential to the whole store.
+
+To fill offprompt's page from one of these stores instead, see
+[Values you already keep](/guides/stores).
+
+## Letting the agent ask, with offprompt
+
+offprompt is an MCP server that gives the agent a way to ask for the value other than the chat.
+The agent calls [`collect_secret`](/reference/collect-secret) with the keys it needs, why it needs
+them, and the file they go in. A page opens in your browser, served from `127.0.0.1`; you type or
+paste each value there, and each is checked as it goes in. offprompt writes the file and answers
+the agent with the key names and a [fingerprint](/guides/fingerprint) of four emoji, never the
+values.
+
+The agent picks the name and the file, so they are the ones the project reads. From a
+[cloud sandbox](/guides/cloud-sandboxes) the agent passes you a link instead, and your browser
+encrypts the values before they leave it.
+
+What offprompt does not do is guard the file afterwards: the `.env` is on disk, and the agent
+could open it. Every result tells the agent not to, and lists every key the file holds so it has
+no reason to, and the [deny rule](#writing-the-env-yourself) closes Claude Code's file tools to it
+as well. See the [threat model](/security/threat-model).
+
+In a project, for everyone who works on it:
+
+```sh
+npx offprompt init
+```
+
+Or for every project you open, as a Claude Code plugin:
+
+```
+/plugin marketplace add offprompt/offprompt
+/plugin install offprompt@offprompt
+```
+
+Then ask the agent for something that needs a key, as in [Your first secret](/first-secret).
+
+## Which to use
+
+- **One key, an agent on your machine, a project you know:** write the `.env` yourself, and add
+  the deny rule.
+- **Keys already in a store, an agent on your machine:** run the agent through the store, and keep
+  commands that print the environment out of the session.
+- **A key the agent finds it needs partway through a task, or an agent in a cloud sandbox:** let
+  it ask, with offprompt.
+- **Not the chat.** A key pasted there stays there; rotate it.

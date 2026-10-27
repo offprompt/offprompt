@@ -78,6 +78,7 @@ export default defineConfig({
     {
       text: 'Guides',
       items: [
+        { text: 'API keys and agents', link: '/guides/claude-code-api-keys' },
         { text: 'The page', link: '/guides/the-page' },
         { text: 'Asking for values', link: '/guides/asking-for-values' },
         { text: 'The fingerprint', link: '/guides/fingerprint' },

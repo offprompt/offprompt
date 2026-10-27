@@ -39,6 +39,7 @@ export const FOOTER: readonly { readonly head: string; readonly links: readonly 
     head: 'Developers',
     links: [
       { label: 'Docs', href: `${DOCS}/introduction` },
+      { label: 'API keys and agents', href: `${DOCS}/guides/claude-code-api-keys` },
       { label: 'GitHub', href: REPO },
       { label: 'npm', href: NPM },
       { label: 'Registry', href: `${DOCS}/reference/providers` },
