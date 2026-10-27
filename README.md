@@ -87,6 +87,19 @@ written, or protect against another program running as you: the
 [threat model](https://docs.offprompt.dev/security/threat-model) says what it covers, and
 [SECURITY.md](SECURITY.md) how to report a problem.
 
+What offprompt runs and reaches:
+
+- **A server on `127.0.0.1`**, which serves the page and takes the write. The page loads nothing
+  from the network.
+- **Your browser**, opened with the platform's URL handler, never a shell: `open` on macOS,
+  `xdg-open` on Linux, `rundll32 url.dll,FileProtocolHandler` on Windows. The agent's host is
+  offered the page first.
+- **In a cloud sandbox, `cloudflared`**, to reach the page through a Cloudflare quick tunnel that
+  carries only ciphertext. It uses a `cloudflared` already on `PATH`, or downloads a pinned
+  release from Cloudflare's GitHub releases once and checks its SHA-256 before running it.
+
+It sends nothing to us, keeps no values once they are written, and collects no telemetry.
+
 ## Development
 
 A pnpm workspace, on Node 22.13 or later. From a checkout, `pnpm install`, then

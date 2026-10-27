@@ -1,14 +1,17 @@
 /**
- * Releases the version packages/offprompt/package.json declares, in three parts that each
- * happen once: the package on npm, a GitHub release with the version's changelog entry, and
- * the server in the MCP Registry. `pending` says which are due, so a run that stopped partway
- * finishes the rest when run again. The release workflow runs it on main, where npm and the
- * registry trust it through GitHub's OIDC, so no token is stored.
+ * Releases the version packages/offprompt/package.json declares, in four parts that each
+ * happen once: the package on npm, a GitHub release with the version's changelog entry, the
+ * server in the MCP Registry, and the package on the plugin branch, which Anthropic's plugin
+ * directory follows. `pending` says which are due, so a run that stopped partway finishes the
+ * rest when run again. The release workflow runs it on main, where npm and the registry trust
+ * it through GitHub's OIDC, so no token is stored.
  *
  *   pending              which parts are due, handed to the workflow's next steps
  *   npm [--dry-run]      assembles the package and publishes it; --dry-run shows what would go
  *   github               opens the GitHub release
  *   wait-for-npm         waits until npm serves the version, which the registry looks up
+ *   plugin [--dry-run]   commits the assembled package to the plugin branch; --dry-run stops
+ *                        before the push
  */
 import { execFile, spawn } from 'node:child_process'
 import { appendFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
@@ -30,6 +33,13 @@ const [command, ...flags] = process.argv.slice(2)
 
 const dryRun = flags.includes('--dry-run')
 
+/**
+ * The branch Anthropic's plugin directory reads offprompt from. The directory reads a plugin's
+ * folder from a GitHub repository, and the server the plugin starts is built, never committed to
+ * main, so this branch holds the package npm has, at its root, one commit for each version.
+ */
+const PLUGIN_BRANCH = 'plugin'
+
 /** How long npm may take to serve a version it has just taken: its registry caches for minutes. */
 const NPM_PATIENCE_MS = 20 * 60_000
 
@@ -42,6 +52,10 @@ const run = (program, args) =>
       code === 0 ? resolve() : reject(new Error(`${program} ${args.join(' ')} exited with ${String(code)}`)),
     )
   })
+
+/** Runs git in the repository, with more of the environment where a step needs it, and gives its output. */
+const git = (args, env = {}) =>
+  promisify(execFile)('git', args, { cwd: root, env: { ...process.env, ...env } }).then(({ stdout }) => stdout.trim())
 
 /** Whether a command succeeds, its output unseen. */
 const succeeds = (program, args) =>
@@ -93,15 +107,28 @@ const inScratch = async step => {
   }
 }
 
+/**
+ * The version the plugin branch holds, read from its plugin.json after fetching the branch to
+ * origin's own ref for it, or undefined while there is no such branch.
+ */
+const onPluginBranch = () =>
+  git(['fetch', '--quiet', 'origin', `+refs/heads/${PLUGIN_BRANCH}:refs/remotes/origin/${PLUGIN_BRANCH}`])
+    .then(() => git(['show', `refs/remotes/origin/${PLUGIN_BRANCH}:.claude-plugin/plugin.json`]))
+    .then(
+      manifest => /** @type {{ version: string }} */ (JSON.parse(manifest)).version,
+      () => undefined,
+    )
+
 const pending = async () => {
-  const [npm, github, registry] = await Promise.all([onNpm(), released(), listed()])
+  const [npm, github, registry, plugin] = await Promise.all([onNpm(), released(), listed(), onPluginBranch()])
   process.stdout.write(
-    `offprompt ${version}: ${npm ? 'on' : 'not on'} npm, ${github ? 'a' : 'no'} GitHub release, ${registry ? 'listed' : 'not listed'} in the MCP Registry\n`,
+    `offprompt ${version}: ${npm ? 'on' : 'not on'} npm, ${github ? 'a' : 'no'} GitHub release, ${registry ? 'listed' : 'not listed'} in the MCP Registry, ${plugin === version ? 'on' : 'not on'} the ${PLUGIN_BRANCH} branch\n`,
   )
   await output('version', version)
   await output('npm', String(!npm))
   await output('github', String(!github))
   await output('registry', String(!registry))
+  await output('plugin', String(plugin !== version))
 }
 
 /**
@@ -160,10 +187,40 @@ const waitForNpm = async (deadline = Date.now() + NPM_PATIENCE_MS) => {
   await waitForNpm(deadline)
 }
 
-const COMMANDS = { pending, npm: publishToNpm, github: openRelease, 'wait-for-npm': () => waitForNpm() }
+/**
+ * Commits the assembled package to the plugin branch, on top of the version before it, and
+ * pushes it. The commit is made from an index of its own, so the checkout is left as it was,
+ * with --force, since the package holds what main ignores, dist among it.
+ */
+const publishPluginBranch = async () => {
+  if ((await onPluginBranch()) === version) throw new Error(`the ${PLUGIN_BRANCH} branch has offprompt ${version} already`)
+  await inScratch(async work => {
+    const assembled = join(work, 'offprompt')
+    await run('pnpm', ['package', assembled])
+    const staged = { GIT_DIR: join(root, '.git'), GIT_WORK_TREE: assembled, GIT_INDEX_FILE: join(work, 'index') }
+    await git(['-C', assembled, 'add', '--all', '--force', '.'], staged)
+    const tree = await git(['write-tree'], staged)
+    const parent = await git(['rev-parse', '--verify', '--quiet', `refs/remotes/origin/${PLUGIN_BRANCH}`]).then(
+      sha => ['-p', sha],
+      () => [],
+    )
+    const commit = await git(['commit-tree', tree, ...parent, '-m', `offprompt ${version}`])
+    process.stdout.write(`${PLUGIN_BRANCH}: offprompt ${version} as ${commit}, the tree of ${assembled}\n`)
+    if (dryRun) process.stdout.write(await git(['ls-tree', '-r', '--name-only', commit]).then(files => `${files}\n`))
+    else await run('git', ['push', 'origin', `${commit}:refs/heads/${PLUGIN_BRANCH}`])
+  })
+}
+
+const COMMANDS = {
+  pending,
+  npm: publishToNpm,
+  github: openRelease,
+  'wait-for-npm': () => waitForNpm(),
+  plugin: publishPluginBranch,
+}
 
 if (command === undefined || !(command in COMMANDS)) {
-  process.stderr.write('usage: node scripts/release.mjs pending | npm [--dry-run] | github | wait-for-npm\n')
+  process.stderr.write('usage: node scripts/release.mjs pending | npm [--dry-run] | github | wait-for-npm | plugin [--dry-run]\n')
   process.exit(1)
 }
 
