@@ -3,12 +3,14 @@ import type { ReactNode } from 'react'
 
 import { FRAME } from '@/components/frame'
 import { Shell } from '@/components/shell'
+import { pageMetadata } from '@/lib/metadata'
 import { REPO } from '@/lib/site'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: '/privacy',
   title: 'Privacy · offprompt',
   description: 'What offprompt, offprompt.dev and docs.offprompt.dev do with your data.',
-}
+})
 
 const Part = ({ title, children }: { readonly title: string; readonly children: ReactNode }) => (
   <section className="flex flex-col gap-3 border-t border-line pt-8">
