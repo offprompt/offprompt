@@ -9,6 +9,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 
 import { DEFAULT_TTL_MS, type RequestedSecret, type SecretRequest } from './core/store.js'
+import { linkFor } from './mcp/links.js'
 import type { AskedSecret } from './mcp/requested.js'
 import { valueFor } from './mcp/resolve.js'
 import { askerFor } from './registry/clients.js'
@@ -201,11 +202,13 @@ const secretsFor = (sample: Sample) =>
   sample.asks.map((ask): RequestedSecret => {
     const value = valueFor(ask)
     if (!value.ok) throw new Error(value.message)
+    const link = linkFor({ name: ask.name, link: ask.link, value: value.value })
     return {
       name: ask.name,
       value: value.value,
       overwrites: sample.file.holds.includes(ask.name),
       ...(ask.caption === undefined ? {} : { caption: ask.caption }),
+      ...(link === undefined ? {} : { link }),
     }
   })
 

@@ -183,6 +183,85 @@ describe('the tool surface', () => {
     expect(description).toContain('none of these')
     expect(description).toContain('`secret: false`')
   })
+
+  it('tells the model when to give a link, and which keys take which parameters from where', async () => {
+    const { client } = await setupTest()
+    const { tools } = await client.listTools()
+    const collect = tools.find(tool => tool.name === 'collect_secret')
+    const schema = JSON.stringify(collect?.inputSchema)
+
+    expect(collect?.description).toContain('Give an entry a `link` when you know where its value is made')
+    expect(collect?.description).toContain('asks the human to confirm its host before it opens')
+    expect(schema).toContain('supabase/secret_key and supabase/publishable_key take `project`, the project ref (20 lowercase letters)')
+    expect(schema).toContain('sentry/auth_token takes `org`, the organization slug')
+    expect(schema).toContain('wrangler.toml')
+  })
+})
+
+describe('the links the agent gives', () => {
+  const REF = 'abcdefghijklmnopqrst'
+
+  it('says which it used, and which it dropped and why, without refusing anything', async () => {
+    const { relayed } = await setupTest()
+    const payload = payloadOf(
+      await relayed({
+        secrets: [
+          { name: 'SUPABASE_SECRET_KEY', provider: 'supabase', link: { project: REF, region: 'eu' } },
+          { name: 'VAULT_TOKEN', link: 'https://vault.acme.internal/ui/tokens/new' },
+          { name: 'SENTRY_AUTH_TOKEN', provider: 'sentry/auth_token', link: { org: 'acme/../admin' } },
+          { name: 'RESEND_API_KEY', provider: 'resend' },
+        ],
+      }),
+    )
+
+    expect(payload.status).toBe('awaiting')
+    expect(payload.links).toEqual([
+      {
+        name: 'SUPABASE_SECRET_KEY',
+        used: 'get_it',
+        url: `https://supabase.com/dashboard/project/${REF}/settings/api-keys`,
+        ignored: ['region'],
+      },
+      { name: 'VAULT_TOKEN', used: 'suggestion', url: 'https://vault.acme.internal/ui/tokens/new' },
+      {
+        name: 'SENTRY_AUTH_TOKEN',
+        dropped: 'org takes letters, digits, ., _ and - only, starting with a letter or a digit, so Get it opens sentry.io/settings/auth-tokens instead',
+      },
+    ])
+    expect(String(payload.note)).toMatch(
+      /The page did not use a link you gave\. SENTRY_AUTH_TOKEN: org takes .* instead\.$/,
+    )
+  })
+
+  it('records them for the page: a filled page, a suggestion, and nothing for one it dropped', async () => {
+    const { collect, opened, lastRequest } = await setupTest({ ttlMs: 200 })
+    const collecting = collect({
+      secrets: [
+        { name: 'SUPABASE_SECRET_KEY', provider: 'supabase', link: { project: REF } },
+        { name: 'VAULT_TOKEN', link: 'https://vault.acme.internal/' },
+      ],
+    })
+    await waitFor(() => opened.length === 1)
+    const [supabase, vault] = lastRequest().secrets
+
+    expect(supabase?.link).toMatchObject({ kind: 'filled' })
+    expect(vault?.link).toEqual({ kind: 'suggested', url: 'https://vault.acme.internal/', host: 'vault.acme.internal' })
+    await collecting
+  })
+
+  it('says nothing of links when none was given', async () => {
+    const { relayed } = await setupTest()
+    const payload = payloadOf(await relayed())
+
+    expect(payload.links).toBeUndefined()
+    expect(String(payload.note)).not.toContain('you gave')
+  })
+
+  it('refuses a link longer than any page where a key is made, before offprompt sees it', async () => {
+    const { collect } = await setupTest()
+    const result = await collect({ secrets: [{ name: 'VAULT_TOKEN', link: `https://vault.acme.internal/${'a'.repeat(2100)}` }] })
+    expect(result.isError).toBe(true)
+  })
 })
 
 describe('collect_secret', () => {

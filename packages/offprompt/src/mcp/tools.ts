@@ -10,9 +10,11 @@ import { keptNames, valuesToWrite } from '../core/values.js'
 import { numbered } from '../core/wording.js'
 import { askerFor } from '../registry/clients.js'
 import { formatIds } from '../registry/formats.js'
-import { providerRefs } from '../registry/registry.js'
+import { providerRefs, templatedPages, type TemplatedPage } from '../registry/registry.js'
+import { PARAM_MAX } from '../registry/template.js'
 import type { LoopbackServer } from '../web/server.js'
 import { unreported, type IdleReport } from './idle.js'
+import { LINK_MAX } from './links.js'
 import type { Presentation, Presenter } from './present.js'
 import type { Whereabouts } from './remote.js'
 import { requestedSecrets } from './requested.js'
@@ -35,6 +37,16 @@ Each entry in \`secrets\` is one key, and says how its value comes to be:
   The page links to providers where the human can create one.
 - none of these — any other value, taken as plain text. A provider's key is still recognised by its usual name.
 Set \`secret: false\` on a value that is not secret, such as MAX_RETRIES, and the page shows it in the clear.
+
+Give an entry a \`link\` when you know where its value is made, so the human lands on the right page:
+- Some provider keys are made on a page that belongs to one account, organisation or project. Give that one's name or ID
+  as parameters, such as \`link: { "project": "abcdefghijklmnopqrst" }\` for a Supabase key, and the page's "Get it"
+  opens it. The \`link\` field lists the keys that take them and where a project keeps each value: read it from there
+  rather than guessing. A parameter that is missing or does not fit leaves "Get it" on the key's usual page.
+- A key no provider issues, such as an internal tool's token, takes the https address where it is made. The page shows it
+  as your suggestion, apart from offprompt's own links, and asks the human to confirm its host before it opens. A
+  provider's key can take one too; it shows under its "Get it", never in its place.
+The result's \`links\` says which links were used, and why any was dropped.
 
 When every key is generated, nothing opens: offprompt writes them and returns. Otherwise it opens a page in the user's
 browser and this call waits there, for up to five minutes, while the human types. It returns once the values have been
@@ -74,6 +86,23 @@ ask them, until the values are written.`
 
 const CANCEL_DESCRIPTION = `Close a collect_secret request that is no longer needed. Anything already typed on the
 page is discarded.`
+
+/** "a, b and c", as a sentence lists them. */
+const inWords = (items: readonly string[]) =>
+  items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1) ?? ''}`
+
+/** One templated page as the agent reads it: which keys link there, and what each parameter is and where it is kept. */
+const pageLine = ({ refs, template }: TemplatedPage) => {
+  const params = Object.entries(template.params).map(
+    ([name, param]) => `\`${name}\`, ${param.label}${param.message === undefined ? '' : ` (${param.message})`}: ${param.found}`,
+  )
+  return `${inWords(refs)} ${refs.length > 1 ? 'take' : 'takes'} ${params.join('; ')}.`
+}
+
+const LINK_DESCRIPTION = [
+  'Where the value is made. Either parameters for the page of a provider key that belongs to one account, organisation or project, read from the project, or an https address for a key no provider issues, shown as your suggestion.',
+  ...templatedPages.map(pageLine),
+].join(' ')
 
 const sinkSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -124,6 +153,10 @@ const secretSchema = z.object({
     .describe(
       'One short line shown under the field, such as where to find the value: "Stripe dashboard → Developers → API keys". Keep it brief.',
     ),
+  link: z
+    .union([z.string().min(1).max(LINK_MAX), z.record(z.string().max(64), z.string().max(PARAM_MAX))])
+    .optional()
+    .describe(LINK_DESCRIPTION),
 })
 
 const collectInput = {
@@ -191,9 +224,23 @@ const statusOutput = {
     .describe('The page the user has to open, while the request is awaiting and the link is yours to pass on.'),
 }
 
+const linkOutput = z.object({
+  name: z.string(),
+  used: z.enum(['get_it', 'suggestion']).optional(),
+  url: z.string().optional(),
+  ignored: z.array(z.string()).optional(),
+  dropped: z.string().optional(),
+})
+
 const collectOutput = {
   ...statusOutput,
   expires_in: z.number(),
+  links: z
+    .array(linkOutput)
+    .optional()
+    .describe(
+      'What became of each link you gave: used as the key\'s "Get it" or shown as your suggestion, with the address the page opens, or dropped, with why.',
+    ),
 }
 
 const sinkReport = (request: SecretRequest) => ({
@@ -204,6 +251,32 @@ const sinkReport = (request: SecretRequest) => ({
 const namesOf = (request: SecretRequest) => request.secrets.map(secret => secret.name)
 
 const listed = (names: readonly string[]) => names.join(', ')
+
+type LinkReport = z.infer<typeof linkOutput>
+
+/** What became of each link the agent gave, reported only when it gave any. */
+const linksOf = (request: SecretRequest) =>
+  request.secrets.flatMap((secret): readonly LinkReport[] => {
+    const { link } = secret
+    if (link === undefined) return []
+    if (link.kind === 'dropped') return [{ name: secret.name, dropped: link.why }]
+    if (link.kind === 'suggested') return [{ name: secret.name, used: 'suggestion', url: link.url }]
+    return [{ name: secret.name, used: 'get_it', url: link.url, ...(link.ignored.length === 0 ? {} : { ignored: [...link.ignored] }) }]
+  })
+
+const linksReport = (request: SecretRequest) => {
+  const links = linksOf(request)
+  return links.length === 0 ? {} : { links }
+}
+
+/**
+ * One line on the links the agent gave, after whatever else the note says, so it learns which
+ * parameters a key takes for next time. Nothing is said when every link was used as given.
+ */
+const linksLine = (request: SecretRequest) => {
+  const dropped = request.secrets.flatMap(secret => (secret.link?.kind === 'dropped' ? [`${secret.name}: ${secret.link.why}`] : []))
+  return dropped.length === 0 ? '' : ` The page did not use ${dropped.length > 1 ? 'some links' : 'a link'} you gave. ${dropped.join('. ')}.`
+}
 
 /** Generated keys the write left alone, reported only when there are any. */
 const keptReport = (request: SecretRequest) => {
@@ -424,8 +497,9 @@ export const registerTools = ({
         ...fileKeysReport(fileKeys),
         ...anywayReport(request),
         sink: sinkReport(request),
-        note: relayed === undefined ? statusNote({ request, fileKeys }) : noteFor(relayed),
+        note: `${relayed === undefined ? statusNote({ request, fileKeys }) : noteFor(relayed)}${linksLine(request)}`,
         ...(relayed === undefined ? {} : { url: relayed.url }),
+        ...linksReport(request),
       },
       lead: headline(request),
     })

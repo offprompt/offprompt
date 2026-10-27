@@ -16,3 +16,9 @@ export const withArticle = (phrase: string) => `${VOWEL_SOUND.test(phrase) ? 'an
 
 /** A count in digits, as a label says it: "5 values". */
 export const numbered = (count: number, noun: string) => `${String(count)} ${noun}${count === 1 ? '' : 's'}`
+
+/** A link read as an address, without the scheme or a trailing slash: dashboard.stripe.com/apikeys. */
+export const addressOf = (url: string) => {
+  const { host, pathname } = new URL(url)
+  return `${host}${pathname === '/' ? '' : pathname.replace(/\/$/, '')}`
+}
