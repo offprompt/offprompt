@@ -1,0 +1,61 @@
+name: Feature request
+description: Something offprompt should do that it does not do yet, or should do differently.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never paste a real secret here. Describe a value's shape instead, or make one up.
+
+        A provider whose keys offprompt should know goes in a [provider request](https://github.com/offprompt/offprompt/issues/new?template=provider_request.yml), and a security problem through the [security policy](https://github.com/offprompt/offprompt/security/policy). [DESIGN.md](https://github.com/offprompt/offprompt/blob/main/DESIGN.md) is the design offprompt implements.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: The parts the change touches.
+      multiple: true
+      options:
+        - The page
+        - The tools and their results
+        - The registry
+        - Where values are written
+        - Cloud sandboxes
+        - Installing, and the agents offprompt sets up
+        - The docs or offprompt.dev
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is missing or hard today, and for whom. What you were doing when you ran into it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: design
+    attributes:
+      label: Why it is this way
+      description: What DESIGN.md or the docs say about how it works now, and anything a change has to keep, such as the threat model. Leave it empty if you don't know.
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What offprompt could do instead. The tool call the agent would make, what the page would show, and what the agent would get back all help.
+    validations:
+      required: true
+
+  - type: textarea
+    id: questions
+    attributes:
+      label: Open questions
+      description: Choices the proposal leaves open, and other ways you considered.
+
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: What shows it is finished, such as behaviour on the page, tests, and the docs that describe it.
