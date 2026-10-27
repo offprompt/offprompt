@@ -58,18 +58,22 @@ jobs:
         if: steps.pending.outputs.npm == 'true'
         run: pnpm release npm
 
+      # npm takes minutes to serve a version it has just taken, and the next two look it up there:
+      # Glama's Auto-Release installs offprompt from npm as soon as the GitHub release appears, and
+      # the registry checks the version on npm.
+      - name: Wait until npm serves it
+        if: steps.pending.outputs.github == 'true' || steps.pending.outputs.registry == 'true'
+        run: pnpm release wait-for-npm
+
       - name: A GitHub release with its changelog entry
         if: steps.pending.outputs.github == 'true'
         run: pnpm release github
         env:
           GH_TOKEN: ${{ github.token }}
 
-      # The registry looks the version up on npm, which takes minutes to serve one it has just
-      # taken.
-      - name: List it in the MCP Registry, once npm serves it
+      - name: List it in the MCP Registry
         if: steps.pending.outputs.registry == 'true'
         run: |
-          pnpm release wait-for-npm
           curl -fsSL https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz \
             | tar -xz mcp-publisher
           ./mcp-publisher login github-oidc
