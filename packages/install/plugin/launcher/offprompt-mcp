@@ -12,7 +12,7 @@ root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 server="$root/dist/mcp.mjs"
 handshake="$root/dist/handshake"
 if [ ! -f "$server" ]; then
-  echo "offprompt: $server is missing. Run 'npx offprompt@latest init -g' to put it back, or in the offprompt repository 'pnpm package <directory>' and install from that directory." >&2
+  echo "offprompt: $server is missing. Reinstall offprompt as https://docs.offprompt.dev/installation says, or in the offprompt repository run 'pnpm package <directory>' and install from that directory." >&2
   exit 1
 fi
 case "$(uname -s 2>/dev/null)" in
