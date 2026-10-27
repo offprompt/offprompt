@@ -255,9 +255,11 @@ The model never carries the URL. The plugin picks the first channel that works:
    until 2026-10-05.
 2. The plugin opens the browser itself with `open`, `xdg-open`, or on Windows
    `rundll32 url.dll,FileProtocolHandler`. This is the v1 default.
-   Claude Code currently rejects URL-mode elicitation
+   Claude Code rejected URL-mode elicitation until 2.1.287
    ([#69555](https://github.com/anthropics/claude-code/issues/69555),
-   [#88075](https://github.com/anthropics/claude-code/issues/88075)).
+   [#88075](https://github.com/anthropics/claude-code/issues/88075)), and since then advertises
+   it to the servers in its MCP configuration
+   ([docs](https://code.claude.com/docs/en/mcp#elicitation-modes-claude-code-declares)).
 3. The URL is returned in the tool result, only when the browser launch fails. The result
    says so, and the transcript exposure is accepted.
 

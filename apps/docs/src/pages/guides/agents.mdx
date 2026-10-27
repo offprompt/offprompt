@@ -29,8 +29,9 @@ In a project, `.mcp.json` declares the server:
 Claude Code asks before it starts a server a project declares; approve it once. With `init -g`
 it gets offprompt as a plugin, through `claude plugin`.
 
-Claude Code starts offprompt in the project's folder, which is where values are written. It does
-not take URL elicitation yet, so offprompt opens your browser itself.
+Claude Code starts offprompt in the project's folder, which is where values are written. Since
+2.1.287 it takes URL elicitation, so offprompt offers the page in Claude Code's own dialog first,
+and opens your browser itself unless you accept the dialog within a second and a half.
 
 ## Codex
 
