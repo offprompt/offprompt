@@ -1,0 +1,216 @@
+---
+description: What MCP elicitation is, what its form and URL modes are for, which hosts support each, and why a secret goes through URL mode.
+---
+
+# MCP elicitation
+
+Elicitation is how an MCP server asks the person for something partway through a call. The
+server sends its request to the host, the program the agent runs in, such as Claude Code or VS
+Code. The host asks the person and sends their answer back to the server. The model is not part
+of the exchange: it sees the tool call it made and, once the server answers, the tool result.
+
+The [MCP specification](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation)
+has two modes. Form mode brings the answer back through the host. URL mode sends the person to a
+page, and what they type there goes from their browser to the server without passing through the
+host. That difference decides which mode a secret may use.
+
+## The two modes
+
+| | Form mode | URL mode |
+| --- | --- | --- |
+| In the spec since | [2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/client/elicitation) | [2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#url-mode-elicitation-requests) |
+| The server sends | A message, and a schema for the answer | A message, and a URL |
+| The host shows | A form it draws from the schema | The URL, and asks before opening it |
+| Comes back through the host | The answers | Whether the person agreed to open it |
+| For | Choices and details that are not secret | Secrets, sign-in, payment |
+
+**Form mode** asks for structured data. The schema is a flat object whose properties are
+strings, numbers, booleans or enums
+([Requested schema](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#requested-schema)),
+and the host draws a field for each. The answers come back in the host's response to the server.
+The spec says so in as many words: "Data is exposed to the client"
+([Elicitation requests](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#elicitation-requests)).
+
+**URL mode** sends a URL instead. The host asks before opening it in the browser, and what the
+person does there is between them and the server: "Data (other than the URL itself) is **not**
+exposed to the client." The host's answer says only whether they agreed to go. An `accept` "does
+not mean that the interaction is complete", and a server can tell the host when it is with
+`notifications/elicitation/complete`
+([Completion notifications](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#completion-notifications-for-url-mode-elicitation)).
+
+In either mode the answer is one of three actions: `accept`, `decline` when the person refuses,
+or `cancel` when they dismiss the request without choosing
+([Response actions](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#response-actions)).
+
+### What a host declares
+
+A host says which modes it takes in the capabilities it sends when it connects:
+
+```json
+{
+  "capabilities": {
+    "elicitation": { "form": {}, "url": {} }
+  }
+}
+```
+
+An empty `"elicitation": {}` means form mode only, and "Servers **MUST NOT** send elicitation
+requests with modes that are not supported by the client"
+([Capabilities](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#capabilities)).
+
+The latest revision,
+[2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation), keeps
+both modes and the rules on secrets below. It changes how a request travels: a host declares its
+capabilities on every request, the server returns the elicitation in the result of the call that
+needs it, and the host retries the call with the answer. The `elicitationId` and the completion
+notification are gone
+([Key changes](https://modelcontextprotocol.io/specification/2026-07-28/changelog)). offprompt
+speaks the revisions up to 2025-11-25, which is what this page describes.
+
+## What the person and the agent see
+
+In form mode the host shows the server's message and the fields. The spec has the host make clear
+which server is asking, let the person review and change their answers before sending them, and
+offer a clear way to decline or cancel
+([User interaction model](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#user-interaction-model)).
+
+In URL mode the host shows the message and the URL, and opens nothing until the person agrees.
+It must show the full URL before they do, and should highlight its domain. It must not fetch the
+URL itself, and it must open it in a way that lets neither the host nor the model see the page or
+what is typed into it
+([Safe URL handling](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#safe-url-handling)).
+Each host words this its own way:
+
+- Claude Code "asks whether to open a link in your browser"
+  ([docs](https://code.claude.com/docs/en/mcp#respond-to-mcp-elicitation-requests)).
+- VS Code, in chat, shows a card titled "Authorization Required", with the message, the URL and
+  a button naming the URL's host
+  ([source](https://github.com/microsoft/vscode/blob/e646868227c3e3a9e3f24277c8c7220be42c0be7/src/vs/workbench/contrib/mcp/browser/mcpElicitationService.ts#L170-L178)).
+- Codex's terminal shows "Action required", the server, the message and the URL, with "Open
+  link", then waits for "I finished"
+  ([source](https://github.com/openai/codex/blob/360319d8dee62d87e2d59fc0c21805d79519cfed/codex-rs/tui/src/bottom_pane/app_link_view.rs#L178-L203)).
+
+In neither mode is the model part of the exchange. It gets the tool result the server returns
+once the request is done, and whatever the server chooses to put in it.
+
+## Why a secret does not go through a form
+
+When elicitation had only the form, the rule was "Servers **MUST NOT** use elicitation to
+request sensitive information"
+([2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/client/elicitation#user-interaction-model)).
+Since 2025-11-25 it names the mode, and the way out
+([User interaction model](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#user-interaction-model)):
+
+> - Servers **MUST NOT** use form mode elicitation to request sensitive information such as
+>   passwords, API keys, access tokens, or payment credentials
+> - Servers **MUST** use URL mode for interactions involving such sensitive information
+
+"Sensitive information" there "refers to secrets and credentials that grant access or authorize
+transactions". A name or an email address is left to the server's judgement.
+
+The reason is the path the value takes. A form's answers pass through the host on their way to
+the server, so anything in the host that logs, records or hooks the exchange has them: Claude
+Code, for one, runs `ElicitationResult` hooks that can read and change the answers before they
+are sent back
+([changelog, 2.1.76](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md#2176)).
+Nor does the schema have a type for a secret, so nothing tells a host to hide what is typed.
+
+URL mode takes the value off that path. It goes from the person's browser to the server, and the
+host only ever has the URL. In the spec's words, the credentials "never pass through the LLM
+context, MCP client or any intermediate MCP servers, reducing the risk of exposure through
+client-side logging or other attack vectors"
+([URL mode for sensitive data](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#url-mode-elicitation-for-sensitive-data)).
+
+In return, the spec asks things of the server
+([Safe URL handling](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#safe-url-handling),
+[Phishing](https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#phishing)):
+
+- The URL carries no credentials or personal details of the person, and does not by itself grant
+  access to anything protected.
+- It uses HTTPS outside development.
+- The server checks who opens it: "The MCP Server **MUST** verify the identity of the user who
+  opens the URL before accepting information." A link shown in one person's host can be passed
+  to someone else.
+
+## Which hosts support it
+
+Checked on October 27, 2026, against each host's own docs, release notes or source:
+
+| Host | Form mode | URL mode | Sources |
+| --- | --- | --- | --- |
+| Claude Code | Since 2.1.76 | Since 2.1.287, for the servers in its MCP configuration, and since 2.1.281 on connections that use 2026-07-28. claude.ai connectors get form mode only | [Docs](https://code.claude.com/docs/en/mcp#elicitation-modes-claude-code-declares), [changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md) |
+| Codex | Since 0.119.0 | Since 0.144.0. The terminal UI shows only `https` links and declines any other. `codex exec` answers every request without showing it | [0.119.0](https://github.com/openai/codex/releases/tag/rust-v0.119.0), [#28772](https://github.com/openai/codex/pull/28772), [terminal UI source](https://github.com/openai/codex/blob/360319d8dee62d87e2d59fc0c21805d79519cfed/codex-rs/tui/src/bottom_pane/app_link_view.rs#L206-L218), [exec source](https://github.com/openai/codex/blob/360319d8dee62d87e2d59fc0c21805d79519cfed/codex-rs/exec/src/lib.rs#L2096-L2111) |
+| Cursor | Since 1.5 | Not documented | [Docs](https://cursor.com/docs/mcp#protocol-and-extension-support), [1.5](https://cursor.com/changelog/1-5) |
+| VS Code | Since 1.102 | Since 1.107 | [1.102](https://code.visualstudio.com/updates/v1_102#_support-for-elicitations), [1.107](https://code.visualstudio.com/updates/v1_107#_support-for-the-latest-mcp-specification) |
+| Pi, through pi-mcp-adapter 3.1.0 | Where Pi can show a dialog | In Pi's terminal UI only | [README](https://github.com/nicobailon/pi-mcp-adapter/blob/v3.1.0/README.md#mcp-elicitation) |
+
+Cursor's docs list elicitation as supported without naming a mode, and its 1.5 notes describe
+requests "defined with JSON schemas", which is form mode. Not in the table, because their own
+sources do not confirm their support: Claude Code's VS Code and JetBrains extensions, Cursor's
+CLI and Cloud Agents, and Codex's IDE extension and app. Other hosts were not checked.
+
+What a host declares, and what it does with a request, can depend on its version, the protocol
+revision it agrees with the server, and whether anyone is at the keyboard. A server learns what
+it may send from the capabilities it is given, and what happened only from the answer.
+
+## How offprompt uses it
+
+offprompt never asks for a value through form mode: you type every value on its own
+[page](/guides/the-page). It uses URL mode to offer that page in the host's own dialog.
+
+### On your own machine
+
+offprompt reads the capabilities the host sent and tries, in order:
+
+1. **The host's URL dialog**, when the host declares URL mode. offprompt sends the page's address
+   on `127.0.0.1` and a message naming the keys, such as "offprompt is collecting
+   RESEND_API_KEY. Open the page to type it." If you accept within a second and a half, the host
+   opens the page.
+2. **Your browser**, opened by offprompt itself, when the dialog did not get you there: you
+   declined or dismissed it, the host answered with an error, or the dialog is still waiting.
+   Some hosts declare URL mode and still never show offprompt's dialog: `codex exec` answers
+   every request without showing it, since nobody is there to see it, and Codex's terminal
+   declines any link that is not `https`, which the local page's is not. In Codex the page opens
+   this way.
+3. **The link in the tool result**, only when the browser cannot be opened. The result says so,
+   and the agent shows you the link.
+
+A dialog offprompt has moved past can stay on screen, and accepting it later opens the same page.
+When the values are written, offprompt sends `notifications/elicitation/complete` for the
+request, which a host can use to close its dialog.
+
+The agent never carries the page's address. Its result says a page is open in your browser and
+not to repeat any URL for it, and once you write, it gets the key names and the
+[fingerprint](/guides/fingerprint), never the values.
+
+### From a sandbox
+
+From a [cloud sandbox](/guides/cloud-sandboxes) offprompt cannot open a browser on your screen,
+so it does not try. The agent always shows you the link, and offprompt offers it in the host's
+dialog as well where the host declares URL mode, since a dialog is not always one you get to
+see. The link reaches the page through a tunnel or your tool's port forwarding, and your
+browser encrypts the values before they leave it.
+
+### Where a host has no URL mode
+
+Nothing changes for you. On your own machine offprompt opens your browser itself, and from a
+sandbox the agent shows you the link. Pi outside its terminal UI is one such host.
+
+### Against what the spec asks
+
+- **The value never passes through the host.** It goes from your browser to offprompt and into
+  the file. The host and the model get the key names and the fingerprint.
+- **The URL carries no value.** A sandbox's link carries a public key after the `#`, which the
+  browser never sends anywhere and which is safe to show. See
+  [Sealed values](/security/sealed-values).
+- **On your machine the page is `http`, on `127.0.0.1`.** Browsers treat the loopback address
+  as secure, and only programs on your machine can reach it. See
+  [The local server](/security/local-server).
+- **offprompt does not identify the person who opens the page.** On your machine only a program
+  there can reach it, at an address with a 128-bit token in it. From a sandbox the link is a
+  bearer link: whoever opens it first within its 30 minutes can submit, which the
+  [threat model](/security/threat-model#from-a-sandbox) accepts.
+
+[Agents](/guides/agents) has how each agent loads offprompt, and
+[How to give Claude Code an API key](/guides/claude-code-api-keys) compares offprompt with the
+other ways to hand an agent a key.
