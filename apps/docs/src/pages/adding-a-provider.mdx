@@ -73,6 +73,32 @@ export const apiKey: Credential = {
 `url` is the page where the key is made. Set `secret: false` on a key meant to be public, such as
 a publishable key.
 
+Where that page belongs to one account, organisation or project, and the provider's own docs or
+source show its address with that one's ID or slug in it, add a `template` too: the same page
+with a parameter in its place. The agent fills it from the project, and `url` stays for when it
+names none.
+
+```ts [providers/supabase/project-page.ts]
+export const projectApiKeys: Template = {
+  url: 'https://supabase.com/dashboard/project/{project}/settings/api-keys',
+  params: {
+    project: {
+      label: 'the project ref',
+      found: 'the subdomain of SUPABASE_URL (https://<ref>.supabase.co), or supabase/.temp/project-ref …',
+      pattern: '^[a-z]{20}$',
+      message: '20 lowercase letters',
+      max: 20,
+    },
+  },
+}
+```
+
+A parameter fills one whole path segment, or one whole label at the start of the host, never the
+query. `label` and `found` tell the agent what the value is and where a project keeps it. Every
+value is held to letters, digits, `.`, `_` and `-` up to `max`; a `pattern`, with the `message`
+that says it, can narrow that. The registry test checks the template's fixed part as it checks
+`url`, and that every parameter has a rule.
+
 Where offprompt's page is shown rather than used, as on these docs, each field holds an example
 made from its rules. Set `example` on a key whose rules cannot produce one that passes, such as
 a Telegram bot token's digits, colon and letters. `examples.test.ts` checks that every key's
