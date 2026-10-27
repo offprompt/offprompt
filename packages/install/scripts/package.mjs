@@ -15,10 +15,14 @@ const LAUNCHER = 'launcher/offprompt-mcp'
 /** Where packages made before kept the launcher, so a directory holding one can be packaged over. */
 const EARLIER_LAUNCHER = 'bin/offprompt-mcp'
 
-/** The plugin's own files: manifests for Claude Code, Codex and Agent Plugins clients, and the launcher. */
+/**
+ * The plugin's own files: manifests for Claude Code, Codex and Agent Plugins clients, the
+ * launcher, and the icon Anthropic's plugin directory lists the plugin with.
+ */
 const PLUGIN = [
   '.claude-plugin/plugin.json',
   '.claude-plugin/marketplace.json',
+  '.claude-plugin/icon.png',
   '.mcp.json',
   '.codex-plugin/plugin.json',
   'plugin.json',
