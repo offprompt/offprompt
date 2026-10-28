@@ -29,8 +29,9 @@ In a project, `.mcp.json` declares the server:
 Claude Code asks before it starts a server a project declares; approve it once. With `init -g`
 it gets offprompt as a plugin, through `claude plugin`.
 
-Claude Code starts offprompt in the project's folder, which is where values are written. It does
-not take URL elicitation yet, so offprompt opens your browser itself.
+Claude Code starts offprompt in the project's folder, which is where values are written. Since
+2.1.287 it takes URL elicitation, so offprompt offers the page in Claude Code's own dialog first,
+and opens your browser itself unless you accept the dialog within a second and a half.
 
 ## Codex
 
@@ -116,7 +117,8 @@ On your own machine the model never carries the page's address. offprompt tries,
 
 1. **URL elicitation**, where the agent's host supports it: the host shows the link in a dialog of
    its own. Only a dialog you accept within a moment counts; offprompt goes on otherwise, since
-   some hosts take the dialog and never show it.
+   some hosts take the dialog and never show it. [MCP elicitation](/guides/mcp-elicitation) has
+   which hosts support it, and why a secret goes through a link and not a form.
 2. **Opening your browser** itself, with `open` on macOS, `xdg-open` on Linux, or
    `rundll32 url.dll,FileProtocolHandler` on Windows.
 3. **The link in the tool result**, only when the browser cannot be opened. The agent shows it to
