@@ -32,8 +32,12 @@ reason to.
 - **A lookalike page from a poisoned prompt.** On your own machine offprompt offers the page in
   the host's own URL dialog first, then opens your browser. It hands the agent a link only when
   neither works, and says why, so an agent passing you a link otherwise is the case to distrust.
-- **A phishing link in the agent's reason.** The page shows the agent's links as text. The only
-  clickable links come from offprompt's registry, on each provider's own domains.
+- **A phishing link in the agent's reason.** The page shows a link in the reason as text. The
+  links that open at a click come from offprompt's registry, on each provider's own domains.
+- **A lookalike page offered as where a key is made.** An agent's parameters only fill one part
+  of a registry address whose host stays on the provider's domains. An address of the agent's
+  own is marked as its suggestion, never drawn as **Get it**, and opens only from a box that
+  names its whole host and says offprompt has not verified it. Reading that host is yours to do.
 - **Another tab reaching the local server.** The page's server checks the `Host`, refuses a
   request the browser marks as coming from another site, serves nothing without the request's
   128-bit token in the path, and takes a write only with a nonce from the page. See

@@ -305,8 +305,35 @@ const regenerate = (button: HTMLButtonElement) => {
   if (button.hidden) field.closest('.input')?.querySelector<HTMLButtonElement>('[data-regenerate]')?.focus()
 }
 
+/** A click on the backdrop lands on the box itself, outside the rectangle it draws. */
+const outside = ({ box, event }: { box: HTMLDialogElement; event: MouseEvent }) => {
+  const drawn = box.getBoundingClientRect()
+  return event.clientX < drawn.left || event.clientX > drawn.right || event.clientY < drawn.top || event.clientY > drawn.bottom
+}
+
+/**
+ * The agent's own link opens a box that names its host before anything opens. The box's link
+ * opens in a new tab and closes the box behind it; Cancel, Escape and a click outside close
+ * it. Says whether the click was about such a link.
+ */
+const onSuggested = (event: MouseEvent) => {
+  const target = event.target instanceof Element ? event.target : null
+  if (target === null) return false
+  const opener = target.closest<HTMLElement>('[data-suggested]')
+  if (opener !== null) {
+    const box = document.getElementById(opener.dataset.suggested ?? '')
+    if (box instanceof HTMLDialogElement) box.showModal()
+    return true
+  }
+  const box = target.closest('dialog')
+  if (box === null) return false
+  if (target.closest('[data-dismiss]') !== null || (target === box && outside({ box, event }))) box.close()
+  return true
+}
+
 /** The buttons inside the page: a field's own eye, Generate and Regenerate, Trim, and Undo. */
 const onClick = (event: MouseEvent) => {
+  if (onSuggested(event)) return
   const button = event.target instanceof Element ? event.target.closest('button') : null
   if (button === null) return
   if (button.hasAttribute('data-reveal')) toggleReveal(button)
@@ -547,6 +574,8 @@ const write = async () => {
  */
 const onKeyDown = (event: KeyboardEvent) => {
   if (event.key !== 'Enter' || event.isComposing || event.keyCode === 229) return
+  // A box asking about the agent's link is open: Enter is for its buttons, never a write.
+  if (document.querySelector('dialog[open]') !== null) return
   const target = event.target
   const fromField = target instanceof HTMLTextAreaElement && isSingleLine(target)
   if (!fromField && !event.metaKey && !event.ctrlKey) return

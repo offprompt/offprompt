@@ -32,6 +32,21 @@ export type TypedValue = {
 /** A value offprompt makes from random bytes at write time, which no one ever sees. */
 export type GeneratedValue = { readonly kind: 'generated'; readonly bytes: number; readonly encoding: Encoding }
 
+/**
+ * What became of the link the agent gave a key. A filled template is the key's own "Get it";
+ * an address of the agent's own is shown as its suggestion, beside "Get it" and never in its
+ * place; a link that could not be used is dropped, and the key keeps its usual page.
+ */
+export type LinkOutcome =
+  | {
+      readonly kind: 'filled'
+      readonly url: string
+      /** Parameters the agent gave that the key's page does not take. */
+      readonly ignored: readonly string[]
+    }
+  | { readonly kind: 'suggested'; readonly url: string; readonly host: string }
+  | { readonly kind: 'dropped'; readonly why: string }
+
 /** One key the agent asked for, and how its value comes to be. */
 export type RequestedSecret = {
   readonly name: string
@@ -40,6 +55,8 @@ export type RequestedSecret = {
   readonly overwrites: boolean
   /** A short line from the agent shown under the field, such as where to find the value. */
   readonly caption?: string
+  /** What became of the link the agent gave it, when it gave one. */
+  readonly link?: LinkOutcome
 }
 
 /** Everything the form renders and the POST handler writes through. */

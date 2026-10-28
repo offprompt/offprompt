@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import { failures } from '../../checks.js'
+import { fill } from '../../template.js'
 import { authToken } from './auth-token.js'
 import { dsn } from './dsn.js'
+import { sentry } from './provider.js'
 
 const TOKEN = 'a sntrys_ or sntryu_ token, or an older 64-character hex token'
 
@@ -39,5 +41,18 @@ describe('Sentry DSN', () => {
     expect(failures(dsn.rules, `sntrys_${'a'.repeat(120)}`)).toEqual([URL_LINE, DSN_LINE])
     expect(failures(dsn.rules, 'my-project')).toEqual([URL_LINE, DSN_LINE])
     expect(failures(dsn.rules, 'https://sentry.io/settings/projects/')).toEqual([DSN_LINE])
+  })
+})
+
+describe("the auth token's page", () => {
+  it("opens the organization's tokens, by the slug the agent names", () => {
+    const template = authToken.template
+    expect(template).toBeDefined()
+    if (template === undefined) return
+    expect(fill({ template, values: { org: 'acme-inc' }, domains: sentry.domains })).toEqual({
+      ok: true,
+      value: { url: 'https://sentry.io/settings/acme-inc/auth-tokens/', ignored: [] },
+    })
+    expect(fill({ template, values: { org: 'acme/../admin' }, domains: sentry.domains }).ok).toBe(false)
   })
 })
