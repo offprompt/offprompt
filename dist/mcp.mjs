@@ -4003,11 +4003,11 @@ var require_fast_uri = __commonJS({
     var URI_PARSE = /^(?:([^#/:?]+):)?(?:\/\/((?:([^#/?@]*)@)?(\[[^#/?\]]+\]|[^#/:?]*)(?::(\d*))?))?([^#?]*)(?:\?([^#]*))?(?:#((?:.|[\n\r])*))?/u;
     var AUTHORITY_PREFIX = /^(?:[^#/:?]+:)?\/\/([^/?#]*)/;
     var AUTHORITY_INTRODUCER_REGION = /^(?:[^#/:?]+:)?([/\\\t\n\r]*)/;
-    function getParseError(parsed, matches) {
-      if (matches[2] !== void 0 && parsed.path && parsed.path[0] !== "/") {
+    function getParseError(parsed3, matches) {
+      if (matches[2] !== void 0 && parsed3.path && parsed3.path[0] !== "/") {
         return 'URI path must start with "/" when authority is present.';
       }
-      if (typeof parsed.port === "number" && (parsed.port < 0 || parsed.port > 65535)) {
+      if (typeof parsed3.port === "number" && (parsed3.port < 0 || parsed3.port > 65535)) {
         return "URI port is malformed.";
       }
       return void 0;
@@ -4030,12 +4030,12 @@ var require_fast_uri = __commonJS({
       const host = matches[4];
       return hasMalformedPercentEncoding(matches[3]) || host !== void 0 && !isIPLiteral(host) && hasMalformedPercentEncoding(host) || hasMalformedPercentEncoding(matches[6]) || hasMalformedPercentEncoding(matches[7]) || hasMalformedPercentEncoding(matches[8]);
     }
-    function canonicalizeHost(parsed, options, schemeHandler, isIP) {
-      if (!options.unicodeSupport && (!schemeHandler || !schemeHandler.unicodeSupport) && parsed.host && !isIPLiteral(parsed.host) && (options.domainHost || schemeHandler && schemeHandler.domainHost) && isIP === false && nonSimpleDomain(parsed.host)) {
+    function canonicalizeHost(parsed3, options, schemeHandler, isIP) {
+      if (!options.unicodeSupport && (!schemeHandler || !schemeHandler.unicodeSupport) && parsed3.host && !isIPLiteral(parsed3.host) && (options.domainHost || schemeHandler && schemeHandler.domainHost) && isIP === false && nonSimpleDomain(parsed3.host)) {
         try {
-          parsed.host = new URL("http://" + parsed.host).hostname;
+          parsed3.host = new URL("http://" + parsed3.host).hostname;
         } catch (e) {
-          parsed.error = parsed.error || "Host's domain name can not be converted to ASCII: " + e;
+          parsed3.error = parsed3.error || "Host's domain name can not be converted to ASCII: " + e;
           return true;
         }
       }
@@ -4043,7 +4043,7 @@ var require_fast_uri = __commonJS({
     }
     function parseWithStatus(uri, opts) {
       const options = Object.assign({}, opts);
-      const parsed = {
+      const parsed3 = {
         scheme: void 0,
         userinfo: void 0,
         host: "",
@@ -4068,7 +4068,7 @@ var require_fast_uri = __commonJS({
       }
       const authorityMatch = uri.match(AUTHORITY_PREFIX);
       if (authorityMatch !== null && authorityMatch[1].indexOf("\\") !== -1) {
-        parsed.error = "URI authority must not contain a literal backslash.";
+        parsed3.error = "URI authority must not contain a literal backslash.";
         malformedAuthorityOrPort = true;
       }
       const introducerMatch = uri.match(AUTHORITY_INTRODUCER_REGION);
@@ -4077,105 +4077,105 @@ var require_fast_uri = __commonJS({
         const normalizedRegion = region.replace(/[\t\n\r]/g, "");
         if (normalizedRegion.length >= 2) {
           if (normalizedRegion.slice(0, 2) !== "//") {
-            parsed.error = parsed.error || "URI authority must not contain a literal backslash.";
+            parsed3.error = parsed3.error || "URI authority must not contain a literal backslash.";
             malformedAuthorityOrPort = true;
           } else if (region.length !== normalizedRegion.length) {
-            parsed.error = parsed.error || "URI authority introducer must not contain whitespace.";
+            parsed3.error = parsed3.error || "URI authority introducer must not contain whitespace.";
             malformedAuthorityOrPort = true;
           }
         }
       }
       const matches = uri.match(URI_PARSE);
       if (matches) {
-        parsed.scheme = matches[1];
-        parsed.userinfo = matches[3];
-        parsed.host = matches[4];
-        parsed.port = parseInt(matches[5], 10);
-        parsed.path = matches[6] || "";
-        parsed.query = matches[7];
-        parsed.fragment = matches[8];
-        if (parsed.scheme !== void 0) {
-          const decodedScheme = unescape(parsed.scheme);
+        parsed3.scheme = matches[1];
+        parsed3.userinfo = matches[3];
+        parsed3.host = matches[4];
+        parsed3.port = parseInt(matches[5], 10);
+        parsed3.path = matches[6] || "";
+        parsed3.query = matches[7];
+        parsed3.fragment = matches[8];
+        if (parsed3.scheme !== void 0) {
+          const decodedScheme = unescape(parsed3.scheme);
           if (VALID_SCHEME.test(decodedScheme)) {
-            parsed.scheme = decodedScheme.toLowerCase();
+            parsed3.scheme = decodedScheme.toLowerCase();
           } else {
-            parsed.error = parsed.error || MALFORMED_SCHEME_ERROR;
+            parsed3.error = parsed3.error || MALFORMED_SCHEME_ERROR;
             malformedScheme = true;
           }
         }
         malformedPercentEncoding = hasMalformedComponentPercentEncoding(matches);
         if (malformedPercentEncoding) {
-          parsed.error = parsed.error || "URI contains malformed percent-encoding.";
+          parsed3.error = parsed3.error || "URI contains malformed percent-encoding.";
         }
-        if (isNaN(parsed.port)) {
-          parsed.port = matches[5];
+        if (isNaN(parsed3.port)) {
+          parsed3.port = matches[5];
         }
-        const parseError = getParseError(parsed, matches);
+        const parseError = getParseError(parsed3, matches);
         if (parseError !== void 0) {
-          parsed.error = parsed.error || parseError;
+          parsed3.error = parsed3.error || parseError;
           malformedAuthorityOrPort = true;
         }
-        if (parsed.host) {
-          const ipv4result = isIPv4(parsed.host);
+        if (parsed3.host) {
+          const ipv4result = isIPv4(parsed3.host);
           if (ipv4result === false) {
-            const bracketedIPLiteral = isIPLiteral(parsed.host);
-            const hasIPLiteralBracket = parsed.host.indexOf("[") !== -1 || parsed.host.indexOf("]") !== -1;
-            const ipv6result = normalizeIPv6(parsed.host);
+            const bracketedIPLiteral = isIPLiteral(parsed3.host);
+            const hasIPLiteralBracket = parsed3.host.indexOf("[") !== -1 || parsed3.host.indexOf("]") !== -1;
+            const ipv6result = normalizeIPv6(parsed3.host);
             isIP = ipv6result.isIPV6 || ipv6result.isIPVFuture === true;
             malformedIPLiteral = hasIPLiteralBracket && (!bracketedIPLiteral || ipv6result.error === true);
-            parsed.host = isIP ? ipv6result.host : ipv6result.host.toLowerCase();
+            parsed3.host = isIP ? ipv6result.host : ipv6result.host.toLowerCase();
             if (malformedIPLiteral) {
-              parsed.error = parsed.error || "URI host is malformed.";
+              parsed3.error = parsed3.error || "URI host is malformed.";
               malformedAuthorityOrPort = true;
             }
           } else {
             isIP = true;
           }
         }
-        if (parsed.scheme === void 0 && parsed.userinfo === void 0 && parsed.host === void 0 && parsed.port === void 0 && parsed.query === void 0 && !parsed.path) {
-          parsed.reference = "same-document";
-        } else if (parsed.scheme === void 0) {
-          parsed.reference = "relative";
-        } else if (parsed.fragment === void 0) {
-          parsed.reference = "absolute";
+        if (parsed3.scheme === void 0 && parsed3.userinfo === void 0 && parsed3.host === void 0 && parsed3.port === void 0 && parsed3.query === void 0 && !parsed3.path) {
+          parsed3.reference = "same-document";
+        } else if (parsed3.scheme === void 0) {
+          parsed3.reference = "relative";
+        } else if (parsed3.fragment === void 0) {
+          parsed3.reference = "absolute";
         } else {
-          parsed.reference = "uri";
+          parsed3.reference = "uri";
         }
-        if (options.reference && options.reference !== "suffix" && options.reference !== parsed.reference) {
-          parsed.error = parsed.error || "URI is not a " + options.reference + " reference.";
+        if (options.reference && options.reference !== "suffix" && options.reference !== parsed3.reference) {
+          parsed3.error = parsed3.error || "URI is not a " + options.reference + " reference.";
         }
-        const schemeHandler = getSchemeHandler(options.scheme || parsed.scheme);
+        const schemeHandler = getSchemeHandler(options.scheme || parsed3.scheme);
         if (!malformedIPLiteral) {
-          malformedHost = canonicalizeHost(parsed, options, schemeHandler, isIP);
+          malformedHost = canonicalizeHost(parsed3, options, schemeHandler, isIP);
         }
-        if (uri.indexOf("%") !== -1 && parsed.host !== void 0 && !malformedIPLiteral) {
-          let host = isIP ? parsed.host : normalizePercentEncoding(parsed.host, true);
+        if (uri.indexOf("%") !== -1 && parsed3.host !== void 0 && !malformedIPLiteral) {
+          let host = isIP ? parsed3.host : normalizePercentEncoding(parsed3.host, true);
           if (!isIP) {
             host = normalizePercentEncoding(host.toLowerCase());
           }
-          parsed.host = reescapeHostDelimiters(host, isIP);
+          parsed3.host = reescapeHostDelimiters(host, isIP);
         }
         if (!schemeHandler || schemeHandler && !schemeHandler.skipNormalize) {
-          if (parsed.path) {
-            parsed.path = normalizePathEncoding(parsed.path);
+          if (parsed3.path) {
+            parsed3.path = normalizePathEncoding(parsed3.path);
           }
-          if (parsed.query) {
-            parsed.query = normalizeQueryFragmentEncoding(parsed.query);
+          if (parsed3.query) {
+            parsed3.query = normalizeQueryFragmentEncoding(parsed3.query);
           }
-          if (parsed.fragment) {
-            parsed.fragment = normalizeQueryFragmentEncoding(parsed.fragment);
+          if (parsed3.fragment) {
+            parsed3.fragment = normalizeQueryFragmentEncoding(parsed3.fragment);
           }
         }
         if (schemeHandler && schemeHandler.parse) {
-          schemeHandler.parse(parsed, options);
-          if (schemeHandler === SCHEMES.urn && parsed.nid === void 0) {
+          schemeHandler.parse(parsed3, options);
+          if (schemeHandler === SCHEMES.urn && parsed3.nid === void 0) {
             malformedSchemeSpecific = true;
           }
         }
       } else {
-        parsed.error = parsed.error || "URI can not be parsed.";
+        parsed3.error = parsed3.error || "URI can not be parsed.";
       }
-      return { parsed, malformedAuthorityOrPort, malformedPercentEncoding, malformedSchemeSpecific, malformedHost, malformedScheme };
+      return { parsed: parsed3, malformedAuthorityOrPort, malformedPercentEncoding, malformedSchemeSpecific, malformedHost, malformedScheme };
     }
     function parse4(uri, opts) {
       return parseWithStatus(uri, opts).parsed;
@@ -4184,9 +4184,9 @@ var require_fast_uri = __commonJS({
       return normalizeStringWithStatus(uri, opts).normalized;
     }
     function normalizeStringWithStatus(uri, opts) {
-      const { parsed, malformedAuthorityOrPort, malformedPercentEncoding, malformedSchemeSpecific, malformedHost, malformedScheme } = parseWithStatus(uri, opts);
+      const { parsed: parsed3, malformedAuthorityOrPort, malformedPercentEncoding, malformedSchemeSpecific, malformedHost, malformedScheme } = parseWithStatus(uri, opts);
       return {
-        normalized: malformedAuthorityOrPort || malformedPercentEncoding || malformedSchemeSpecific || malformedHost || malformedScheme ? uri : serialize(parsed, opts),
+        normalized: malformedAuthorityOrPort || malformedPercentEncoding || malformedSchemeSpecific || malformedHost || malformedScheme ? uri : serialize(parsed3, opts),
         malformedAuthorityOrPort,
         malformedPercentEncoding,
         malformedSchemeSpecific,
@@ -21572,8 +21572,8 @@ var Protocol = class {
     const method = getMethodLiteral(requestSchema);
     this.assertRequestHandlerCapability(method);
     this._requestHandlers.set(method, (request, extra) => {
-      const parsed = parseWithCompat(requestSchema, request);
-      return Promise.resolve(handler(parsed, extra));
+      const parsed3 = parseWithCompat(requestSchema, request);
+      return Promise.resolve(handler(parsed3, extra));
     });
   }
   /**
@@ -21598,8 +21598,8 @@ var Protocol = class {
   setNotificationHandler(notificationSchema, handler) {
     const method = getMethodLiteral(notificationSchema);
     this._notificationHandlers.set(method, (notification) => {
-      const parsed = parseWithCompat(notificationSchema, notification);
-      return Promise.resolve(handler(parsed));
+      const parsed3 = parseWithCompat(notificationSchema, notification);
+      return Promise.resolve(handler(parsed3));
     });
   }
   /**
@@ -23677,7 +23677,7 @@ var createRequestStore = ({
 };
 
 // src/version.ts
-var VERSION = "0.2.0";
+var VERSION = "0.3.0";
 
 // src/web/server.ts
 import { randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
@@ -23777,14 +23777,14 @@ var upsertDotenv = ({
     return ok({ contents: `${[...lines, `${name}=${rendered.value}`].join("\n")}
 `, overwrote: false });
   }
-  const dropped = new Set(
+  const dropped2 = new Set(
     [first, ...rest].flatMap(
       (entry) => Array.from({ length: entry.lastLine - entry.firstLine + 1 }, (_, offset) => entry.firstLine + offset)
     )
   );
   const kept = lines.flatMap((line, index) => {
     if (index === first.firstLine) return [`${first.prefix}${rendered.value}`];
-    return dropped.has(index) ? [] : [line];
+    return dropped2.has(index) ? [] : [line];
   });
   return ok({ contents: `${kept.join("\n")}
 `, overwrote: true });
@@ -23871,6 +23871,10 @@ var inSentence = (label) => /^[A-Z][A-Z]/.test(label) ? label : `${label.charAt(
 var VOWEL_SOUND = /^(?:[aeio]|u(?:p|m|n(?!i))|8|1[18](?!\d))/i;
 var withArticle = (phrase) => `${VOWEL_SOUND.test(phrase) ? "an" : "a"} ${phrase}`;
 var numbered = (count, noun) => `${String(count)} ${noun}${count === 1 ? "" : "s"}`;
+var addressOf = (url2) => {
+  const { host, pathname } = new URL(url2);
+  return `${host}${pathname === "/" ? "" : pathname.replace(/\/$/, "")}`;
+};
 
 // src/core/generated.ts
 var ENCODINGS = ["base64url", "base64", "hex"];
@@ -24031,14 +24035,14 @@ var CURVE = { name: "ECDH", namedCurve: "P-256" };
 var HKDF_INFO = "offprompt/v1/seal";
 var utf8 = (text) => new TextEncoder().encode(text);
 var toBase64Url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-var fromBase64Url = (encoded) => {
-  if (!/^[A-Za-z0-9_-]*$/.test(encoded)) throw new Error("not base64url");
-  const binary = atob(encoded.replace(/-/g, "+").replace(/_/g, "/"));
+var fromBase64Url = (encoded2) => {
+  if (!/^[A-Za-z0-9_-]*$/.test(encoded2)) throw new Error("not base64url");
+  const binary = atob(encoded2.replace(/-/g, "+").replace(/_/g, "/"));
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 };
 var fromHex = (hex2) => Uint8Array.from(hex2.match(/../g) ?? [], (pair) => Number.parseInt(pair, 16));
 var additionalData = ({ token: token2, nonce }) => utf8(`offprompt/${SEAL_VERSION}|${token2}|${nonce}`);
-var importPublicKey = async (encoded) => crypto.subtle.importKey("raw", fromBase64Url(encoded), CURVE, false, []);
+var importPublicKey = async (encoded2) => crypto.subtle.importKey("raw", fromBase64Url(encoded2), CURVE, false, []);
 var aesKeyFrom = async ({
   privateKey,
   publicKey: publicKey2,
@@ -24528,6 +24532,36 @@ var RULES = `
   .get { flex: none; text-decoration: none; }
   .get:hover span { text-decoration: underline; text-underline-offset: 3px; }
   .get .icon { width: 14px; height: 14px; }
+  /* The agent's own link has a line of its own under "Get it", on the same side, so "Get it" never moves. */
+  .field-head:has(.suggestion) { display: grid; grid-template-columns: minmax(0, 1fr) auto; row-gap: 8px; }
+  .suggestion { display: flex; grid-column: 1 / -1; justify-self: end; min-width: 0; max-width: 100%; }
+  .suggested { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-width: 0; max-width: 100%;
+               margin: 0; padding: 2px 10px 2px 8px; font: 12.5px/18px var(--sans); color: var(--warn-ink); text-align: left;
+               background: var(--warn-bg); border: 1px dashed #DDBB6E; border-radius: 9px; }
+  .suggested > span { white-space: nowrap; }
+  button.suggested { cursor: pointer; }
+  button.suggested:hover { border-style: solid; }
+  button.suggested:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .suggested .icon { width: 13px; height: 13px; color: var(--warn); }
+  .suggested-host { font: 500 12px/18px var(--mono); color: var(--ink); overflow-wrap: anywhere; }
+  dialog.confirm { width: min(440px, 100% - 32px); max-width: none; padding: 24px; border: 1px solid var(--line);
+                   border-radius: 16px; background: var(--surface); color: var(--ink); box-shadow: 0 24px 56px #12332A33; }
+  dialog.confirm[open] { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+  dialog.confirm::backdrop { background: #12332A40; }
+  .confirm-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+                  border-radius: 12px; background: var(--warn-bg); color: var(--warn); }
+  .confirm-icon .icon { width: 20px; height: 20px; }
+  .confirm-title { margin: 0; font-size: 18px; line-height: 25px; font-weight: 500; overflow-wrap: anywhere; }
+  .confirm-title strong { font: 600 16px/25px var(--mono); }
+  .confirm-said { font-size: 13.5px; line-height: 20px; color: var(--ink-2); }
+  .confirm-url { display: block; align-self: stretch; padding: 8px 10px; border-radius: 8px; background: var(--sunken);
+                 font-size: 12px; line-height: 18px; color: var(--ink-2); word-break: break-all; }
+  .confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-self: stretch; margin-top: 4px; }
+  .confirm-open { display: inline-flex; align-items: center; gap: 7px; min-width: 0; padding: 8px 12px; font: 500 13px var(--sans);
+                  color: #fff; text-decoration: none; overflow-wrap: anywhere; background: var(--brand); border-radius: 8px; }
+  .confirm-open:hover { background: var(--brand-2); }
+  .confirm-open:focus-visible, .confirm .secondary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .confirm-open .icon { width: 14px; height: 14px; }
   .caption { font-size: 13px; line-height: 18px; color: var(--ink-2); }
 
   .input { display: flex; align-items: center; gap: 8px; padding: 0 12px 0 14px; background: var(--surface);
@@ -24783,6 +24817,8 @@ var RULES = `
     .emoji { flex-wrap: wrap; justify-content: center; gap: 8px; }
     .emoji .glyph { width: 56px; height: 56px; font-size: 30px; }
     .fingerprint { padding: 20px 16px; }
+    dialog.confirm { padding: 20px; }
+    .confirm-actions > * { flex: 1 1 auto; justify-content: center; }
   }
 `;
 var STYLES = `${fontFaces}
@@ -24822,7 +24858,7 @@ ${script === "" ? "" : `<script nonce="${escapeHtml(cspNonce)}">${script}</scrip
 </body>
 </html>
 `;
-var logoSvg = ({ logo: logo55, className, fill }) => `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="${escapeHtml(fill)}"${logo55.evenOdd === true ? ' fill-rule="evenodd"' : ""} d="${escapeHtml(logo55.path)}"/></svg>`;
+var logoSvg = ({ logo: logo55, className, fill: fill2 }) => `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="${escapeHtml(fill2)}"${logo55.evenOdd === true ? ' fill-rule="evenodd"' : ""} d="${escapeHtml(logo55.path)}"/></svg>`;
 var inlineLogo = (logo55) => logoSvg({ logo: logo55, className: "logo", fill: "currentColor" });
 var logoTile = ({ name, logo: logo55, color }) => {
   if (logo55 === void 0) return `<span class="tile initial" aria-hidden="true">${escapeHtml(name.charAt(0))}</span>`;
@@ -25185,12 +25221,27 @@ var logo6 = {
   path: "M16.5088 16.8447c.1475-.5068.0908-.9707-.1553-1.3154-.2246-.3164-.6045-.499-1.0615-.5205l-8.6592-.1123a.1559.1559 0 0 1-.1333-.0713c-.0283-.042-.0351-.0986-.021-.1553.0278-.084.1123-.1484.2036-.1562l8.7359-.1123c1.0351-.0489 2.1601-.8868 2.5537-1.9136l.499-1.3013c.0215-.0561.0293-.1128.0147-.168-.5625-2.5463-2.835-4.4453-5.5499-4.4453-2.5039 0-4.6284 1.6177-5.3876 3.8614-.4927-.3658-1.1187-.5625-1.794-.499-1.2026.119-2.1665 1.083-2.2861 2.2856-.0283.31-.0069.6128.0635.894C1.5683 13.171 0 14.7754 0 16.752c0 .1748.0142.3515.0352.5273.0141.083.0844.1475.1689.1475h15.9814c.0909 0 .1758-.0645.2032-.1553l.12-.4268zm2.7568-5.5634c-.0771 0-.1611 0-.2383.0112-.0566 0-.1054.0415-.127.0976l-.3378 1.1744c-.1475.5068-.0918.9707.1543 1.3164.2256.3164.6055.498 1.0625.5195l1.8437.1133c.0557 0 .1055.0263.1329.0703.0283.043.0351.1074.0214.1562-.0283.084-.1132.1485-.204.1553l-1.921.1123c-1.041.0488-2.1582.8867-2.5527 1.914l-.1406.3585c-.0283.0713.0215.1416.0986.1416h6.5977c.0771 0 .1474-.0489.169-.126.1122-.4082.1757-.837.1757-1.2803 0-2.6025-2.125-4.727-4.7344-4.727"
 };
 
+// src/registry/providers/cloudflare/r2-tokens-page.ts
+var r2TokensPage = {
+  url: "https://dash.cloudflare.com/{account}/r2/api-tokens",
+  params: {
+    account: {
+      label: "the account ID",
+      found: "account_id in wrangler.toml or wrangler.jsonc, or CLOUDFLARE_ACCOUNT_ID",
+      pattern: "^[0-9a-fA-F]{32}$",
+      message: "32 hexadecimal digits",
+      max: 32
+    }
+  }
+};
+
 // src/registry/providers/cloudflare/r2-access-key-id.ts
 var r2AccessKeyId = {
   id: "r2_access_key_id",
   label: "R2 access key ID",
   names: ["R2_ACCESS_KEY_ID"],
   url: "https://dash.cloudflare.com/?to=/:account/r2/overview",
+  template: r2TokensPage,
   rules: [
     { kind: "length", min: 32, max: 32, message: "32 characters" },
     { kind: "charset", pattern: "^[0-9a-fA-F]*$", message: "hexadecimal characters only, 0-9 and a-f" }
@@ -25203,6 +25254,7 @@ var r2SecretAccessKey = {
   label: "R2 secret access key",
   names: ["R2_SECRET_ACCESS_KEY"],
   url: "https://dash.cloudflare.com/?to=/:account/r2/overview",
+  template: r2TokensPage,
   rules: [
     { kind: "length", min: 64, max: 64, message: "64 characters" },
     { kind: "charset", pattern: "^[0-9a-fA-F]*$", message: "hexadecimal characters only, 0-9 and a-f" }
@@ -26849,6 +26901,18 @@ var authToken = {
   label: "Auth token",
   names: ["SENTRY_AUTH_TOKEN"],
   url: "https://sentry.io/settings/auth-tokens/",
+  // Sentry's docs link a signed-in reader to their organization's tokens this way, and say
+  // the slug is the part of the dashboard's address before .sentry.io.
+  template: {
+    url: "https://sentry.io/settings/{org}/auth-tokens/",
+    params: {
+      org: {
+        label: "the organization slug",
+        found: "org under [defaults] in .sentryclirc, defaults.org in sentry.properties, SENTRY_ORG, or the part before .sentry.io in its dashboard address",
+        max: 64
+      }
+    }
+  },
   placeholder: "sntrys_\u2026",
   rules: [
     {
@@ -27091,12 +27155,27 @@ var logo47 = {
   path: "M11.9 1.036c-.015-.986-1.26-1.41-1.874-.637L.764 12.05C-.33 13.427.65 15.455 2.409 15.455h9.579l.113 7.51c.014.985 1.259 1.408 1.873.636l9.262-11.653c1.093-1.375.113-3.403-1.645-3.403h-9.642z"
 };
 
+// src/registry/providers/supabase/project-page.ts
+var projectApiKeys = {
+  url: "https://supabase.com/dashboard/project/{project}/settings/api-keys",
+  params: {
+    project: {
+      label: "the project ref",
+      found: "the subdomain of SUPABASE_URL (https://<ref>.supabase.co), or supabase/.temp/project-ref once supabase link has run. The project_id at the top of supabase/config.toml is a local name, not the ref",
+      pattern: "^[a-z]{20}$",
+      message: "20 lowercase letters",
+      max: 20
+    }
+  }
+};
+
 // src/registry/providers/supabase/publishable-key.ts
 var publishableKey3 = {
   id: "publishable_key",
   label: "Publishable key",
   names: ["SUPABASE_PUBLISHABLE_KEY", "SUPABASE_ANON_KEY"],
   url: "https://supabase.com/dashboard/project/_/settings/api-keys",
+  template: projectApiKeys,
   placeholder: "sb_publishable_\u2026",
   secret: false,
   rules: [
@@ -27120,6 +27199,7 @@ var secretKey3 = {
   label: "Secret key",
   names: ["SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY"],
   url: "https://supabase.com/dashboard/project/_/settings/api-keys",
+  template: projectApiKeys,
   placeholder: "sb_secret_\u2026",
   rules: [
     {
@@ -27648,6 +27728,12 @@ var sourcesNamed = (name) => allSources.filter((source) => goesBy({ source, name
 var offersFor = (format) => providers.flatMap(
   (provider) => provider.offers.filter((offer) => offer.format === format).map((offer) => ({ provider, url: offer.url }))
 );
+var templatedPages = providers.flatMap(
+  (provider) => provider.credentials.flatMap((credential) => credential.template === void 0 ? [] : [{ credential, template: credential.template }]).filter((entry, index, all) => all.findIndex((other) => other.template.url === entry.template.url) === index).map(({ template }) => ({
+    refs: provider.credentials.filter((credential) => credential.template?.url === template.url).map((credential) => referenceOf({ provider, credential })),
+    template
+  }))
+);
 
 // src/web/page/field.ts
 var REQUIRED = "a value is required";
@@ -27668,23 +27754,57 @@ var FORMAT_ICONS = {
 var tileOf = (value) => value.source === void 0 ? iconTile(FORMAT_ICONS[value.format ?? ""] ?? "key-round") : logoTile(value.source.provider);
 var tileFor = (secret) => secret.value.kind === "generated" ? iconTile("dices") : tileOf(secret.value);
 var outLink = ({ url: url2, className, body, label }) => `<a class="${className}" href="${escapeHtml(url2)}" target="_blank" rel="noopener noreferrer"${label === void 0 ? "" : ` aria-label="${escapeHtml(label)}"`}>${body}</a>`;
-var addressOf = (url2) => {
-  const { host, pathname } = new URL(url2);
-  return `${host}${pathname === "/" ? "" : pathname.replace(/\/$/, "")}`;
-};
-var getLink = ({ provider, credential }) => outLink({
-  url: credential.url,
+var getLink = ({ source, url: url2 }) => outLink({
+  url: url2,
   className: "get",
-  label: `Get ${withArticle(`${provider.name} ${inSentence(credential.label)}`)} at ${addressOf(credential.url)}`,
+  label: `Get ${withArticle(`${source.provider.name} ${inSentence(source.credential.label)}`)} at ${addressOf(url2)}`,
   body: `<span>Get it</span>${icon("arrow-up-right")}`
 });
-var asideOf = (value) => {
-  if (value.source !== void 0) return getLink(value.source);
+var suggestedId = (index) => `suggested${String(index)}`;
+var suggestedLink = ({ request, link, index }) => {
+  const by = `<span>Suggested by ${escapeHtml(askerName(request))}</span>`;
+  return `<span class="suggestion"><button type="button" class="suggested" data-suggested="${suggestedId(
+    index
+  )}" aria-haspopup="dialog" data-needs-script hidden>${icon("bot")}${by}<strong class="suggested-host">${escapeHtml(
+    link.host
+  )}</strong></button><noscript><span class="suggested">${icon("bot")}${by}<strong class="suggested-host">${escapeHtml(
+    addressOf(link.url)
+  )}</strong></span></noscript></span>`;
+};
+var confirmBox = ({ request, link, index }) => {
+  const id = suggestedId(index);
+  const host = escapeHtml(link.host);
+  const who = escapeHtml(request.asker?.name ?? "your agent");
+  return `
+<dialog class="confirm" id="${id}" aria-labelledby="${id}-title" aria-describedby="${id}-said">
+<span class="confirm-icon">${icon("triangle-alert")}</span>
+<h2 class="confirm-title" id="${id}-title">Open <strong>${host}</strong>?</h2>
+<p class="confirm-said" id="${id}-said">This link was proposed by ${who} and not verified by offprompt. Make sure it is a site you expect before you sign in or copy a key there.</p>
+<code class="confirm-url">${escapeHtml(link.url)}</code>
+<div class="confirm-actions"><button type="button" class="secondary" data-dismiss>Cancel</button><a class="confirm-open" href="${escapeHtml(
+    link.url
+  )}" target="_blank" rel="noopener noreferrer" data-dismiss>Open ${host}${icon("arrow-up-right")}</a></div>
+</dialog>`;
+};
+var suggestedOf = (secret) => secret.link?.kind === "suggested" ? secret.link : void 0;
+var asideOf = ({ secret, value }) => {
+  if (value.source !== void 0) {
+    return getLink({ source: value.source, url: secret.link?.kind === "filled" ? secret.link.url : value.source.credential.url });
+  }
   return value.label === void 0 ? "" : `<span class="aside">${escapeHtml(capitalised(value.label))}</span>`;
 };
-var fieldHead = ({ secret, value, id }) => `<div class="field-head"><span class="field-name">${tileFor(secret)}<label class="key" for="${id}">${escapeHtml(
+var suggestionOf = ({ request, secret, index }) => {
+  const suggested = suggestedOf(secret);
+  return suggested === void 0 ? "" : suggestedLink({ request, link: suggested, index });
+};
+var fieldHead = ({
+  request,
+  secret,
+  value,
+  index
+}) => `<div class="field-head"><span class="field-name">${tileFor(secret)}<label class="key" for="${fieldName(index)}">${escapeHtml(
   secret.name
-)}</label></span>${asideOf(value)}</div>`;
+)}</label></span>${asideOf({ secret, value })}${suggestionOf({ request, secret, index })}</div>`;
 var captionLine = (secret) => secret.caption === void 0 ? "" : `
 <p class="caption">${escapeHtml(secret.caption)}</p>`;
 var rulesOf = ({ request, value }) => fieldRules({ rules: value.rules, sinkKind: request.sink.kind });
@@ -27771,14 +27891,16 @@ var replaceNotice = ({ request, secret }) => {
   return `
 <p class="notice">${icon("triangle-alert")}<span data-writing="${writing}">${what}</span></p>`;
 };
-var below = (field) => `${ruleLines(field)}${scriptLines(field)}${anywayBox(field)}${generateHint(field)}${uncheckedLine(field.value)}${offersLine(
-  field.value
-)}${replaceNotice(field)}`;
+var below = (field) => {
+  const suggested = suggestedOf(field.secret);
+  return `${ruleLines(field)}${scriptLines(field)}${anywayBox(field)}${generateHint(field)}${uncheckedLine(field.value)}${offersLine(
+    field.value
+  )}${replaceNotice(field)}${suggested === void 0 ? "" : confirmBox({ request: field.request, link: suggested, index: field.index })}`;
+};
 var singleLineField = (field) => {
-  const id = fieldName(field.index);
   const names = [...field.value.masked ? ["secret"] : [], ...field.broken.length > 0 ? ["invalid"] : []];
   return `<div class="field">
-${fieldHead({ secret: field.secret, value: field.value, id })}${captionLine(field.secret)}
+${fieldHead({ request: field.request, secret: field.secret, value: field.value, index: field.index })}${captionLine(field.secret)}
 <div class="input"><textarea${classes(names)} rows="1" data-single-line ${fieldAttributes(field)}></textarea>${field.value.masked ? revealButton(field.secret) : ""}${STATE_MARKS}${field.generate === void 0 ? "" : GENERATE}${TRIM}</div>
 ${below(field)}
 </div>`;
@@ -27786,7 +27908,7 @@ ${below(field)}
 var multiLineField = (field) => {
   const id = fieldName(field.index);
   return `<div class="field">
-${fieldHead({ secret: field.secret, value: field.value, id })}${captionLine(field.secret)}
+${fieldHead({ request: field.request, secret: field.secret, value: field.value, index: field.index })}${captionLine(field.secret)}
 <div class="input multi"><textarea${classes(field.broken.length > 0 ? ["invalid"] : [])} ${fieldAttributes(field)}></textarea>${STATE_MARKS}</div>
 <div class="pick"><input id="${id}-file" name="${id}-file" type="file" data-fills="${id}" aria-label="Choose a file for ${escapeHtml(
     field.secret.name
@@ -27823,7 +27945,7 @@ var valueField = ({
 };
 
 // src/web/client-script.ts
-var pasteScript = '"use strict";(()=>{var K=[["\\u{1F34E}","apple"],["\\u{1F34B}","lemon"],["\\u{1F347}","grapes"],["\\u{1F353}","strawberry"],["\\u{1F352}","cherries"],["\\u{1F95D}","kiwi"],["\\u{1F351}","peach"],["\\u{1F955}","carrot"],["\\u{1F33D}","corn"],["\\u{1F344}","mushroom"],["\\u{1F950}","croissant"],["\\u{1F9C0}","cheese"],["\\u{1F355}","pizza"],["\\u{1F354}","burger"],["\\u{1F32E}","taco"],["\\u{1F363}","sushi"],["\\u{1F369}","donut"],["\\u{1F36A}","cookie"],["\\u{1F382}","cake"],["\\u{1F37F}","popcorn"],["\\u2615","coffee"],["\\u{1F9CA}","ice"],["\\u{1F98A}","fox"],["\\u{1F989}","owl"],["\\u{1F419}","octopus"],["\\u{1F422}","turtle"],["\\u{1F427}","penguin"],["\\u{1F98B}","butterfly"],["\\u26BD","football"],["\\u{1F3C0}","basketball"],["\\u{1F3BE}","tennis"],["\\u{1F3B3}","bowling"],["\\u{1F3AF}","target"],["\\u{1F3B2}","dice"],["\\u{1F3B8}","guitar"],["\\u{1F3BA}","trumpet"],["\\u{1F3BB}","violin"],["\\u{1F941}","drum"],["\\u{1F3A8}","palette"],["\\u{1F3AC}","clapper"],["\\u{1F3A4}","microphone"],["\\u{1F3A7}","headphones"],["\\u{1F4F7}","camera"],["\\u{1F52D}","telescope"],["\\u{1F52C}","microscope"],["\\u{1F4A1}","bulb"],["\\u{1F511}","key"],["\\u{1F512}","lock"],["\\u{1F9ED}","compass"],["\\u23F0","alarm"],["\\u231B","hourglass"],["\\u{1F9F2}","magnet"],["\\u{1F680}","rocket"],["\\u{1F6F8}","saucer"],["\\u{1F6B2}","bicycle"],["\\u{1F682}","train"],["\\u26F5","sailboat"],["\\u{1F388}","balloon"],["\\u{1FA81}","kite"],["\\u{1F9E9}","puzzle"],["\\u{1F308}","rainbow"],["\\u{1F319}","moon"],["\\u{1F335}","cactus"],["\\u{1F33B}","sunflower"]];var ut=e=>K[e]?.[0]??K[0][0],oe=e=>{let[t=0,n=0,r=0]=e,o=t<<16|n<<8|r;return Array.from({length:4},(s,i)=>ut(o>>18-i*6&63)).join(" ")},ft=new Map(K.map(([e,t])=>[e,t])),se=e=>e.split(" ").filter(t=>t!=="").map(t=>({glyph:t,name:ft.get(t)??""}));var ae=new TextEncoder,pt="offprompt/fingerprint/v1",ie=async({key:e,values:t})=>{let n=await crypto.subtle.importKey("raw",ae.encode(e),{name:"HMAC",hash:"SHA-256"},!1,["sign"]),r=await crypto.subtle.sign("HMAC",n,ae.encode(`${pt}\n${JSON.stringify(t)}`));return oe(new Uint8Array(r))};var mt=/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/,gt=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,yt=/^(?=.{1,253}$)[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/,ht=/^[A-Za-z0-9+/]+={0,2}$/,bt=/^[A-Za-z0-9_-]+$/,wt=new Set(["prefix","length","charset","format","either"]),xt=e=>{try{return JSON.parse(e),!0}catch{return!1}},Et=/^[A-Za-z][A-Za-z0-9+.-]*:\\/\\/[^\\s/?#]+[^\\s]*$/,Lt=e=>{try{let t=new URL(e);return t.protocol==="http:"||t.protocol==="https:"}catch{return!1}},kt=e=>{try{let t=new URL(e);return(t.protocol==="postgres:"||t.protocol==="postgresql:")&&t.hostname!==""}catch{return!1}},St=e=>{let t=e.split("."),[n]=t;if(t.length!==3||n===void 0||!t.every(r=>bt.test(r)))return!1;try{let r=n.replace(/-/g,"+").replace(/_/g,"/").padEnd(Math.ceil(n.length/4)*4,"="),o=JSON.parse(atob(r));return typeof o=="object"&&o!==null}catch{return!1}},Tt={email:e=>mt.test(e),url:e=>Et.test(e),http_url:Lt,hostname:e=>yt.test(e),uuid:e=>gt.test(e),jwt:St,base64:e=>{let t=e.replace(/\\s/g,"");return t.length%4===0&&ht.test(t)},json:xt,pem:e=>/-----BEGIN [A-Z0-9 ]+-----/.test(e)&&/-----END [A-Z0-9 ]+-----/.test(e),postgres:kt},le=(e,t)=>e.kind==="prefix"?e.anyOf.some(n=>t.startsWith(n)):e.kind==="length"?t.length>=e.min&&t.length<=e.max:e.kind==="charset"?new RegExp(e.pattern).test(t):Tt[e.format](t),de=(e,t)=>e.kind==="either"?e.options.some(n=>n.every(r=>le(r,t))):le(e,t);var ce=e=>typeof e=="object"&&e!==null&&"kind"in e&&wt.has(String(e.kind));var x=e=>/^[A-Z][A-Z]/.test(e)?e:`${e.charAt(0).toLowerCase()}${e.slice(1)}`,vt=/^(?:[aeio]|u(?:p|m|n(?!i))|8|1[18](?!\\d))/i,I=e=>`${vt.test(e)?"an":"a"} ${e}`;var fe=["base64url","base64","hex"],ue="0123456789abcdef",At=e=>btoa(String.fromCharCode(...e)),A=(e,t)=>{if(t==="hex")return[...e].map(r=>`${ue[r>>4]??""}${ue[r&15]??""}`).join("");let n=At(e);return t==="base64"?n:n.replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/,"")};var k=e=>({ok:!0,value:e}),pe=e=>({ok:!1,message:e});var Mt=/^(\\s*(?:export\\s+)?([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*)([\\s\\S]*)$/,Ft=/^[A-Za-z0-9_@%+=:,./-]+$/,me=(e,t)=>t==="\'"?e.indexOf(t):e.replace(/\\\\[\\s\\S]/g,"\\0\\0").indexOf(t),ge=({raw:e,quote:t})=>t===""?e.trim():t===\'"\'?e.replace(/\\\\n/g,`\n`).replace(/\\\\r/g,"\\r"):e,B=({open:e,tail:t,lastLine:n})=>({key:e.key,value:ge({raw:[...e.parts,t].join(`\n`),quote:e.quote}),prefix:e.prefix,firstLine:e.firstLine,lastLine:n}),Ht=({open:e,line:t,index:n})=>{let r=me(t,e.quote);return r===-1?{entries:[],open:{...e,parts:[...e.parts,t]}}:{entries:[B({open:e,tail:t.slice(0,r),lastLine:n})],open:void 0}},$t=({line:e,index:t})=>{let n=Mt.exec(e),r=n?.[1],o=n?.[2],s=n?.[3];if(r===void 0||o===void 0||s===void 0)return{entries:[],open:void 0};let i=/^[\'"`]/.exec(s)?.[0];if(i===void 0){let d=/^[^#]*/.exec(s)?.[0]??"";return{entries:[{key:o,value:ge({raw:d,quote:""}),prefix:r,firstLine:t,lastLine:t}],open:void 0}}let a=s.slice(i.length),c={key:o,prefix:r,quote:i,parts:[],firstLine:t},m=me(a,i);return m===-1?{entries:[],open:{...c,parts:[a]}}:{entries:[B({open:c,tail:a.slice(0,m),lastLine:t})],open:void 0}},M=e=>{let t=e.split(`\n`),n=t.reduce((r,o,s)=>{let i=r.open===void 0?$t({line:o,index:s}):Ht({open:r.open,line:o,index:s});return{entries:[...r.entries,...i.entries],open:i.open}},{entries:[],open:void 0});return n.open===void 0?n.entries:[...n.entries,B({open:n.open,tail:"",lastLine:t.length-1})]},qt=e=>{let t=/[\\r\\n]/.test(e),n=!e.includes(\'"\')&&!e.includes("\\\\");return!t&&Ft.test(e)?k(e):!t&&!e.includes("\'")?k(`\'${e}\'`):n?k(`"${e.replace(/\\n/g,"\\\\n").replace(/\\r/g,"\\\\r")}"`):e.includes("\'")?pe(e.includes(\'"\')?"that value mixes quote characters and cannot be stored in a .env file":"that value has a single quote and a backslash, which a .env file cannot hold together"):k(`\'${e}\'`)},ye=e=>qt(e).ok;var he=({text:e,names:t})=>{let n=new Set(t),r=M(e).filter(s=>s.value!==""),o=r.filter(s=>n.has(s.key));if(o.length!==0)return{fills:new Map(o.map(s=>[s.key,s.value])),ignored:[...new Set(r.filter(s=>!n.has(s.key)).map(s=>s.key))]}};var Rt=e=>typeof e=="object"&&e!==null&&"status"in e&&typeof e.status=="string"&&["awaiting","written","expired"].includes(e.status)&&"expiresIn"in e&&typeof e.expiresIn=="number",be=e=>{let t=Math.max(0,Math.floor(e));return`${String(Math.floor(t/60))}:${String(t%60).padStart(2,"0")}`},we=({statusUrl:e,onChange:t,fetchStatus:n=s=>fetch(s,{credentials:"omit",cache:"no-store",signal:AbortSignal.timeout(8e3)}),pollEveryMs:r=1e4,tickMs:o=1e3})=>{let s={expiresAt:0,lost:!1,closed:!1,asking:!1,timers:[]},i=()=>s.timers.forEach(d=>clearInterval(d)),a=d=>{s.closed||(s.closed=!0,i(),t({kind:"closed",reason:d}))},c=()=>{if(s.closed||s.lost||s.expiresAt===0)return;let d=(s.expiresAt-Date.now())/1e3;d<=0?a("expired"):t({kind:"open",secondsLeft:d})},m=async()=>{if(s.closed||s.asking)return;s.asking=!0;let d=await n(e).then(b=>b.ok?b.json():Promise.resolve(void 0)).catch(()=>{});if(s.asking=!1,!s.closed){if(!Rt(d)){s.lost=!0,t({kind:"lost"});return}s.lost=!1,d.status==="written"?a("answered"):d.status==="expired"?a("expired"):(s.expiresAt=Date.now()+d.expiresIn*1e3,t({kind:"open",secondsLeft:d.expiresIn}))}};return m(),s.timers.push(window.setInterval(()=>{m()},r),window.setInterval(c,o)),{stop:i,pollNow:()=>{m()}}};var Ct=({name:e,value:t})=>{let n=M(t),[r]=n;return n.length===1&&r?.key===e&&r.value!==""?r.value:t},xe=({name:e,value:t,multiline:n})=>Ct({name:e,value:n?t:t.replace(/[\\r\\n]/g,"")});var sr={kind:"length",min:0,max:8192,message:`no more than ${String(8192)} characters`,quiet:!0,binding:!0};var Ee=(e,t)=>e.kind==="storable"?ye(t):de(e,t),S=(e,t)=>e.map(n=>Ee(n,t));var Le=({rules:e,anyway:t})=>t?e.filter(n=>n.binding===!0):e,ke=(e,t)=>{let n=e.filter(r=>!Ee(r,t));return n.length>0&&n.every(r=>r.binding!==!0)},Se=e=>ce(e)||typeof e=="object"&&e!==null&&"kind"in e&&e.kind==="storable";var Ot=/^[a-z][a-z0-9+.-]{0,15}:\\/\\//i,Nt=({value:e,prefixes:t})=>Ot.exec(e)?.[0]??t.filter(n=>e.startsWith(n)).reduce((n,r)=>r.length>n.length?r:n,""),Te=e=>e.kind==="prefix"?e.anyOf:e.kind!=="either"?[]:e.options.flatMap(t=>t.flatMap(n=>n.kind==="prefix"?n.anyOf:[])),Kt=({rule:e,value:t})=>Te(e).some(n=>n.startsWith(t)),It=({rule:e,value:t,typing:n})=>n&&t.length<e.min?{state:"pending",detail:`${String(t.length)} so far`}:{state:"fail",detail:`got ${String(t.length)}`},Dt=({value:e,prefixes:t})=>{let n=Nt({value:e,prefixes:t});return n===""?"":`got ${n}`},Bt=e=>e.kind==="format"&&(e.format==="postgres"||e.format==="url"||e.format==="http_url"),ve=({rule:e,value:t,typing:n,known:r=[]})=>t===""?{state:"idle",detail:""}:S([e],t)[0]===!0?{state:"pass",detail:""}:e.kind==="length"?It({rule:e,value:t,typing:n}):n&&Kt({rule:e,value:t})?{state:"pending",detail:""}:e.kind==="prefix"||e.kind==="either"||Bt(e)?{state:"fail",detail:Dt({value:t,prefixes:[...r,...Te(e)]})}:{state:"fail",detail:""},_t=({value:e,known:t,own:n})=>{let r=t.flatMap(a=>a.prefixes.filter(c=>e.startsWith(c)).map(c=>({key:a,length:c.length}))),o=Math.max(0,...r.map(a=>a.length)),s=r.filter(a=>a.length===o).map(a=>a.key),i=s.find(a=>a.provider===n?.provider);return i!==void 0?i:new Set(s.map(a=>a.provider)).size===1?s[0]:void 0},Ae=({value:e,own:t,known:n})=>{let r=_t({value:e,known:n,own:t});return r===void 0||r.ref===t?.ref?"":t!==void 0&&r.provider===t.provider?r.url===t.url?`That\'s the ${x(r.label)}. Use the ${x(t.label)} from the same page.`:`That\'s the ${r.provider} ${x(r.label)}, not the ${x(t.label)}.`:`This looks like ${I(`${r.provider} ${x(r.label)}`)}.`},Pt=/^\\s|\\s$/,Me=e=>{if(!Pt.test(e))return"";let t=/^\\s/.test(e),n=/\\s$/.test(e);return`${t&&n?"Starts and ends with a space":t?"Starts with a space":"Ends with a space"}. It will be written exactly as typed unless you trim it.`};var F=(e,t)=>`${String(e)} ${t}${e===1?"":"s"}`,Fe=e=>e.length<=1?e[0]??"":`${e.slice(0,-1).join(", ")} and ${e.at(-1)??""}`,He=({counts:e,blocker:t,file:n,failed:r=!1})=>{let o=s=>({label:s,icon:"file-input",disabled:!0,busy:!1});return t==="writing"?{label:`Writing to ${n}\\u2026`,icon:"loader-circle",disabled:!0,busy:!0}:t==="closed"?o("This request is closed"):t==="lost"?{label:"Waiting for offprompt\\u2026",icon:"loader-circle",disabled:!0,busy:!1}:e.failing>0?o(`Fix ${F(e.failing,"value")} to write`):e.ready<e.total?o(`Fill ${F(e.total-e.ready,"value")} to write`):t==="unsealable"?o("This page can\'t encrypt the values"):t==="override"?o("Tick the box above to write"):r?{label:"Try again",icon:"rotate-ccw",disabled:!1,busy:!1}:{label:`Write to ${n}`,icon:"file-input",disabled:!1,busy:!1}},$e=({counts:e,writing:t})=>({ready:`${String(e.ready)} of ${String(e.total)} ready`,note:t?"Writing\\u2026":e.failing>0?`${String(e.failing)} ${e.failing===1?"needs":"need"} a fix`:"",bad:!t&&e.failing>0}),qe=({connection:e,asker:t,ours:n=!1})=>e.kind==="open"?`Connected to ${t} \\xB7 ${be(e.secondsLeft)} left`:e.kind==="lost"?"Reconnecting to offprompt\\u2026":e.reason==="expired"?"Expired":n?"Written":"Answered elsewhere",Re=({connection:e,remote:t,ours:n=!1})=>{if(e.kind!=="open")return e.kind==="lost"?{tone:"warn",title:"Lost the connection to offprompt",body:`${t?"The agent\'s sandbox":"The local server"} stopped answering. Your values stay on this page, and nothing is written until it is back.`}:e.reason==="expired"?{tone:"bad",title:"This request has expired",body:"Ask the agent to request the values again."}:n?{tone:"ok",title:"Your values were written",body:"offprompt wrote them and told the agent, but this page missed its answer. There\'s nothing more to do here."}:{tone:"bad",title:"This request has already been answered",body:"If that was not you, tell the agent. Nothing typed here will be written."}},Ce=({filled:e,failing:t,ignored:n,skipped:r,source:o})=>{let s=o==="your clipboard",i=t===0?"":`${F(t,"value")} ${t===1?"needs":"need"} a fix.`,a=n.length>1,c=n.length===0?"":`${Fe(n)} ${a?"were":"was"} in the ${s?"paste":"file"} but ${a?"weren\'t":"wasn\'t"} asked for, so ${a?"they were":"it was"} skipped.`,m=r.length===0?"":`${Fe(r)} ${r.length>1?"are":"is"} already set and kept, so the ${s?"pasted":"imported"} value was left out.`,d=[i,c,m].filter(b=>b!=="").join(" ");return{title:`Filled ${F(e,"field")} from ${o}`,body:d===""?"Each value is in its field.":d}};var u=(e,t)=>{e!=null&&e.textContent!==t&&(e.textContent=t)},Oe=e=>{let t=document.querySelector("[data-submit]");t!==null&&(t.disabled=e.disabled,t.classList.toggle("busy",e.busy),t.classList.toggle("waiting",e.icon==="loader-circle"),t.classList.toggle("retry",e.icon==="rotate-ccw"),u(t.querySelector("[data-label]"),e.label))},Ne=({counts:e,writing:t})=>{let n=$e({counts:e,writing:t}),r=document.querySelector(".bar-fill");r!==null&&(r.style.width=`${String(e.total===0?0:e.ready/e.total*100)}%`),u(document.querySelector("[data-ready]"),n.ready);let o=document.querySelector("[data-progress-note]");o!==null&&(u(o,n.note),o.classList.toggle("bad",n.bad))},Ke=({text:e,state:t})=>{let n=document.getElementById("connection");n!==null&&(n.hidden=!1,u(n,e),n.dataset.state=t)},Ie=e=>{let t=document.getElementById("page-notice");if(t===null||(t.hidden=e===void 0,e===void 0))return;t.classList.toggle("warn",e.tone==="warn"),t.classList.toggle("bad",e.tone==="bad"),t.classList.toggle("ok",e.tone==="ok");let[n,r]=t.querySelectorAll("p");u(n,e.title),u(r,e.body)},_=e=>{let t=document.querySelector("[data-filled]"),n=document.querySelector("section.import:not([data-filled])");if(t===null||n===null||(t.hidden=e===void 0,n.hidden=e!==void 0,e===void 0))return;u(t.querySelector("[data-filled-title]"),e.title),u(t.querySelector("[data-filled-body]"),e.body);let r=t.querySelector("[data-undo]");r!==null&&(r.hidden=!1)},De=()=>{let e=document.querySelector("[data-undo]");e!==null&&(e.hidden=!0)},Be=e=>{document.querySelector("form")?.classList.toggle("writing",e),document.querySelectorAll("textarea[data-key]").forEach(t=>{t.readOnly=e}),document.querySelectorAll("input[type=file]").forEach(t=>{t.disabled=e}),document.querySelectorAll("[data-writing]").forEach(t=>{t.dataset.idle===void 0&&(t.dataset.idle=t.textContent),u(t,(e?t.dataset.writing:t.dataset.idle)??"")})},_e=e=>{let t=document.querySelector("ul.emoji"),n=e.map(({glyph:o})=>o).join(" ");if(t===null||t.getAttribute("aria-label")===n)return;t.setAttribute("aria-label",n),t.querySelectorAll("li").forEach((o,s)=>{u(o.querySelector(".glyph"),e[s]?.glyph??""),u(o.querySelector(".name"),e[s]?.name??"")});let r=document.querySelector("[data-mismatch]");r!==null&&(r.hidden=!1)},H=e=>{let t=document.querySelector("[data-drop]");t!==null&&(t.hidden=!e)};var f=()=>[...document.querySelectorAll("textarea[data-key]")],E=e=>e.dataset.key??"",w=e=>e.hasAttribute("data-single-line"),Ue=()=>f().map(e=>[E(e),xe({name:E(e),value:e.value,multiline:!w(e)})]),U=({field:e,value:t})=>w(e)?t.replace(/[\\r\\n]/g,""):t,j=e=>Array.isArray(e),je=e=>JSON.parse(e??"[]"),q=e=>{let t=je(e.dataset.rules);return j(t)?t.filter(Se):[]},Ut=e=>typeof e=="object"&&e!==null&&"ref"in e&&typeof e.ref=="string"&&"provider"in e&&typeof e.provider=="string"&&"label"in e&&typeof e.label=="string"&&"url"in e&&typeof e.url=="string"&&"prefixes"in e&&j(e.prefixes)&&e.prefixes.every(t=>typeof t=="string"),P=(()=>{let e=je(document.querySelector("form[data-known]")?.dataset.known);return j(e)?e.filter(Ut):[]})(),jt=P.flatMap(e=>e.prefixes),We=e=>e.closest(".field")?.querySelector("[data-anyway]"),Ve=e=>{let t=We(e);return t!=null&&!t.hidden&&t.querySelector("input")?.checked===!0},W=()=>f().filter(Ve).map(e=>Number(e.name.replace(/^value/,""))),Wt=e=>e.value!==""&&S(q(e),e.value).every(Boolean),V=e=>e.value!==""&&S(Le({rules:q(e),anyway:Ve(e)}),e.value).every(Boolean),$=new WeakMap,L=({field:e,file:t})=>{t===void 0?$.delete(e):$.set(e,t)},ze=e=>$.get(e),Vt=e=>`${e.charAt(0).toLowerCase()}${e.slice(1)}`,zt=({line:e,result:t})=>{let n=t?.state??"idle";e.classList.toggle("pass",n==="pass"),e.classList.toggle("fail",n==="fail"),e.classList.toggle("pending",n==="pending"),e.hasAttribute("data-quiet")&&(e.hidden=n!=="fail");let r=t?.detail??"",o=e.querySelector(".detail"),s=e.querySelector(":scope > span");if(r===""||s===null){o?.remove();return}let i=o??s.appendChild(document.createElement("span"));i.className="detail",u(i,` \\xB7 ${r}`)},Gt=({box:e,field:t,valid:n})=>{let r=e.querySelector("[data-summary]"),o=r?.querySelector("[data-said]");if(r===null||o===null||o===void 0)return!1;let i=(t.dataset.made==="page"?o.dataset.made:void 0)??o.dataset.said??"",a=$.get(t);return r.hidden=!n,r.classList.toggle("from-file",a!==void 0),u(o,a===void 0?i:`Matched from ${a} \\xB7 ${Vt(i)}`),!0},Pe=({element:e,text:t})=>{e!==null&&(e.hidden=t==="",u(e.querySelector("span")??e,t))},Zt=({field:e,failing:t})=>{let n=We(e);if(n==null)return;n.hidden=!(t&&ke(q(e),e.value));let r=n.querySelector("input");n.hidden&&r!==null&&(r.checked=!1)},g=e=>{let t=document.activeElement===e,n=q(e).map(y=>ve({rule:y,value:e.value,typing:t,known:jt})),r=document.getElementById(`${e.id}-rules`);r?.querySelectorAll("li").forEach(y=>{y.hasAttribute("data-required")?y.remove():zt({line:y,result:n[Number(y.dataset.rule)]})});let o=n.some(y=>y.state==="fail");Zt({field:e,failing:o});let s=V(e),i=Wt(e);e.classList.toggle("valid",i),e.classList.toggle("invalid",o&&!s),e.classList.toggle("anyway",o&&s),e.toggleAttribute("aria-invalid",o&&!s);let a=e.closest(".field");if(a===null)return s;Gt({box:a,field:e,valid:i})&&r!==null&&(r.hidden=i);let c=P.find(y=>y.ref===e.dataset.source);Pe({element:a.querySelector("[data-hint]"),text:!i&&e.value!==""?Ae({value:e.value,own:c,known:P}):""});let m=w(e)?Me(e.value):"";Pe({element:a.querySelector("[data-space]"),text:m}),e.classList.toggle("spaced",m!=="");let d=a.querySelector("[data-trim]");d!==null&&(d.hidden=m==="");let b=e.value==="",te=a.querySelector("[data-generate-new]");te!==null&&(te.hidden=!b);let ne=a.querySelector("[data-regenerate]");ne!==null&&(ne.hidden=b);let re=a.querySelector("[data-generate-hint]");re!==null&&(re.hidden=!b);let v=a.querySelector("[data-unchecked]");return v!==null&&u(v,(e.value===""?v.dataset.empty:v.dataset.filled)??""),s},Ge=e=>{let t=e.closest(".input")?.querySelector("textarea");if(t==null)return;let n=document.querySelector("#reveal-all");n?.checked===!0?(n.checked=!1,f().filter(r=>r.classList.contains("secret")).forEach(r=>r.classList.toggle("shown",r!==t))):t.classList.toggle("shown"),document.querySelectorAll("[data-reveal]").forEach(r=>{let o=r.closest(".input")?.querySelector("textarea")?.classList.contains("shown")===!0;r.setAttribute("aria-pressed",String(o))})},Ze=e=>{let t=e.closest(".input")?.querySelector("textarea");if(t!=null)return t.value=t.value.trim(),t},Yt=e=>fe.some(t=>t===e),Jt=e=>{let t=JSON.parse(e.dataset.generate??"null");if(typeof t!="object"||t===null||!("bytes"in t)||!("encoding"in t))return;let{bytes:n,encoding:r}=t;return typeof n=="number"&&Yt(r)?{bytes:n,encoding:r}:void 0},z=e=>e.dataset.generate!==void 0,G=e=>{let t=Jt(e);t!==void 0&&(e.value=A(crypto.getRandomValues(new Uint8Array(t.bytes)),t.encoding),e.dataset.made="page",L({field:e,file:void 0}))},Ye=e=>e.closest(".input")?.querySelector("textarea")??void 0;var Je={name:"ECDH",namedCurve:"P-256"},Xt="offprompt/v1/seal",Qt=12,Z=e=>new TextEncoder().encode(e),en=e=>btoa(String.fromCharCode(...e)).replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/,""),tn=e=>{if(!/^[A-Za-z0-9_-]*$/.test(e))throw new Error("not base64url");let t=atob(e.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(t,n=>n.charCodeAt(0))},nn=e=>Uint8Array.from(e.match(/../g)??[],t=>Number.parseInt(t,16)),rn=({token:e,nonce:t})=>Z(`offprompt/v1|${e}|${t}`),on=async e=>crypto.subtle.importKey("raw",tn(e),Je,!1,[]),sn=async({privateKey:e,publicKey:t,token:n})=>{let r=await crypto.subtle.deriveBits({name:"ECDH",public:t},e,256),o=await crypto.subtle.importKey("raw",r,"HKDF",!1,["deriveKey"]);return crypto.subtle.deriveKey({name:"HKDF",hash:"SHA-256",salt:nn(n),info:Z(Xt)},o,{name:"AES-GCM",length:256},!1,["encrypt","decrypt"])};var Xe=on,Qe=async({sandboxKey:e,token:t,nonce:n,plaintext:r})=>{let o=await crypto.subtle.generateKey(Je,!1,["deriveBits"]),s=await sn({privateKey:o.privateKey,publicKey:e,token:t}),i=crypto.getRandomValues(new Uint8Array(Qt)),a=await crypto.subtle.encrypt({name:"AES-GCM",iv:i,additionalData:rn({token:t,nonce:n})},s,Z(r)),c=await crypto.subtle.exportKey("raw",o.publicKey);return["v1",...[new Uint8Array(c),i,new Uint8Array(a)].map(en)].join(".")};var et="This link is missing its key. Ask the agent for the link again.",an="This browser cannot encrypt the values. Open the link in a current browser.",tt=({values:e,allowTracked:t,anyway:n=[],fingerprint:r})=>JSON.stringify({values:Object.fromEntries(e),allowTracked:t,...n.length===0?{}:{anyway:n},...r===void 0?{}:{fingerprint:r}}),ln=e=>new URLSearchParams(e.replace(/^#/,"")).get("k")??"",nt=async({hash:e,token:t,nonce:n})=>{if(globalThis.crypto?.subtle===void 0)return an;let o=ln(e);return o===""?et:Xe(o).then(s=>i=>Qe({sandboxKey:s,token:t,nonce:n,plaintext:i}),()=>et)};var dn=256*1024,cn=3e4,h=document.querySelector("form"),R=()=>document.querySelector("[data-submit]"),X=()=>document.querySelector("form[data-sealed]"),l={connection:void 0,writing:!1,posted:!1,sealer:void 0,beforeFill:void 0,failed:!1,pollNow:()=>{}},st=()=>[...document.querySelectorAll("[data-generated]")],un=()=>{let e=f(),t=st().length;return{total:e.length+t,ready:e.filter(V).length+t,failing:e.filter(n=>n.classList.contains("invalid")).length}},fn=()=>h?.querySelector("input[name=allowTracked]")?.checked!==!1,pn=()=>{if(l.writing)return"writing";if(l.connection?.kind==="closed")return"closed";if(l.connection?.kind==="lost")return"lost";if(X()!==null&&l.sealer===void 0)return"unsealable";if(!fn())return"override"},p=()=>{let e=un();if(Oe(He({counts:e,blocker:pn(),file:h?.dataset.file??"the file",failed:l.failed})),Ne({counts:e,writing:l.writing}),l.connection===void 0)return;let t=h?.dataset.asker??"the agent",n=l.connection.kind==="open"?"open":l.connection.kind,r=l.posted;Ke({text:qe({connection:l.connection,asker:t,ours:r}),state:n}),Ie(Re({connection:l.connection,remote:X()!==null,ours:r}))},C=e=>{let t=document.getElementById("fill-status");t!==null&&(t.textContent=e)},mn=e=>{let t=document.getElementById("seal-status")??document.getElementById("fill-status");t!==null&&(t.textContent=e)},O=e=>{l.beforeFill?.has(e)===!0&&(l.beforeFill=void 0,De())},at=({text:e,source:t,file:n})=>{let r=f(),o=he({text:e,names:r.map(E)});if(o===void 0)return!1;let s=r.filter(a=>o.fills.has(E(a)));l.beforeFill=new Map(s.map(a=>[a,{value:a.value,made:a.dataset.made,file:ze(a)}])),s.forEach(a=>{a.value=U({field:a,value:o.fills.get(E(a))??""}),delete a.dataset.made,L({field:a,file:n}),g(a)});let i=new Set(st().map(a=>a.dataset.generated??""));return C(""),_(Ce({filled:s.length,failing:s.filter(a=>a.classList.contains("invalid")).length,ignored:o.ignored.filter(a=>!i.has(a)),skipped:o.ignored.filter(a=>i.has(a)),source:t})),p(),!0},gn=()=>{let e=l.beforeFill;if(e===void 0)return;e.forEach(({value:n,made:r,file:o},s)=>{s.value=n,r===void 0?delete s.dataset.made:s.dataset.made=r,L({field:s,file:o}),g(s)}),l.beforeFill=void 0,_(void 0),p();let[t]=e.keys();t?.focus()},yn=e=>{l.writing||at({text:e.clipboardData?.getData("text/plain")??"",source:"your clipboard"})&&e.preventDefault()},it=async e=>{if(e.size>dn){C(`${e.name} is too large to read here: over 256 KB.`);return}return e.text()},Y=async({file:e,field:t})=>{if(l.writing)return;let n=await it(e);n!==void 0&&(O(t),t.value=n.replace(/\\r\\n/g,`\n`),delete t.dataset.made,L({field:t,file:e.name}),g(t),p())},hn=({x:e,y:t})=>{let n=document.elementFromPoint(e,t)?.closest(".field")?.querySelector("textarea");if(n instanceof HTMLTextAreaElement&&!w(n))return n;let r=f(),[o]=r;return r.length===1&&o!==void 0&&!w(o)?o:void 0},lt=async({file:e,at:t})=>{let n=t===void 0?void 0:hn(t);if(n!==void 0&&document.querySelector("[data-drop]")===null){await Y({file:e,field:n});return}let r=await it(e);r!==void 0&&(at({text:r,source:e.name,file:e.name})||(n!==void 0?await Y({file:e,field:n}):C(`${e.name} names none of the keys this page asked for.`)))},bn=e=>{let t=e.target;if(!(t instanceof HTMLInputElement))return;if(t.name==="allowTracked"){p();return}if(t.closest("[data-anyway]")!==null){let o=document.getElementById(t.name.replace(/^anyway/,"value"));o instanceof HTMLTextAreaElement&&g(o),p();return}if(t.id==="reveal-all"){f().filter(o=>o.classList.contains("secret")).forEach(o=>o.classList.toggle("shown",t.checked)),document.querySelectorAll("[data-reveal]").forEach(o=>o.setAttribute("aria-pressed",String(t.checked)));return}if(t.type!=="file")return;let[n]=t.files??[];if(t.value="",n===void 0)return;if(t.id==="import-file"){lt({file:n});return}let r=document.getElementById(t.dataset.fills??"");r instanceof HTMLTextAreaElement&&Y({file:n,field:r})},wn=e=>{let t=e.target;if(!(t instanceof HTMLTextAreaElement)||t.dataset.key===void 0)return;let n=U({field:t,value:t.value});n!==t.value&&(t.value=n),L({field:t,file:void 0}),delete t.dataset.made,O(t),g(t),p()},xn=e=>{!(e.target instanceof HTMLTextAreaElement)||e.target.dataset.key===void 0||(g(e.target),p())},En=e=>{let t=Ye(e);t!==void 0&&(O(t),G(t),g(t),p(),e.hidden&&t.closest(".input")?.querySelector("[data-regenerate]")?.focus())},Ln=e=>{let t=e.target instanceof Element?e.target.closest("button"):null;if(t===null||(t.hasAttribute("data-reveal")&&Ge(t),t.hasAttribute("data-undo")&&gn(),(t.hasAttribute("data-generate-new")||t.hasAttribute("data-regenerate"))&&En(t),!t.hasAttribute("data-trim")))return;let n=Ze(t);n!==void 0&&(O(n),g(n),p(),n.focus())},N=e=>e.dataTransfer?.types.includes("Files")===!0,kn=e=>e.target instanceof HTMLInputElement&&e.target.type==="file",T={depth:0},Sn=()=>document.querySelector("[data-drop]")!==null,Tn=e=>{N(e)&&(e.preventDefault(),T.depth+=1,!l.writing&&Sn()&&H(!0))},vn=e=>{N(e)&&(e.preventDefault(),e.dataTransfer!==null&&(e.dataTransfer.dropEffect=l.writing?"none":"copy"))},An=e=>{N(e)&&(T.depth=Math.max(0,T.depth-1),T.depth===0&&H(!1))},Mn=e=>{if(T.depth=0,H(!1),!N(e)||kn(e))return;e.preventDefault();let[t]=e.dataTransfer?.files??[];t===void 0||l.writing||lt({file:t,at:{x:e.clientX,y:e.clientY}})},Q=e=>e.querySelector("input[name=nonce]")?.value??"",Fn=()=>A(crypto.getRandomValues(new Uint8Array(32)),"base64url"),Hn=({sent:e,key:t})=>new URLSearchParams([["nonce",Q(e)],...f().map(n=>[n.name,n.value]),...e.querySelector("input[name=allowTracked]")?.checked===!0?[["allowTracked","yes"]]:[],...W().map(n=>[`anyway${String(n)}`,"yes"]),["fingerprint",t]]),$n=async({sent:e,sealer:t,key:n})=>{let r=new Map(f().map(i=>[i.name,i.value])),o=e.querySelector("input[name=allowTracked]")?.checked===!0,s=await t(tt({values:r,allowTracked:o,anyway:W(),fingerprint:n}));return new URLSearchParams([["nonce",Q(e)],["sealed",s]])},qn=({sent:e,key:t})=>l.sealer===void 0?Hn({sent:e,key:t}):$n({sent:e,sealer:l.sealer,key:t}),Rn=["header.topbar","main"],dt=e=>{Rn.forEach(t=>{let n=e.querySelector(t),r=document.querySelector(t);n!==null&&r!==null&&r.replaceWith(document.importNode(n,!0))}),document.title=e.title},ee=e=>e.querySelectorAll("[data-needs-script]").forEach(t=>t.removeAttribute("hidden")),Cn=e=>{e.querySelectorAll("ul.rules").forEach(o=>{document.getElementById(o.id)?.replaceWith(document.importNode(o,!0))}),f().forEach(o=>{if(!(e.getElementById(o.id)?.classList.contains("invalid")===!0)){g(o);return}o.classList.add("invalid"),o.classList.remove("valid","anyway");let i=o.closest(".field")?.querySelector("[data-summary]");i!=null&&(i.hidden=!0);let a=e.getElementById(o.id)?.closest(".field")?.querySelector("[data-anyway]"),c=o.closest(".field")?.querySelector("[data-anyway]");a!=null&&c!==null&&c!==void 0&&(c.hidden=a.hasAttribute("hidden"))}),document.querySelector(".error")?.remove();let t=e.querySelector(".target .state");t!==null&&document.querySelector(".target .state")?.replaceWith(document.importNode(t,!0));let n=e.querySelector(".error");if(n===null)return;let r=document.importNode(n,!0);ee(r),R()?.before(r)},On=()=>{(document.querySelector(".error")??f().find(t=>t.classList.contains("invalid")))?.focus()},Nn=e=>ie({key:e,values:Ue()}).catch(()=>{}),J=e=>{l.writing=e,Be(e),p()},Kn=({next:e,fingerprint:t})=>{dt(e);let n=document.querySelector("main");t!==void 0&&n!==null&&(ee(n),_e(se(t))),document.querySelector("main h1")?.focus()},rt=e=>{J(!1),C(`${e} This page is checking whether the values were written.`),l.pollNow()},ct=async()=>{let e=R();if(h===null||e===null||e.disabled)return;let t=Fn();J(!0),l.posted=!0;let n=await Nn(t),r=await fetch(h.action,{method:"POST",body:await qn({sent:h,key:t}),credentials:"omit",signal:AbortSignal.timeout(cn)}).then(async s=>({response:s,next:new DOMParser().parseFromString(await s.text(),"text/html")})).catch(()=>{});if(r===void 0){rt("offprompt did not answer.");return}let o=r.next.querySelector("main[data-page]")?.getAttribute("data-page");if(o==="form"){l.posted=!1,l.failed=r.next.querySelector("[data-write-failed]")!==null,J(!1),Cn(r.next),p(),On();return}if(o==="written"||o==="closed"){h.dispatchEvent(new Event("offprompt:written")),o==="written"?Kn({next:r.next,fingerprint:n}):dt(r.next);return}rt(`Something other than offprompt answered (HTTP ${String(r.response.status)}).`)},In=e=>{if(e.key!=="Enter"||e.isComposing||e.keyCode===229)return;let t=e.target;!(t instanceof HTMLTextAreaElement&&w(t))&&!e.metaKey&&!e.ctrlKey||(e.preventDefault(),ct())},Dn=async e=>{let t=new URL(e.action).pathname.split("/").pop()??"",n=await nt({hash:location.hash,token:t,nonce:Q(e)});if(typeof n=="string"){mn(n);return}l.sealer=n,p()},Bn=e=>{let t=we({statusUrl:`${e.action}/status`,onChange:n=>{l.connection=n,p()}});l.pollNow=t.pollNow,e.addEventListener("offprompt:written",()=>t.stop(),{once:!0})};R()?.setAttribute("type","button");R()?.addEventListener("click",()=>{ct()});h?.addEventListener("submit",e=>e.preventDefault());var ot=X();ot!==null&&Dn(ot);h!==null&&Bn(h);ee(document);/Mac|iPhone|iPad/.test(navigator.userAgent)||document.querySelectorAll("kbd[data-shortcut]").forEach(e=>{e.textContent=`Ctrl ${e.dataset.shortcut??""}`});f().filter(z).forEach(e=>{e.placeholder="paste one, or",e.value===""&&G(e)});f().filter(e=>e.value!==""||z(e)).forEach(g);p();document.addEventListener("keydown",In);document.addEventListener("paste",yn);document.addEventListener("change",bn);document.addEventListener("input",wn);document.addEventListener("focusout",xn);document.addEventListener("click",Ln);document.addEventListener("dragenter",Tn);document.addEventListener("dragover",vn);document.addEventListener("dragleave",An);document.addEventListener("drop",Mn);})();\n';
+var pasteScript = '"use strict";(()=>{var I=[["\\u{1F34E}","apple"],["\\u{1F34B}","lemon"],["\\u{1F347}","grapes"],["\\u{1F353}","strawberry"],["\\u{1F352}","cherries"],["\\u{1F95D}","kiwi"],["\\u{1F351}","peach"],["\\u{1F955}","carrot"],["\\u{1F33D}","corn"],["\\u{1F344}","mushroom"],["\\u{1F950}","croissant"],["\\u{1F9C0}","cheese"],["\\u{1F355}","pizza"],["\\u{1F354}","burger"],["\\u{1F32E}","taco"],["\\u{1F363}","sushi"],["\\u{1F369}","donut"],["\\u{1F36A}","cookie"],["\\u{1F382}","cake"],["\\u{1F37F}","popcorn"],["\\u2615","coffee"],["\\u{1F9CA}","ice"],["\\u{1F98A}","fox"],["\\u{1F989}","owl"],["\\u{1F419}","octopus"],["\\u{1F422}","turtle"],["\\u{1F427}","penguin"],["\\u{1F98B}","butterfly"],["\\u26BD","football"],["\\u{1F3C0}","basketball"],["\\u{1F3BE}","tennis"],["\\u{1F3B3}","bowling"],["\\u{1F3AF}","target"],["\\u{1F3B2}","dice"],["\\u{1F3B8}","guitar"],["\\u{1F3BA}","trumpet"],["\\u{1F3BB}","violin"],["\\u{1F941}","drum"],["\\u{1F3A8}","palette"],["\\u{1F3AC}","clapper"],["\\u{1F3A4}","microphone"],["\\u{1F3A7}","headphones"],["\\u{1F4F7}","camera"],["\\u{1F52D}","telescope"],["\\u{1F52C}","microscope"],["\\u{1F4A1}","bulb"],["\\u{1F511}","key"],["\\u{1F512}","lock"],["\\u{1F9ED}","compass"],["\\u23F0","alarm"],["\\u231B","hourglass"],["\\u{1F9F2}","magnet"],["\\u{1F680}","rocket"],["\\u{1F6F8}","saucer"],["\\u{1F6B2}","bicycle"],["\\u{1F682}","train"],["\\u26F5","sailboat"],["\\u{1F388}","balloon"],["\\u{1FA81}","kite"],["\\u{1F9E9}","puzzle"],["\\u{1F308}","rainbow"],["\\u{1F319}","moon"],["\\u{1F335}","cactus"],["\\u{1F33B}","sunflower"]];var ut=e=>I[e]?.[0]??I[0][0],oe=e=>{let[t=0,n=0,r=0]=e,o=t<<16|n<<8|r;return Array.from({length:4},(s,i)=>ut(o>>18-i*6&63)).join(" ")},ft=new Map(I.map(([e,t])=>[e,t])),se=e=>e.split(" ").filter(t=>t!=="").map(t=>({glyph:t,name:ft.get(t)??""}));var ae=new TextEncoder,pt="offprompt/fingerprint/v1",ie=async({key:e,values:t})=>{let n=await crypto.subtle.importKey("raw",ae.encode(e),{name:"HMAC",hash:"SHA-256"},!1,["sign"]),r=await crypto.subtle.sign("HMAC",n,ae.encode(`${pt}\n${JSON.stringify(t)}`));return oe(new Uint8Array(r))};var mt=/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/,gt=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,yt=/^(?=.{1,253}$)[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/,ht=/^[A-Za-z0-9+/]+={0,2}$/,bt=/^[A-Za-z0-9_-]+$/,wt=new Set(["prefix","length","charset","format","either"]),xt=e=>{try{return JSON.parse(e),!0}catch{return!1}},Et=/^[A-Za-z][A-Za-z0-9+.-]*:\\/\\/[^\\s/?#]+[^\\s]*$/,Lt=e=>{try{let t=new URL(e);return t.protocol==="http:"||t.protocol==="https:"}catch{return!1}},kt=e=>{try{let t=new URL(e);return(t.protocol==="postgres:"||t.protocol==="postgresql:")&&t.hostname!==""}catch{return!1}},St=e=>{let t=e.split("."),[n]=t;if(t.length!==3||n===void 0||!t.every(r=>bt.test(r)))return!1;try{let r=n.replace(/-/g,"+").replace(/_/g,"/").padEnd(Math.ceil(n.length/4)*4,"="),o=JSON.parse(atob(r));return typeof o=="object"&&o!==null}catch{return!1}},Tt={email:e=>mt.test(e),url:e=>Et.test(e),http_url:Lt,hostname:e=>yt.test(e),uuid:e=>gt.test(e),jwt:St,base64:e=>{let t=e.replace(/\\s/g,"");return t.length%4===0&&ht.test(t)},json:xt,pem:e=>/-----BEGIN [A-Z0-9 ]+-----/.test(e)&&/-----END [A-Z0-9 ]+-----/.test(e),postgres:kt},le=(e,t)=>e.kind==="prefix"?e.anyOf.some(n=>t.startsWith(n)):e.kind==="length"?t.length>=e.min&&t.length<=e.max:e.kind==="charset"?new RegExp(e.pattern).test(t):Tt[e.format](t),de=(e,t)=>e.kind==="either"?e.options.some(n=>n.every(r=>le(r,t))):le(e,t);var ce=e=>typeof e=="object"&&e!==null&&"kind"in e&&wt.has(String(e.kind));var x=e=>/^[A-Z][A-Z]/.test(e)?e:`${e.charAt(0).toLowerCase()}${e.slice(1)}`,vt=/^(?:[aeio]|u(?:p|m|n(?!i))|8|1[18](?!\\d))/i,K=e=>`${vt.test(e)?"an":"a"} ${e}`;var fe=["base64url","base64","hex"],ue="0123456789abcdef",At=e=>btoa(String.fromCharCode(...e)),A=(e,t)=>{if(t==="hex")return[...e].map(r=>`${ue[r>>4]??""}${ue[r&15]??""}`).join("");let n=At(e);return t==="base64"?n:n.replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/,"")};var k=e=>({ok:!0,value:e}),pe=e=>({ok:!1,message:e});var Mt=/^(\\s*(?:export\\s+)?([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*)([\\s\\S]*)$/,Ft=/^[A-Za-z0-9_@%+=:,./-]+$/,me=(e,t)=>t==="\'"?e.indexOf(t):e.replace(/\\\\[\\s\\S]/g,"\\0\\0").indexOf(t),ge=({raw:e,quote:t})=>t===""?e.trim():t===\'"\'?e.replace(/\\\\n/g,`\n`).replace(/\\\\r/g,"\\r"):e,B=({open:e,tail:t,lastLine:n})=>({key:e.key,value:ge({raw:[...e.parts,t].join(`\n`),quote:e.quote}),prefix:e.prefix,firstLine:e.firstLine,lastLine:n}),Ht=({open:e,line:t,index:n})=>{let r=me(t,e.quote);return r===-1?{entries:[],open:{...e,parts:[...e.parts,t]}}:{entries:[B({open:e,tail:t.slice(0,r),lastLine:n})],open:void 0}},$t=({line:e,index:t})=>{let n=Mt.exec(e),r=n?.[1],o=n?.[2],s=n?.[3];if(r===void 0||o===void 0||s===void 0)return{entries:[],open:void 0};let i=/^[\'"`]/.exec(s)?.[0];if(i===void 0){let d=/^[^#]*/.exec(s)?.[0]??"";return{entries:[{key:o,value:ge({raw:d,quote:""}),prefix:r,firstLine:t,lastLine:t}],open:void 0}}let a=s.slice(i.length),c={key:o,prefix:r,quote:i,parts:[],firstLine:t},m=me(a,i);return m===-1?{entries:[],open:{...c,parts:[a]}}:{entries:[B({open:c,tail:a.slice(0,m),lastLine:t})],open:void 0}},M=e=>{let t=e.split(`\n`),n=t.reduce((r,o,s)=>{let i=r.open===void 0?$t({line:o,index:s}):Ht({open:r.open,line:o,index:s});return{entries:[...r.entries,...i.entries],open:i.open}},{entries:[],open:void 0});return n.open===void 0?n.entries:[...n.entries,B({open:n.open,tail:"",lastLine:t.length-1})]},qt=e=>{let t=/[\\r\\n]/.test(e),n=!e.includes(\'"\')&&!e.includes("\\\\");return!t&&Ft.test(e)?k(e):!t&&!e.includes("\'")?k(`\'${e}\'`):n?k(`"${e.replace(/\\n/g,"\\\\n").replace(/\\r/g,"\\\\r")}"`):e.includes("\'")?pe(e.includes(\'"\')?"that value mixes quote characters and cannot be stored in a .env file":"that value has a single quote and a backslash, which a .env file cannot hold together"):k(`\'${e}\'`)},ye=e=>qt(e).ok;var he=({text:e,names:t})=>{let n=new Set(t),r=M(e).filter(s=>s.value!==""),o=r.filter(s=>n.has(s.key));if(o.length!==0)return{fills:new Map(o.map(s=>[s.key,s.value])),ignored:[...new Set(r.filter(s=>!n.has(s.key)).map(s=>s.key))]}};var Rt=e=>typeof e=="object"&&e!==null&&"status"in e&&typeof e.status=="string"&&["awaiting","written","expired"].includes(e.status)&&"expiresIn"in e&&typeof e.expiresIn=="number",be=e=>{let t=Math.max(0,Math.floor(e));return`${String(Math.floor(t/60))}:${String(t%60).padStart(2,"0")}`},we=({statusUrl:e,onChange:t,fetchStatus:n=s=>fetch(s,{credentials:"omit",cache:"no-store",signal:AbortSignal.timeout(8e3)}),pollEveryMs:r=1e4,tickMs:o=1e3})=>{let s={expiresAt:0,lost:!1,closed:!1,asking:!1,timers:[]},i=()=>s.timers.forEach(d=>clearInterval(d)),a=d=>{s.closed||(s.closed=!0,i(),t({kind:"closed",reason:d}))},c=()=>{if(s.closed||s.lost||s.expiresAt===0)return;let d=(s.expiresAt-Date.now())/1e3;d<=0?a("expired"):t({kind:"open",secondsLeft:d})},m=async()=>{if(s.closed||s.asking)return;s.asking=!0;let d=await n(e).then(b=>b.ok?b.json():Promise.resolve(void 0)).catch(()=>{});if(s.asking=!1,!s.closed){if(!Rt(d)){s.lost=!0,t({kind:"lost"});return}s.lost=!1,d.status==="written"?a("answered"):d.status==="expired"?a("expired"):(s.expiresAt=Date.now()+d.expiresIn*1e3,t({kind:"open",secondsLeft:d.expiresIn}))}};return m(),s.timers.push(window.setInterval(()=>{m()},r),window.setInterval(c,o)),{stop:i,pollNow:()=>{m()}}};var Ct=({name:e,value:t})=>{let n=M(t),[r]=n;return n.length===1&&r?.key===e&&r.value!==""?r.value:t},xe=({name:e,value:t,multiline:n})=>Ct({name:e,value:n?t:t.replace(/[\\r\\n]/g,"")});var ir={kind:"length",min:0,max:8192,message:`no more than ${String(8192)} characters`,quiet:!0,binding:!0};var Ee=(e,t)=>e.kind==="storable"?ye(t):de(e,t),S=(e,t)=>e.map(n=>Ee(n,t));var Le=({rules:e,anyway:t})=>t?e.filter(n=>n.binding===!0):e,ke=(e,t)=>{let n=e.filter(r=>!Ee(r,t));return n.length>0&&n.every(r=>r.binding!==!0)},Se=e=>ce(e)||typeof e=="object"&&e!==null&&"kind"in e&&e.kind==="storable";var Ot=/^[a-z][a-z0-9+.-]{0,15}:\\/\\//i,Nt=({value:e,prefixes:t})=>Ot.exec(e)?.[0]??t.filter(n=>e.startsWith(n)).reduce((n,r)=>r.length>n.length?r:n,""),Te=e=>e.kind==="prefix"?e.anyOf:e.kind!=="either"?[]:e.options.flatMap(t=>t.flatMap(n=>n.kind==="prefix"?n.anyOf:[])),It=({rule:e,value:t})=>Te(e).some(n=>n.startsWith(t)),Kt=({rule:e,value:t,typing:n})=>n&&t.length<e.min?{state:"pending",detail:`${String(t.length)} so far`}:{state:"fail",detail:`got ${String(t.length)}`},Dt=({value:e,prefixes:t})=>{let n=Nt({value:e,prefixes:t});return n===""?"":`got ${n}`},Bt=e=>e.kind==="format"&&(e.format==="postgres"||e.format==="url"||e.format==="http_url"),ve=({rule:e,value:t,typing:n,known:r=[]})=>t===""?{state:"idle",detail:""}:S([e],t)[0]===!0?{state:"pass",detail:""}:e.kind==="length"?Kt({rule:e,value:t,typing:n}):n&&It({rule:e,value:t})?{state:"pending",detail:""}:e.kind==="prefix"||e.kind==="either"||Bt(e)?{state:"fail",detail:Dt({value:t,prefixes:[...r,...Te(e)]})}:{state:"fail",detail:""},_t=({value:e,known:t,own:n})=>{let r=t.flatMap(a=>a.prefixes.filter(c=>e.startsWith(c)).map(c=>({key:a,length:c.length}))),o=Math.max(0,...r.map(a=>a.length)),s=r.filter(a=>a.length===o).map(a=>a.key),i=s.find(a=>a.provider===n?.provider);return i!==void 0?i:new Set(s.map(a=>a.provider)).size===1?s[0]:void 0},Ae=({value:e,own:t,known:n})=>{let r=_t({value:e,known:n,own:t});return r===void 0||r.ref===t?.ref?"":t!==void 0&&r.provider===t.provider?r.url===t.url?`That\'s the ${x(r.label)}. Use the ${x(t.label)} from the same page.`:`That\'s the ${r.provider} ${x(r.label)}, not the ${x(t.label)}.`:`This looks like ${K(`${r.provider} ${x(r.label)}`)}.`},Pt=/^\\s|\\s$/,Me=e=>{if(!Pt.test(e))return"";let t=/^\\s/.test(e),n=/\\s$/.test(e);return`${t&&n?"Starts and ends with a space":t?"Starts with a space":"Ends with a space"}. It will be written exactly as typed unless you trim it.`};var F=(e,t)=>`${String(e)} ${t}${e===1?"":"s"}`,Fe=e=>e.length<=1?e[0]??"":`${e.slice(0,-1).join(", ")} and ${e.at(-1)??""}`,He=({counts:e,blocker:t,file:n,failed:r=!1})=>{let o=s=>({label:s,icon:"file-input",disabled:!0,busy:!1});return t==="writing"?{label:`Writing to ${n}\\u2026`,icon:"loader-circle",disabled:!0,busy:!0}:t==="closed"?o("This request is closed"):t==="lost"?{label:"Waiting for offprompt\\u2026",icon:"loader-circle",disabled:!0,busy:!1}:e.failing>0?o(`Fix ${F(e.failing,"value")} to write`):e.ready<e.total?o(`Fill ${F(e.total-e.ready,"value")} to write`):t==="unsealable"?o("This page can\'t encrypt the values"):t==="override"?o("Tick the box above to write"):r?{label:"Try again",icon:"rotate-ccw",disabled:!1,busy:!1}:{label:`Write to ${n}`,icon:"file-input",disabled:!1,busy:!1}},$e=({counts:e,writing:t})=>({ready:`${String(e.ready)} of ${String(e.total)} ready`,note:t?"Writing\\u2026":e.failing>0?`${String(e.failing)} ${e.failing===1?"needs":"need"} a fix`:"",bad:!t&&e.failing>0}),qe=({connection:e,asker:t,ours:n=!1})=>e.kind==="open"?`Connected to ${t} \\xB7 ${be(e.secondsLeft)} left`:e.kind==="lost"?"Reconnecting to offprompt\\u2026":e.reason==="expired"?"Expired":n?"Written":"Answered elsewhere",Re=({connection:e,remote:t,ours:n=!1})=>{if(e.kind!=="open")return e.kind==="lost"?{tone:"warn",title:"Lost the connection to offprompt",body:`${t?"The agent\'s sandbox":"The local server"} stopped answering. Your values stay on this page, and nothing is written until it is back.`}:e.reason==="expired"?{tone:"bad",title:"This request has expired",body:"Ask the agent to request the values again."}:n?{tone:"ok",title:"Your values were written",body:"offprompt wrote them and told the agent, but this page missed its answer. There\'s nothing more to do here."}:{tone:"bad",title:"This request has already been answered",body:"If that was not you, tell the agent. Nothing typed here will be written."}},Ce=({filled:e,failing:t,ignored:n,skipped:r,source:o})=>{let s=o==="your clipboard",i=t===0?"":`${F(t,"value")} ${t===1?"needs":"need"} a fix.`,a=n.length>1,c=n.length===0?"":`${Fe(n)} ${a?"were":"was"} in the ${s?"paste":"file"} but ${a?"weren\'t":"wasn\'t"} asked for, so ${a?"they were":"it was"} skipped.`,m=r.length===0?"":`${Fe(r)} ${r.length>1?"are":"is"} already set and kept, so the ${s?"pasted":"imported"} value was left out.`,d=[i,c,m].filter(b=>b!=="").join(" ");return{title:`Filled ${F(e,"field")} from ${o}`,body:d===""?"Each value is in its field.":d}};var u=(e,t)=>{e!=null&&e.textContent!==t&&(e.textContent=t)},Oe=e=>{let t=document.querySelector("[data-submit]");t!==null&&(t.disabled=e.disabled,t.classList.toggle("busy",e.busy),t.classList.toggle("waiting",e.icon==="loader-circle"),t.classList.toggle("retry",e.icon==="rotate-ccw"),u(t.querySelector("[data-label]"),e.label))},Ne=({counts:e,writing:t})=>{let n=$e({counts:e,writing:t}),r=document.querySelector(".bar-fill");r!==null&&(r.style.width=`${String(e.total===0?0:e.ready/e.total*100)}%`),u(document.querySelector("[data-ready]"),n.ready);let o=document.querySelector("[data-progress-note]");o!==null&&(u(o,n.note),o.classList.toggle("bad",n.bad))},Ie=({text:e,state:t})=>{let n=document.getElementById("connection");n!==null&&(n.hidden=!1,u(n,e),n.dataset.state=t)},Ke=e=>{let t=document.getElementById("page-notice");if(t===null||(t.hidden=e===void 0,e===void 0))return;t.classList.toggle("warn",e.tone==="warn"),t.classList.toggle("bad",e.tone==="bad"),t.classList.toggle("ok",e.tone==="ok");let[n,r]=t.querySelectorAll("p");u(n,e.title),u(r,e.body)},_=e=>{let t=document.querySelector("[data-filled]"),n=document.querySelector("section.import:not([data-filled])");if(t===null||n===null||(t.hidden=e===void 0,n.hidden=e!==void 0,e===void 0))return;u(t.querySelector("[data-filled-title]"),e.title),u(t.querySelector("[data-filled-body]"),e.body);let r=t.querySelector("[data-undo]");r!==null&&(r.hidden=!1)},De=()=>{let e=document.querySelector("[data-undo]");e!==null&&(e.hidden=!0)},Be=e=>{document.querySelector("form")?.classList.toggle("writing",e),document.querySelectorAll("textarea[data-key]").forEach(t=>{t.readOnly=e}),document.querySelectorAll("input[type=file]").forEach(t=>{t.disabled=e}),document.querySelectorAll("[data-writing]").forEach(t=>{t.dataset.idle===void 0&&(t.dataset.idle=t.textContent),u(t,(e?t.dataset.writing:t.dataset.idle)??"")})},_e=e=>{let t=document.querySelector("ul.emoji"),n=e.map(({glyph:o})=>o).join(" ");if(t===null||t.getAttribute("aria-label")===n)return;t.setAttribute("aria-label",n),t.querySelectorAll("li").forEach((o,s)=>{u(o.querySelector(".glyph"),e[s]?.glyph??""),u(o.querySelector(".name"),e[s]?.name??"")});let r=document.querySelector("[data-mismatch]");r!==null&&(r.hidden=!1)},H=e=>{let t=document.querySelector("[data-drop]");t!==null&&(t.hidden=!e)};var f=()=>[...document.querySelectorAll("textarea[data-key]")],E=e=>e.dataset.key??"",w=e=>e.hasAttribute("data-single-line"),Ue=()=>f().map(e=>[E(e),xe({name:E(e),value:e.value,multiline:!w(e)})]),U=({field:e,value:t})=>w(e)?t.replace(/[\\r\\n]/g,""):t,j=e=>Array.isArray(e),je=e=>JSON.parse(e??"[]"),q=e=>{let t=je(e.dataset.rules);return j(t)?t.filter(Se):[]},Ut=e=>typeof e=="object"&&e!==null&&"ref"in e&&typeof e.ref=="string"&&"provider"in e&&typeof e.provider=="string"&&"label"in e&&typeof e.label=="string"&&"url"in e&&typeof e.url=="string"&&"prefixes"in e&&j(e.prefixes)&&e.prefixes.every(t=>typeof t=="string"),P=(()=>{let e=je(document.querySelector("form[data-known]")?.dataset.known);return j(e)?e.filter(Ut):[]})(),jt=P.flatMap(e=>e.prefixes),We=e=>e.closest(".field")?.querySelector("[data-anyway]"),Ve=e=>{let t=We(e);return t!=null&&!t.hidden&&t.querySelector("input")?.checked===!0},W=()=>f().filter(Ve).map(e=>Number(e.name.replace(/^value/,""))),Wt=e=>e.value!==""&&S(q(e),e.value).every(Boolean),V=e=>e.value!==""&&S(Le({rules:q(e),anyway:Ve(e)}),e.value).every(Boolean),$=new WeakMap,L=({field:e,file:t})=>{t===void 0?$.delete(e):$.set(e,t)},ze=e=>$.get(e),Vt=e=>`${e.charAt(0).toLowerCase()}${e.slice(1)}`,zt=({line:e,result:t})=>{let n=t?.state??"idle";e.classList.toggle("pass",n==="pass"),e.classList.toggle("fail",n==="fail"),e.classList.toggle("pending",n==="pending"),e.hasAttribute("data-quiet")&&(e.hidden=n!=="fail");let r=t?.detail??"",o=e.querySelector(".detail"),s=e.querySelector(":scope > span");if(r===""||s===null){o?.remove();return}let i=o??s.appendChild(document.createElement("span"));i.className="detail",u(i,` \\xB7 ${r}`)},Gt=({box:e,field:t,valid:n})=>{let r=e.querySelector("[data-summary]"),o=r?.querySelector("[data-said]");if(r===null||o===null||o===void 0)return!1;let i=(t.dataset.made==="page"?o.dataset.made:void 0)??o.dataset.said??"",a=$.get(t);return r.hidden=!n,r.classList.toggle("from-file",a!==void 0),u(o,a===void 0?i:`Matched from ${a} \\xB7 ${Vt(i)}`),!0},Pe=({element:e,text:t})=>{e!==null&&(e.hidden=t==="",u(e.querySelector("span")??e,t))},Zt=({field:e,failing:t})=>{let n=We(e);if(n==null)return;n.hidden=!(t&&ke(q(e),e.value));let r=n.querySelector("input");n.hidden&&r!==null&&(r.checked=!1)},g=e=>{let t=document.activeElement===e,n=q(e).map(y=>ve({rule:y,value:e.value,typing:t,known:jt})),r=document.getElementById(`${e.id}-rules`);r?.querySelectorAll("li").forEach(y=>{y.hasAttribute("data-required")?y.remove():zt({line:y,result:n[Number(y.dataset.rule)]})});let o=n.some(y=>y.state==="fail");Zt({field:e,failing:o});let s=V(e),i=Wt(e);e.classList.toggle("valid",i),e.classList.toggle("invalid",o&&!s),e.classList.toggle("anyway",o&&s),e.toggleAttribute("aria-invalid",o&&!s);let a=e.closest(".field");if(a===null)return s;Gt({box:a,field:e,valid:i})&&r!==null&&(r.hidden=i);let c=P.find(y=>y.ref===e.dataset.source);Pe({element:a.querySelector("[data-hint]"),text:!i&&e.value!==""?Ae({value:e.value,own:c,known:P}):""});let m=w(e)?Me(e.value):"";Pe({element:a.querySelector("[data-space]"),text:m}),e.classList.toggle("spaced",m!=="");let d=a.querySelector("[data-trim]");d!==null&&(d.hidden=m==="");let b=e.value==="",te=a.querySelector("[data-generate-new]");te!==null&&(te.hidden=!b);let ne=a.querySelector("[data-regenerate]");ne!==null&&(ne.hidden=b);let re=a.querySelector("[data-generate-hint]");re!==null&&(re.hidden=!b);let v=a.querySelector("[data-unchecked]");return v!==null&&u(v,(e.value===""?v.dataset.empty:v.dataset.filled)??""),s},Ge=e=>{let t=e.closest(".input")?.querySelector("textarea");if(t==null)return;let n=document.querySelector("#reveal-all");n?.checked===!0?(n.checked=!1,f().filter(r=>r.classList.contains("secret")).forEach(r=>r.classList.toggle("shown",r!==t))):t.classList.toggle("shown"),document.querySelectorAll("[data-reveal]").forEach(r=>{let o=r.closest(".input")?.querySelector("textarea")?.classList.contains("shown")===!0;r.setAttribute("aria-pressed",String(o))})},Ze=e=>{let t=e.closest(".input")?.querySelector("textarea");if(t!=null)return t.value=t.value.trim(),t},Yt=e=>fe.some(t=>t===e),Jt=e=>{let t=JSON.parse(e.dataset.generate??"null");if(typeof t!="object"||t===null||!("bytes"in t)||!("encoding"in t))return;let{bytes:n,encoding:r}=t;return typeof n=="number"&&Yt(r)?{bytes:n,encoding:r}:void 0},z=e=>e.dataset.generate!==void 0,G=e=>{let t=Jt(e);t!==void 0&&(e.value=A(crypto.getRandomValues(new Uint8Array(t.bytes)),t.encoding),e.dataset.made="page",L({field:e,file:void 0}))},Ye=e=>e.closest(".input")?.querySelector("textarea")??void 0;var Je={name:"ECDH",namedCurve:"P-256"},Xt="offprompt/v1/seal",Qt=12,Z=e=>new TextEncoder().encode(e),en=e=>btoa(String.fromCharCode(...e)).replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/,""),tn=e=>{if(!/^[A-Za-z0-9_-]*$/.test(e))throw new Error("not base64url");let t=atob(e.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(t,n=>n.charCodeAt(0))},nn=e=>Uint8Array.from(e.match(/../g)??[],t=>Number.parseInt(t,16)),rn=({token:e,nonce:t})=>Z(`offprompt/v1|${e}|${t}`),on=async e=>crypto.subtle.importKey("raw",tn(e),Je,!1,[]),sn=async({privateKey:e,publicKey:t,token:n})=>{let r=await crypto.subtle.deriveBits({name:"ECDH",public:t},e,256),o=await crypto.subtle.importKey("raw",r,"HKDF",!1,["deriveKey"]);return crypto.subtle.deriveKey({name:"HKDF",hash:"SHA-256",salt:nn(n),info:Z(Xt)},o,{name:"AES-GCM",length:256},!1,["encrypt","decrypt"])};var Xe=on,Qe=async({sandboxKey:e,token:t,nonce:n,plaintext:r})=>{let o=await crypto.subtle.generateKey(Je,!1,["deriveBits"]),s=await sn({privateKey:o.privateKey,publicKey:e,token:t}),i=crypto.getRandomValues(new Uint8Array(Qt)),a=await crypto.subtle.encrypt({name:"AES-GCM",iv:i,additionalData:rn({token:t,nonce:n})},s,Z(r)),c=await crypto.subtle.exportKey("raw",o.publicKey);return["v1",...[new Uint8Array(c),i,new Uint8Array(a)].map(en)].join(".")};var et="This link is missing its key. Ask the agent for the link again.",an="This browser cannot encrypt the values. Open the link in a current browser.",tt=({values:e,allowTracked:t,anyway:n=[],fingerprint:r})=>JSON.stringify({values:Object.fromEntries(e),allowTracked:t,...n.length===0?{}:{anyway:n},...r===void 0?{}:{fingerprint:r}}),ln=e=>new URLSearchParams(e.replace(/^#/,"")).get("k")??"",nt=async({hash:e,token:t,nonce:n})=>{if(globalThis.crypto?.subtle===void 0)return an;let o=ln(e);return o===""?et:Xe(o).then(s=>i=>Qe({sandboxKey:s,token:t,nonce:n,plaintext:i}),()=>et)};var dn=256*1024,cn=3e4,h=document.querySelector("form"),R=()=>document.querySelector("[data-submit]"),X=()=>document.querySelector("form[data-sealed]"),l={connection:void 0,writing:!1,posted:!1,sealer:void 0,beforeFill:void 0,failed:!1,pollNow:()=>{}},st=()=>[...document.querySelectorAll("[data-generated]")],un=()=>{let e=f(),t=st().length;return{total:e.length+t,ready:e.filter(V).length+t,failing:e.filter(n=>n.classList.contains("invalid")).length}},fn=()=>h?.querySelector("input[name=allowTracked]")?.checked!==!1,pn=()=>{if(l.writing)return"writing";if(l.connection?.kind==="closed")return"closed";if(l.connection?.kind==="lost")return"lost";if(X()!==null&&l.sealer===void 0)return"unsealable";if(!fn())return"override"},p=()=>{let e=un();if(Oe(He({counts:e,blocker:pn(),file:h?.dataset.file??"the file",failed:l.failed})),Ne({counts:e,writing:l.writing}),l.connection===void 0)return;let t=h?.dataset.asker??"the agent",n=l.connection.kind==="open"?"open":l.connection.kind,r=l.posted;Ie({text:qe({connection:l.connection,asker:t,ours:r}),state:n}),Ke(Re({connection:l.connection,remote:X()!==null,ours:r}))},C=e=>{let t=document.getElementById("fill-status");t!==null&&(t.textContent=e)},mn=e=>{let t=document.getElementById("seal-status")??document.getElementById("fill-status");t!==null&&(t.textContent=e)},O=e=>{l.beforeFill?.has(e)===!0&&(l.beforeFill=void 0,De())},at=({text:e,source:t,file:n})=>{let r=f(),o=he({text:e,names:r.map(E)});if(o===void 0)return!1;let s=r.filter(a=>o.fills.has(E(a)));l.beforeFill=new Map(s.map(a=>[a,{value:a.value,made:a.dataset.made,file:ze(a)}])),s.forEach(a=>{a.value=U({field:a,value:o.fills.get(E(a))??""}),delete a.dataset.made,L({field:a,file:n}),g(a)});let i=new Set(st().map(a=>a.dataset.generated??""));return C(""),_(Ce({filled:s.length,failing:s.filter(a=>a.classList.contains("invalid")).length,ignored:o.ignored.filter(a=>!i.has(a)),skipped:o.ignored.filter(a=>i.has(a)),source:t})),p(),!0},gn=()=>{let e=l.beforeFill;if(e===void 0)return;e.forEach(({value:n,made:r,file:o},s)=>{s.value=n,r===void 0?delete s.dataset.made:s.dataset.made=r,L({field:s,file:o}),g(s)}),l.beforeFill=void 0,_(void 0),p();let[t]=e.keys();t?.focus()},yn=e=>{l.writing||at({text:e.clipboardData?.getData("text/plain")??"",source:"your clipboard"})&&e.preventDefault()},it=async e=>{if(e.size>dn){C(`${e.name} is too large to read here: over 256 KB.`);return}return e.text()},Y=async({file:e,field:t})=>{if(l.writing)return;let n=await it(e);n!==void 0&&(O(t),t.value=n.replace(/\\r\\n/g,`\n`),delete t.dataset.made,L({field:t,file:e.name}),g(t),p())},hn=({x:e,y:t})=>{let n=document.elementFromPoint(e,t)?.closest(".field")?.querySelector("textarea");if(n instanceof HTMLTextAreaElement&&!w(n))return n;let r=f(),[o]=r;return r.length===1&&o!==void 0&&!w(o)?o:void 0},lt=async({file:e,at:t})=>{let n=t===void 0?void 0:hn(t);if(n!==void 0&&document.querySelector("[data-drop]")===null){await Y({file:e,field:n});return}let r=await it(e);r!==void 0&&(at({text:r,source:e.name,file:e.name})||(n!==void 0?await Y({file:e,field:n}):C(`${e.name} names none of the keys this page asked for.`)))},bn=e=>{let t=e.target;if(!(t instanceof HTMLInputElement))return;if(t.name==="allowTracked"){p();return}if(t.closest("[data-anyway]")!==null){let o=document.getElementById(t.name.replace(/^anyway/,"value"));o instanceof HTMLTextAreaElement&&g(o),p();return}if(t.id==="reveal-all"){f().filter(o=>o.classList.contains("secret")).forEach(o=>o.classList.toggle("shown",t.checked)),document.querySelectorAll("[data-reveal]").forEach(o=>o.setAttribute("aria-pressed",String(t.checked)));return}if(t.type!=="file")return;let[n]=t.files??[];if(t.value="",n===void 0)return;if(t.id==="import-file"){lt({file:n});return}let r=document.getElementById(t.dataset.fills??"");r instanceof HTMLTextAreaElement&&Y({file:n,field:r})},wn=e=>{let t=e.target;if(!(t instanceof HTMLTextAreaElement)||t.dataset.key===void 0)return;let n=U({field:t,value:t.value});n!==t.value&&(t.value=n),L({field:t,file:void 0}),delete t.dataset.made,O(t),g(t),p()},xn=e=>{!(e.target instanceof HTMLTextAreaElement)||e.target.dataset.key===void 0||(g(e.target),p())},En=e=>{let t=Ye(e);t!==void 0&&(O(t),G(t),g(t),p(),e.hidden&&t.closest(".input")?.querySelector("[data-regenerate]")?.focus())},Ln=({box:e,event:t})=>{let n=e.getBoundingClientRect();return t.clientX<n.left||t.clientX>n.right||t.clientY<n.top||t.clientY>n.bottom},kn=e=>{let t=e.target instanceof Element?e.target:null;if(t===null)return!1;let n=t.closest("[data-suggested]");if(n!==null){let o=document.getElementById(n.dataset.suggested??"");return o instanceof HTMLDialogElement&&o.showModal(),!0}let r=t.closest("dialog");return r===null?!1:((t.closest("[data-dismiss]")!==null||t===r&&Ln({box:r,event:e}))&&r.close(),!0)},Sn=e=>{if(kn(e))return;let t=e.target instanceof Element?e.target.closest("button"):null;if(t===null||(t.hasAttribute("data-reveal")&&Ge(t),t.hasAttribute("data-undo")&&gn(),(t.hasAttribute("data-generate-new")||t.hasAttribute("data-regenerate"))&&En(t),!t.hasAttribute("data-trim")))return;let n=Ze(t);n!==void 0&&(O(n),g(n),p(),n.focus())},N=e=>e.dataTransfer?.types.includes("Files")===!0,Tn=e=>e.target instanceof HTMLInputElement&&e.target.type==="file",T={depth:0},vn=()=>document.querySelector("[data-drop]")!==null,An=e=>{N(e)&&(e.preventDefault(),T.depth+=1,!l.writing&&vn()&&H(!0))},Mn=e=>{N(e)&&(e.preventDefault(),e.dataTransfer!==null&&(e.dataTransfer.dropEffect=l.writing?"none":"copy"))},Fn=e=>{N(e)&&(T.depth=Math.max(0,T.depth-1),T.depth===0&&H(!1))},Hn=e=>{if(T.depth=0,H(!1),!N(e)||Tn(e))return;e.preventDefault();let[t]=e.dataTransfer?.files??[];t===void 0||l.writing||lt({file:t,at:{x:e.clientX,y:e.clientY}})},Q=e=>e.querySelector("input[name=nonce]")?.value??"",$n=()=>A(crypto.getRandomValues(new Uint8Array(32)),"base64url"),qn=({sent:e,key:t})=>new URLSearchParams([["nonce",Q(e)],...f().map(n=>[n.name,n.value]),...e.querySelector("input[name=allowTracked]")?.checked===!0?[["allowTracked","yes"]]:[],...W().map(n=>[`anyway${String(n)}`,"yes"]),["fingerprint",t]]),Rn=async({sent:e,sealer:t,key:n})=>{let r=new Map(f().map(i=>[i.name,i.value])),o=e.querySelector("input[name=allowTracked]")?.checked===!0,s=await t(tt({values:r,allowTracked:o,anyway:W(),fingerprint:n}));return new URLSearchParams([["nonce",Q(e)],["sealed",s]])},Cn=({sent:e,key:t})=>l.sealer===void 0?qn({sent:e,key:t}):Rn({sent:e,sealer:l.sealer,key:t}),On=["header.topbar","main"],dt=e=>{On.forEach(t=>{let n=e.querySelector(t),r=document.querySelector(t);n!==null&&r!==null&&r.replaceWith(document.importNode(n,!0))}),document.title=e.title},ee=e=>e.querySelectorAll("[data-needs-script]").forEach(t=>t.removeAttribute("hidden")),Nn=e=>{e.querySelectorAll("ul.rules").forEach(o=>{document.getElementById(o.id)?.replaceWith(document.importNode(o,!0))}),f().forEach(o=>{if(!(e.getElementById(o.id)?.classList.contains("invalid")===!0)){g(o);return}o.classList.add("invalid"),o.classList.remove("valid","anyway");let i=o.closest(".field")?.querySelector("[data-summary]");i!=null&&(i.hidden=!0);let a=e.getElementById(o.id)?.closest(".field")?.querySelector("[data-anyway]"),c=o.closest(".field")?.querySelector("[data-anyway]");a!=null&&c!==null&&c!==void 0&&(c.hidden=a.hasAttribute("hidden"))}),document.querySelector(".error")?.remove();let t=e.querySelector(".target .state");t!==null&&document.querySelector(".target .state")?.replaceWith(document.importNode(t,!0));let n=e.querySelector(".error");if(n===null)return;let r=document.importNode(n,!0);ee(r),R()?.before(r)},In=()=>{(document.querySelector(".error")??f().find(t=>t.classList.contains("invalid")))?.focus()},Kn=e=>ie({key:e,values:Ue()}).catch(()=>{}),J=e=>{l.writing=e,Be(e),p()},Dn=({next:e,fingerprint:t})=>{dt(e);let n=document.querySelector("main");t!==void 0&&n!==null&&(ee(n),_e(se(t))),document.querySelector("main h1")?.focus()},rt=e=>{J(!1),C(`${e} This page is checking whether the values were written.`),l.pollNow()},ct=async()=>{let e=R();if(h===null||e===null||e.disabled)return;let t=$n();J(!0),l.posted=!0;let n=await Kn(t),r=await fetch(h.action,{method:"POST",body:await Cn({sent:h,key:t}),credentials:"omit",signal:AbortSignal.timeout(cn)}).then(async s=>({response:s,next:new DOMParser().parseFromString(await s.text(),"text/html")})).catch(()=>{});if(r===void 0){rt("offprompt did not answer.");return}let o=r.next.querySelector("main[data-page]")?.getAttribute("data-page");if(o==="form"){l.posted=!1,l.failed=r.next.querySelector("[data-write-failed]")!==null,J(!1),Nn(r.next),p(),In();return}if(o==="written"||o==="closed"){h.dispatchEvent(new Event("offprompt:written")),o==="written"?Dn({next:r.next,fingerprint:n}):dt(r.next);return}rt(`Something other than offprompt answered (HTTP ${String(r.response.status)}).`)},Bn=e=>{if(e.key!=="Enter"||e.isComposing||e.keyCode===229||document.querySelector("dialog[open]")!==null)return;let t=e.target;!(t instanceof HTMLTextAreaElement&&w(t))&&!e.metaKey&&!e.ctrlKey||(e.preventDefault(),ct())},_n=async e=>{let t=new URL(e.action).pathname.split("/").pop()??"",n=await nt({hash:location.hash,token:t,nonce:Q(e)});if(typeof n=="string"){mn(n);return}l.sealer=n,p()},Pn=e=>{let t=we({statusUrl:`${e.action}/status`,onChange:n=>{l.connection=n,p()}});l.pollNow=t.pollNow,e.addEventListener("offprompt:written",()=>t.stop(),{once:!0})};R()?.setAttribute("type","button");R()?.addEventListener("click",()=>{ct()});h?.addEventListener("submit",e=>e.preventDefault());var ot=X();ot!==null&&_n(ot);h!==null&&Pn(h);ee(document);/Mac|iPhone|iPad/.test(navigator.userAgent)||document.querySelectorAll("kbd[data-shortcut]").forEach(e=>{e.textContent=`Ctrl ${e.dataset.shortcut??""}`});f().filter(z).forEach(e=>{e.placeholder="paste one, or",e.value===""&&G(e)});f().filter(e=>e.value!==""||z(e)).forEach(g);p();document.addEventListener("keydown",Bn);document.addEventListener("paste",yn);document.addEventListener("change",bn);document.addEventListener("input",wn);document.addEventListener("focusout",xn);document.addEventListener("click",Sn);document.addEventListener("dragenter",An);document.addEventListener("dragover",Mn);document.addEventListener("dragleave",Fn);document.addEventListener("drop",Hn);})();\n';
 
 // src/web/markdown.ts
 var isCapture = (index) => index % 2 === 1;
@@ -28219,17 +28341,17 @@ var parseBody = ({ body, contentType }) => {
 var VALUE_FIELD = /^value\d+(-file)?$/;
 var carriesPlainFields = (submission) => submission.allowTracked || submission.anyway.size > 0 || submission.fingerprintKey !== void 0 || [...submission.typed.keys()].some((name) => VALUE_FIELD.test(name));
 var submissionFrom = ({ plaintext, nonce }) => {
-  const parsed = JSON.parse(plaintext);
-  if (!isRecord(parsed) || !isRecord(parsed.values) || typeof parsed.allowTracked !== "boolean") {
+  const parsed3 = JSON.parse(plaintext);
+  if (!isRecord(parsed3) || !isRecord(parsed3.values) || typeof parsed3.allowTracked !== "boolean") {
     throw new Error("not a sealed submission");
   }
-  const typed = Object.entries(parsed.values).flatMap(
+  const typed = Object.entries(parsed3.values).flatMap(
     ([name, value]) => typeof value === "string" ? [[name, normalise(value)]] : []
   );
-  const { fingerprint: fingerprint2, anyway } = parsed;
+  const { fingerprint: fingerprint2, anyway } = parsed3;
   return {
     nonce,
-    allowTracked: parsed.allowTracked,
+    allowTracked: parsed3.allowTracked,
     anyway: new Set(Array.isArray(anyway) ? anyway.filter(isPlace) : []),
     typed: new Map(typed),
     ...typeof fingerprint2 === "string" ? { fingerprintKey: fingerprint2 } : {}
@@ -28887,6 +29009,152 @@ var findFormat = (id) => {
   return format;
 };
 
+// src/registry/template.ts
+var PARAM_MAX = 100;
+var SEGMENT_VALUE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+var LABEL_VALUE = /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/;
+var PLACEHOLDER = /^\{([a-z][a-z0-9_]*)\}$/;
+var PLACEHOLDERS = /\{([a-z][a-z0-9_]*)\}/g;
+var taken = (value) => ({ ok: true, value });
+var refused = (problems) => ({ ok: false, problems });
+var SCHEME = "https://";
+var hasBrace = (text) => /[{}]/.test(text);
+var placeholderIn = (part) => PLACEHOLDER.exec(part)?.[1];
+var duplicates = (names) => names.filter((name, index) => names.indexOf(name) !== index);
+var shapeOf = (template) => {
+  if (!template.startsWith(SCHEME)) return refused([`${template} must start with https://`]);
+  const rest = template.slice(SCHEME.length);
+  const hostEnd = rest.search(/[/?#]/);
+  const authority = hostEnd === -1 ? rest : rest.slice(0, hostEnd);
+  const after = hostEnd === -1 ? "" : rest.slice(hostEnd);
+  const pathEnd = after.search(/[?#]/);
+  const path = (pathEnd === -1 ? after : after.slice(0, pathEnd)) || "/";
+  const tail = pathEnd === -1 ? "" : after.slice(pathEnd);
+  const labels = authority.split(".");
+  const segments = path.split("/");
+  const hostNames = labels.map(placeholderIn);
+  const pathNames = segments.map(placeholderIn);
+  const firstFixed = hostNames.findIndex((name) => name === void 0);
+  const problems = [
+    .../[@:]/.test(authority) ? [`${template} names a user or a port, which a link to a provider's page never needs`] : [],
+    ...hasBrace(tail) ? [`${template} has a parameter in its query or fragment; parameters only fill a path segment or a host label`] : [],
+    ...labels.filter((label) => placeholderIn(label) === void 0 && hasBrace(label)).map((label) => `${template} has a parameter in part of the host label ${label}; it must be the whole label`),
+    ...segments.filter((segment) => placeholderIn(segment) === void 0 && hasBrace(segment)).map((segment) => `${template} has a parameter in part of the path segment ${segment}; it must be the whole segment`),
+    ...firstFixed === -1 ? [`${template} has no fixed part to its host`] : [],
+    ...hostNames.slice(Math.max(firstFixed, 0)).filter((name) => name !== void 0).map((name) => `${template} has {${name}} after a fixed label; host parameters only lead the host`),
+    ...duplicates([...hostNames, ...pathNames].filter((name) => name !== void 0)).map(
+      (name) => `${template} uses {${name}} more than once`
+    )
+  ];
+  if (problems.length > 0) return refused(problems);
+  const places = new Map([
+    ...hostNames.filter((name) => name !== void 0).map((name) => [name, "host"]),
+    ...pathNames.filter((name) => name !== void 0).map((name) => [name, "path"])
+  ]);
+  return taken({ places, fixedHost: labels.slice(firstFixed).join("."), labels: labels.length, segments: segments.length });
+};
+var onDomains = ({ hostname, domains }) => domains.some((domain2) => hostname === domain2 || hostname.endsWith(`.${domain2}`));
+var problemOf = ({ rule, place, value }) => {
+  if (value === "") return "is empty";
+  if (value.length > rule.max) return `is longer than ${String(rule.max)} characters`;
+  if (place === "host" && !LABEL_VALUE.test(value)) {
+    return "takes letters, digits and hyphens only, as one part of a host name";
+  }
+  if (place === "path" && !SEGMENT_VALUE.test(value)) {
+    return "takes letters, digits, ., _ and - only, starting with a letter or a digit";
+  }
+  if (rule.pattern !== void 0 && !new RegExp(rule.pattern).test(value)) {
+    return `must be ${rule.message ?? "in the shape its key expects"}`;
+  }
+  return void 0;
+};
+var encoded = ({ place, value }) => place === "host" ? value.toLowerCase() : encodeURIComponent(value);
+var parsed = (address) => {
+  try {
+    return new URL(address);
+  } catch {
+    return void 0;
+  }
+};
+var substituted = ({ url: url2, values }) => url2.replace(PLACEHOLDERS, (whole, name) => values.get(name) ?? whole);
+var keepsShape = ({ address, shape, domains }) => address !== void 0 && address.protocol === "https:" && address.username === "" && address.password === "" && onDomains({ hostname: address.hostname, domains }) && address.hostname.split(".").length === shape.labels && address.pathname.split("/").length === shape.segments;
+var fill = ({
+  template,
+  values,
+  domains
+}) => {
+  const shape = shapeOf(template.url);
+  if (!shape.ok) return shape;
+  const names = [...shape.value.places.keys()];
+  const problems = names.flatMap((name) => {
+    const value = values[name];
+    const rule = template.params[name];
+    const place = shape.value.places.get(name) ?? "path";
+    if (value === void 0) return [`${name} is missing`];
+    if (rule === void 0) return [`${name} has no rule`];
+    const problem = problemOf({ rule, place, value });
+    return problem === void 0 ? [] : [`${name} ${problem}`];
+  });
+  if (problems.length > 0) return refused(problems);
+  const filledIn = new Map(
+    names.map((name) => [name, encoded({ place: shape.value.places.get(name) ?? "path", value: values[name] ?? "" })])
+  );
+  const address = parsed(substituted({ url: template.url, values: filledIn }));
+  if (address === void 0 || !keepsShape({ address, shape: shape.value, domains })) {
+    return refused(["the filled address left the page its key links to"]);
+  }
+  return taken({ url: address.href, ignored: Object.keys(values).filter((name) => !shape.value.places.has(name)) });
+};
+
+// src/mcp/links.ts
+var LINK_MAX = 2048;
+var dropped = (why) => ({ kind: "dropped", why });
+var parsed2 = (text) => {
+  try {
+    return new URL(text);
+  } catch {
+    return void 0;
+  }
+};
+var suggestion = (text) => {
+  if (text.length > LINK_MAX) return dropped(`the link is longer than ${String(LINK_MAX)} characters`);
+  const url2 = parsed2(text.trim());
+  if (url2 === void 0) return dropped("the link is not an address");
+  if (url2.protocol !== "https:") return dropped("the link is not https, and the page only shows https links");
+  if (url2.username !== "" || url2.password !== "") {
+    return dropped("the link names a user or a password before its host, which hides where it goes");
+  }
+  return { kind: "suggested", url: url2.href, host: url2.host };
+};
+var filledPage = ({
+  name,
+  values,
+  source
+}) => {
+  if (source === void 0) {
+    return dropped(
+      `${name} is not a provider's key, so there is no page for parameters to fill; give the https address where it is made instead`
+    );
+  }
+  const { provider, credential } = source;
+  const usual = addressOf(credential.url);
+  if (credential.template === void 0) {
+    return dropped(`${provider.name}'s ${inSentence(credential.label)} has one page for everyone, ${usual}, which takes no parameters`);
+  }
+  const filled = fill({ template: credential.template, values, domains: provider.domains });
+  if (!filled.ok) return dropped(`${filled.problems.join("; ")}, so Get it opens ${usual} instead`);
+  return { kind: "filled", url: filled.value.url, ignored: filled.value.ignored };
+};
+var linkFor = ({
+  name,
+  link,
+  value
+}) => {
+  if (link === void 0) return void 0;
+  if (value.kind === "generated") return dropped(`${name} is generated on the page, so there is nothing to get`);
+  return typeof link === "string" ? suggestion(link) : filledPage({ name, values: link, source: value.source });
+};
+
 // src/mcp/resolve.ts
 var fromSource = ({ source, secret }) => ({
   kind: "typed",
@@ -28934,6 +29202,20 @@ var valueFor = (ask) => {
 };
 
 // src/mcp/requested.ts
+var requestedSecret = ({
+  ask,
+  value,
+  overwrites
+}) => {
+  const link = linkFor({ name: ask.name, link: ask.link, value });
+  return {
+    name: ask.name,
+    value,
+    overwrites,
+    ...ask.caption === void 0 ? {} : { caption: ask.caption },
+    ...link === void 0 ? {} : { link }
+  };
+};
 var requestedSecrets = async ({
   sink,
   asks
@@ -28948,12 +29230,7 @@ var requestedSecrets = async ({
   return ok(
     await Promise.all(
       resolved2.value.map(
-        async ({ ask, value }) => ({
-          name: ask.name,
-          value,
-          overwrites: await sinkHolds({ sink, name: ask.name }),
-          ...ask.caption === void 0 ? {} : { caption: ask.caption }
-        })
+        async ({ ask, value }) => requestedSecret({ ask, value, overwrites: await sinkHolds({ sink, name: ask.name }) })
       )
     )
   );
@@ -28976,6 +29253,16 @@ Each entry in \`secrets\` is one key, and says how its value comes to be:
   The page links to providers where the human can create one.
 - none of these \u2014 any other value, taken as plain text. A provider's key is still recognised by its usual name.
 Set \`secret: false\` on a value that is not secret, such as MAX_RETRIES, and the page shows it in the clear.
+
+Give an entry a \`link\` when you know where its value is made, so the human lands on the right page:
+- Some provider keys are made on a page that belongs to one account, organisation or project. Give that one's name or ID
+  as parameters, such as \`link: { "project": "abcdefghijklmnopqrst" }\` for a Supabase key, and the page's "Get it"
+  opens it. The \`link\` field lists the keys that take them and where a project keeps each value: read it from there
+  rather than guessing. A parameter that is missing or does not fit leaves "Get it" on the key's usual page.
+- A key no provider issues, such as an internal tool's token, takes the https address where it is made. The page shows it
+  as your suggestion, apart from offprompt's own links, and asks the human to confirm its host before it opens. A
+  provider's key can take one too; it shows under its "Get it", never in its place.
+The result's \`links\` says which links were used, and why any was dropped.
 
 When every key is generated, nothing opens: offprompt writes them and returns. Otherwise it opens a page in the user's
 browser and this call waits there, for up to five minutes, while the human types. It returns once the values have been
@@ -29013,6 +29300,17 @@ you were given a link to pass on, an "awaiting" result carries it again: keep it
 ask them, until the values are written.`;
 var CANCEL_DESCRIPTION = `Close a collect_secret request that is no longer needed. Anything already typed on the
 page is discarded.`;
+var inWords = (items) => items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1) ?? ""}`;
+var pageLine = ({ refs, template }) => {
+  const params = Object.entries(template.params).map(
+    ([name, param]) => `\`${name}\`, ${param.label}${param.message === void 0 ? "" : ` (${param.message})`}: ${param.found}`
+  );
+  return `${inWords(refs)} ${refs.length > 1 ? "take" : "takes"} ${params.join("; ")}.`;
+};
+var LINK_DESCRIPTION = [
+  "Where the value is made. Either parameters for the page of a provider key that belongs to one account, organisation or project, read from the project, or an https address for a key no provider issues, shown as your suggestion.",
+  ...templatedPages.map(pageLine)
+].join(" ");
 var sinkSchema = discriminatedUnion("kind", [
   object2({
     kind: literal("dotenv"),
@@ -29039,7 +29337,8 @@ var secretSchema = object2({
   secret: boolean2().optional().describe("false for a value that is not secret, such as MAX_RETRIES or a publishable key. It is shown in the clear."),
   caption: string2().min(1).max(90).optional().describe(
     'One short line shown under the field, such as where to find the value: "Stripe dashboard \u2192 Developers \u2192 API keys". Keep it brief.'
-  )
+  ),
+  link: union([string2().min(1).max(LINK_MAX), record(string2().max(64), string2().max(PARAM_MAX))]).optional().describe(LINK_DESCRIPTION)
 });
 var collectInput = {
   secrets: array(secretSchema).min(1).max(12).describe(
@@ -29076,9 +29375,19 @@ var statusOutput = {
   note: string2(),
   url: string2().optional().describe("The page the user has to open, while the request is awaiting and the link is yours to pass on.")
 };
+var linkOutput = object2({
+  name: string2(),
+  used: _enum(["get_it", "suggestion"]).optional(),
+  url: string2().optional(),
+  ignored: array(string2()).optional(),
+  dropped: string2().optional()
+});
 var collectOutput = {
   ...statusOutput,
-  expires_in: number2()
+  expires_in: number2(),
+  links: array(linkOutput).optional().describe(
+    `What became of each link you gave: used as the key's "Get it" or shown as your suggestion, with the address the page opens, or dropped, with why.`
+  )
 };
 var sinkReport = (request) => ({
   kind: request.sink.kind,
@@ -29086,6 +29395,21 @@ var sinkReport = (request) => ({
 });
 var namesOf = (request) => request.secrets.map((secret) => secret.name);
 var listed = (names) => names.join(", ");
+var linksOf = (request) => request.secrets.flatMap((secret) => {
+  const { link } = secret;
+  if (link === void 0) return [];
+  if (link.kind === "dropped") return [{ name: secret.name, dropped: link.why }];
+  if (link.kind === "suggested") return [{ name: secret.name, used: "suggestion", url: link.url }];
+  return [{ name: secret.name, used: "get_it", url: link.url, ...link.ignored.length === 0 ? {} : { ignored: [...link.ignored] } }];
+});
+var linksReport = (request) => {
+  const links = linksOf(request);
+  return links.length === 0 ? {} : { links };
+};
+var linksLine = (request) => {
+  const dropped2 = request.secrets.flatMap((secret) => secret.link?.kind === "dropped" ? [`${secret.name}: ${secret.link.why}`] : []);
+  return dropped2.length === 0 ? "" : ` The page did not use ${dropped2.length > 1 ? "some links" : "a link"} you gave. ${dropped2.join(". ")}.`;
+};
 var keptReport = (request) => {
   const kept = request.status === "written" ? keptNames(request.secrets) : [];
   return kept.length === 0 ? {} : { kept };
@@ -29210,8 +29534,9 @@ var registerTools = ({
         ...fileKeysReport(fileKeys),
         ...anywayReport(request),
         sink: sinkReport(request),
-        note: relayed === void 0 ? statusNote({ request, fileKeys }) : noteFor(relayed),
-        ...relayed === void 0 ? {} : { url: relayed.url }
+        note: `${relayed === void 0 ? statusNote({ request, fileKeys }) : noteFor(relayed)}${linksLine(request)}`,
+        ...relayed === void 0 ? {} : { url: relayed.url },
+        ...linksReport(request)
       },
       lead: headline(request)
     });
@@ -29254,27 +29579,27 @@ var registerTools = ({
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false }
     },
     async (input, extra) => during(async () => {
-      const refused = (message) => ({
+      const refused2 = (message) => ({
         isError: true,
         content: [{ type: "text", text: `offprompt refused that request: ${message}` }]
       });
       const root = await project({ meta: extra._meta });
-      if (!root.ok) return refused(root.message);
+      if (!root.ok) return refused2(root.message);
       const sink = await resolveSink({ root: root.value, spec: input.sink });
-      if (!sink.ok) return refused(sink.message);
+      if (!sink.ok) return refused2(sink.message);
       if (sink.value.kind === "file" && input.secrets.length > 1) {
-        return refused("a file sink holds exactly one value; use a dotenv sink for several");
+        return refused2("a file sink holds exactly one value; use a dotenv sink for several");
       }
       const duplicate = input.secrets.find(
         (secret, index) => input.secrets.findIndex((other) => other.name === secret.name) !== index
       );
-      if (duplicate !== void 0) return refused(`${duplicate.name} is asked for twice`);
+      if (duplicate !== void 0) return refused2(`${duplicate.name} is asked for twice`);
       const requested = await requestedSecrets({ sink: sink.value, asks: input.secrets });
-      if (!requested.ok) return refused(requested.message);
+      if (!requested.ok) return refused2(requested.message);
       const secrets = requested.value;
       if (secrets.every((secret) => secret.value.kind === "generated")) {
         const written = await writeAtOnce({ secrets, sink: sink.value, reason: input.reason });
-        return written.ok ? answer({ request: written.value }) : refused(written.message);
+        return written.ok ? answer({ request: written.value }) : refused2(written.message);
       }
       const sandboxed = where === "remote" || where === "unsure" && input.sandbox === true;
       const pair = sandboxed ? await newSealPair() : void 0;

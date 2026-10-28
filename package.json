@@ -1,6 +1,6 @@
 {
   "name": "offprompt",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Hand a secret to a coding agent without the secret entering the transcript.",
   "keywords": [
     "mcp",
@@ -29,6 +29,7 @@
     "offprompt": "dist/offprompt-install.mjs"
   },
   "files": [
+    ".claude-plugin/icon.png",
     ".claude-plugin/marketplace.json",
     ".claude-plugin/plugin.json",
     ".codex-plugin/plugin.json",

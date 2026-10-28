@@ -68,12 +68,29 @@ the same of its own public keys, such as Stripe's publishable key.
 
 | Field     | Rule                                                                          |
 | --------- | ----------------------------------------------------------------------------- |
-| `secrets` | One to twelve entries. `name` is `[A-Z][A-Z0-9_]*`; at most one of `generate`, `provider` and `format`, each an enum drawn from the registry; `secret` and `caption` optional |
+| `secrets` | One to twelve entries. `name` is `[A-Z][A-Z0-9_]*`; at most one of `generate`, `provider` and `format`, each an enum drawn from the registry; `secret`, `caption` and `link` optional |
 | `reason`  | Markdown up to 2000 characters, labelled as the agent's claim. Rendered to a short list of tags with no attributes; links show their address as text and are not clickable |
 | `sink`    | Tagged union, see Sinks. A `file` sink takes exactly one secret                |
 | `sandbox` | Optional. `true` when the agent's environment tells it that it runs in a cloud sandbox, a container or a remote VM. Counts only where offprompt cannot tell; see Presenting the URL |
 
 A batch is one page, one wait and one atomic write, rather than a request per key.
+
+`link` says where a value is made, in one of two forms. For a provider's key whose page
+belongs to one account, organisation or project, it is that one's name or ID, as the key's
+template in the registry names its parameters: `{ "project": "abcdefghijklmnopqrst" }` for a
+Supabase key, and the page's "Get it" opens that project's API keys rather than a page that
+asks which project. The tool's schema lists every key that takes parameters, what each is and
+where a project keeps it: the subdomain of `SUPABASE_URL`, `account_id` in `wrangler.toml`,
+`org` in `.sentryclirc`. A parameter that is missing or does not fit its rule leaves "Get it"
+on the key's usual page. For a key the registry does not know, such as an internal tool's
+token, `link` is an https address, which the page shows as the agent's suggestion; a
+provider's key may take one too, shown beside its "Get it" and never in its place. A link that
+cannot be used never refuses the request: `collect_secret`'s result lists under `links` what
+became of each, used as the key's "Get it", shown as a suggestion, or dropped with why, and its
+note repeats any that were dropped, so the agent learns what a key takes. The issue that
+proposed this named `project_id` in `supabase/config.toml` as where a project ref is kept;
+Supabase's docs say it is a local name, which the ref's rule, 20 lowercase letters, refuses,
+so the schema points the agent at `SUPABASE_URL` instead.
 
 A generated value is made on the page, from the browser's random bytes, as the page opens.
 It is masked like any other value; the human can show it, make another, or paste one they
@@ -255,9 +272,11 @@ The model never carries the URL. The plugin picks the first channel that works:
    until 2026-10-05.
 2. The plugin opens the browser itself with `open`, `xdg-open`, or on Windows
    `rundll32 url.dll,FileProtocolHandler`. This is the v1 default.
-   Claude Code currently rejects URL-mode elicitation
+   Claude Code rejected URL-mode elicitation until 2.1.287
    ([#69555](https://github.com/anthropics/claude-code/issues/69555),
-   [#88075](https://github.com/anthropics/claude-code/issues/88075)).
+   [#88075](https://github.com/anthropics/claude-code/issues/88075)), and since then advertises
+   it to the servers in its MCP configuration
+   ([docs](https://code.claude.com/docs/en/mcp#elicitation-modes-claude-code-declares)).
 3. The URL is returned in the tool result, only when the browser launch fails. The result
    says so, and the transcript exposure is accepted.
 
@@ -435,8 +454,9 @@ page was served from. Below it, in this order:
    project it works in, then the agent's reason, rendered from Markdown. Every character
    is escaped before any of it is read as Markdown, and the output is a short list of tags
    with no attributes. A link shows its address as text instead of becoming clickable,
-   because this is the page a person types secrets into. The only clickable links on it
-   come from the registry.
+   because this is the page a person types secrets into. The links on it that open at a click
+   come from the registry; the agent's own, given as a key's `link`, opens only once the
+   human confirms its host.
 2. Where it writes: the file, its project, the full path on hover, and a few words on its
    state — a new file, one that exists and how many of the keys it already holds, not
    gitignored, or tracked by git. A remote request adds that the values are encrypted in
@@ -445,7 +465,8 @@ page was served from. Below it, in this order:
    `.env`.
 4. One field per key, in a card headed by the count and a switch that shows or hides every
    masked value at once. A field carries its name, the provider's logo tile, and on the
-   right the address where the key is made, or what kind of value it is. The caption the
+   right "Get it", a link to where the key is made, or what kind of value it is. A link the
+   agent gave sits under that, on the same side, marked as its suggestion. The caption the
    agent gave it sits under the name. Under the field come its rules, then a line for a
    value nothing checks, providers that can create one for someone who has none yet, and
    a notice when the file already holds the key and writing replaces it. Formats that
@@ -506,6 +527,23 @@ choice travels as `anyway<n>` in a plain POST and inside the seal from a sandbox
 server writes past a field's own rules only where it was ticked. The agent hears which keys
 were written anyway.
 
+"Get it" is the registry's page for the key. Where the key has a template and the agent
+named its account, organisation or project, it is that template filled in, and otherwise the
+key's usual page; either way it looks the same, because either way the registry chose the
+page and its domain. An address the agent gave is drawn apart from it: a pill with a dashed
+edge, the agent's icon, "Suggested by Claude Code", and the whole host, in monospace, never
+cut short, under "Get it" when there is one. It is a button, not a link. A click opens a
+dialog, "Open vault.acme.internal?", that says the link was proposed by the agent and not
+verified by offprompt, shows the whole address, and has **Cancel**, which has the focus, and
+**Open vault.acme.internal**, the one link to it on the page. That opens in a new tab with
+`noopener noreferrer`, as every link here does, and closes the dialog; Escape and a click
+outside close it too, and while it is open ⌘ or Ctrl with Enter does not write. A host spelt
+in another script shows as the browser resolves it, `xn--…`, so a lookalike looks like one.
+With the page script off the pill reads as text, the address in full, as a link in the
+reason does. The decision to make it clickable at all, behind the dialog, is recorded on
+issue #21: a click is what people expect, and the dialog puts the host in front of them
+before anything opens.
+
 The heading names the program the agent runs in — "Claude Code is asking" — taken from
 the `clientInfo` every MCP client sends at `initialize`. The host program sets it, not the
 model, so the agent is never asked to introduce itself. Known hosts get their proper name
@@ -532,7 +570,8 @@ alone; one with several also lists each key as `provider/key`.
   draws, such as Slack or Twilio, whose owners had Simple Icons remove them, shows its
   initial.
 - A key has a label, the env names projects conventionally give it, the page where it is
-  made, a placeholder, and its rules. Rules stay loose, a prefix and a wide length range,
+  made, optionally that page inside one account, organisation or project as a template, a
+  placeholder, and its rules. Rules stay loose, a prefix and a wide length range,
   because a rule that goes stale blocks a valid key. The prefix catches the most common
   human error, pasting a key from the wrong provider. Where a provider still honours keys
   with no prefix, or says its format may change, as GitLab, Netlify, Fly, DigitalOcean and
@@ -553,6 +592,25 @@ repository where other tools can use it too.
 Every link in the registry is https and on one of its provider's own domains, which a test
 checks, and it opens in a new tab without sending this page's address. Logos are single
 SVG paths, from Simple Icons (CC0) and lobe-icons (MIT), drawn inline in the text colour.
+
+A template is a key's page with named parameters, such as
+`https://supabase.com/dashboard/project/{project}/settings/api-keys`, beside the plain `url`
+the key falls back to. Its fixed part is checked as a plain link is: https, and its host,
+without the labels parameters fill, on the provider's domains. A parameter fills one whole
+path segment or one whole leading label of the host, never part of either, nor the query or
+the fragment, and each has a rule: what it is, where a project keeps it, the longest value it
+takes, and optionally a narrower shape with the words for it, such as `^[a-z]{20}$`, "20
+lowercase letters". Whatever its rule, a value holds only letters, digits, `.`, `_` and `-`,
+starting with a letter or a digit so it is never `.` or `..`; one in the host holds a single
+DNS label. It is percent-encoded into its segment, or lowercased into its label, and the
+filled address is parsed again and must keep the template's host on the provider's domains
+and as many segments and labels, so a value can choose which of the provider's pages opens
+and nothing else: never another path, a query or another host. A host label is only ever
+templated under a domain whose every subdomain the provider runs, never one that serves its
+customers' sites. The registry test parses every template and checks its fixed part and that
+every parameter has a rule. The first templates are only those whose address the provider's
+own docs or source show with the identifier in it, 2026-10-27: Supabase's publishable and
+secret keys, Cloudflare's R2 keys, and Sentry's auth token.
 
 Rules are plain data — a prefix, a length range, a character set, a known format, or a
 choice between two sets. The server hands each field its rules on the page, and the page
@@ -665,8 +723,16 @@ What it protects against:
   inside the project, and shown to the human as an absolute path.
 - A lookalike URL from a poisoned prompt. On the human's machine offprompt opens the browser
   itself.
-- A phishing link in the agent's reason. The page shows the agent's links as text; the
-  only clickable links come from the registry, on the provider's own domains.
+- A phishing link in the agent's reason. The page shows a link in the reason as text; the
+  links that open at a click come from the registry, on the provider's own domains.
+- A lookalike page offered as where a key is made. A poisoned prompt can make the agent give
+  a key a `link` that imitates the provider, beside the field a person is about to type a
+  secret into. Parameters only fill a registry template, one segment or one label of an
+  address whose host stays on the provider's domains, so they choose among the provider's
+  own pages. An address of the agent's own is never drawn as "Get it" or as a link: it is
+  marked as the agent's suggestion with its whole host, and opens only from a dialog that
+  names the host and says offprompt has not verified it. That leaves the human to read the
+  host, which is what the dialog asks of them.
 - A page in another tab reaching the loopback server. Host check, CORS deny, page nonce.
 
 What it does not protect against:
