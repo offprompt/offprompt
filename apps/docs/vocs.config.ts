@@ -85,6 +85,7 @@ export default defineConfig({
         { text: 'Values you already keep', link: '/guides/stores' },
         { text: 'Cloud sandboxes', link: '/guides/cloud-sandboxes' },
         { text: 'Agents', link: '/guides/agents' },
+        { text: 'MCP elicitation', link: '/guides/mcp-elicitation' },
       ],
     },
     {
