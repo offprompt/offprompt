@@ -1,11 +1,11 @@
 import { generatedRules, generatedSummary, madeSummary } from '../../core/generated.js'
 import { fieldRules } from '../../core/rules.js'
-import type { GeneratedValue, RequestedSecret, SecretRequest, TypedValue } from '../../core/store.js'
-import { inSentence, withArticle } from '../../core/wording.js'
+import type { GeneratedValue, LinkOutcome, RequestedSecret, SecretRequest, TypedValue } from '../../core/store.js'
+import { addressOf, inSentence, withArticle } from '../../core/wording.js'
 import { referenceOf, type Source } from '../../registry/registry.js'
 import { escapeHtml } from '../html.js'
 import { icon, type IconName } from './icons.js'
-import { askerSubject, capitalised, iconTile, inlineLogo, logoTile } from './shell.js'
+import { askerName, askerSubject, capitalised, iconTile, inlineLogo, logoTile } from './shell.js'
 
 /** The rules each field breaks, by field. A field missing from the map passed. */
 export type FieldProblems = ReadonlyMap<number, readonly string[]>
@@ -49,43 +49,99 @@ export const tileFor = (secret: RequestedSecret) =>
   secret.value.kind === 'generated' ? iconTile('dices') : tileOf(secret.value)
 
 /**
- * A link out of the page. Only links from the registry are drawn, never one the agent
- * wrote, and none carries this page's address with it.
+ * A link out of the page, from the registry. None carries this page's address with it. A link
+ * the agent wrote is never drawn this way: see `suggestedLink`.
  */
 const outLink = ({ url, className, body, label }: { url: string; className: string; body: string; label?: string }) =>
   `<a class="${className}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer"${
     label === undefined ? '' : ` aria-label="${escapeHtml(label)}"`
   }>${body}</a>`
 
-/** A link read as an address, without the scheme or a trailing slash. */
-const addressOf = (url: string) => {
-  const { host, pathname } = new URL(url)
-  return `${host}${pathname === '/' ? '' : pathname.replace(/\/$/, '')}`
-}
-
 /**
  * Where a provider's key is made, on the right of its name. It reads "Get it", which a long
  * address would crowd the name out of; the address is in its accessible name and, as for any
- * link, in the browser's status bar on hover.
+ * link, in the browser's status bar on hover. It is the registry's page for the key, filled in
+ * for the agent's account, organisation or project where it named one.
  */
-const getLink = ({ provider, credential }: Source) =>
+const getLink = ({ source, url }: { source: Source; url: string }) =>
   outLink({
-    url: credential.url,
+    url,
     className: 'get',
-    label: `Get ${withArticle(`${provider.name} ${inSentence(credential.label)}`)} at ${addressOf(credential.url)}`,
+    label: `Get ${withArticle(`${source.provider.name} ${inSentence(source.credential.label)}`)} at ${addressOf(url)}`,
     body: `<span>Get it</span>${icon('arrow-up-right')}`,
   })
 
+type Suggested = Extract<LinkOutcome, { kind: 'suggested' }>
+
+const suggestedId = (index: number) => `suggested${String(index)}`
+
+/**
+ * The agent's own link, under "Get it" and never in its place, marked as its suggestion with
+ * its whole host. It is a button rather than a link: it opens a box naming the host, and only
+ * the link in that box goes anywhere. With the page script off it reads as text, as an address
+ * in the agent's reason does.
+ */
+const suggestedLink = ({ request, link, index }: { request: SecretRequest; link: Suggested; index: number }) => {
+  const by = `<span>Suggested by ${escapeHtml(askerName(request))}</span>`
+  return `<span class="suggestion"><button type="button" class="suggested" data-suggested="${suggestedId(
+    index,
+  )}" aria-haspopup="dialog" data-needs-script hidden>${icon('bot')}${by}<strong class="suggested-host">${escapeHtml(
+    link.host,
+  )}</strong></button><noscript><span class="suggested">${icon('bot')}${by}<strong class="suggested-host">${escapeHtml(
+    addressOf(link.url),
+  )}</strong></span></noscript></span>`
+}
+
+/**
+ * What the agent's link opens: a box that names the whole host and says offprompt has not
+ * checked it. Its own link opens in a new tab and, like every link here, sends nothing of
+ * this page.
+ */
+const confirmBox = ({ request, link, index }: { request: SecretRequest; link: Suggested; index: number }) => {
+  const id = suggestedId(index)
+  const host = escapeHtml(link.host)
+  const who = escapeHtml(request.asker?.name ?? 'your agent')
+  return `\n<dialog class="confirm" id="${id}" aria-labelledby="${id}-title" aria-describedby="${id}-said">
+<span class="confirm-icon">${icon('triangle-alert')}</span>
+<h2 class="confirm-title" id="${id}-title">Open <strong>${host}</strong>?</h2>
+<p class="confirm-said" id="${id}-said">This link was proposed by ${who} and not verified by offprompt. Make sure it is a site you expect before you sign in or copy a key there.</p>
+<code class="confirm-url">${escapeHtml(link.url)}</code>
+<div class="confirm-actions"><button type="button" class="secondary" data-dismiss>Cancel</button><a class="confirm-open" href="${escapeHtml(
+    link.url,
+  )}" target="_blank" rel="noopener noreferrer" data-dismiss>Open ${host}${icon('arrow-up-right')}</a></div>
+</dialog>`
+}
+
+const suggestedOf = (secret: RequestedSecret) => (secret.link?.kind === 'suggested' ? secret.link : undefined)
+
 /** What goes right of the name: where to get the key, or what kind of value it is. */
-const asideOf = (value: TypedValue) => {
-  if (value.source !== undefined) return getLink(value.source)
+const asideOf = ({ secret, value }: { secret: RequestedSecret; value: TypedValue }) => {
+  if (value.source !== undefined) {
+    return getLink({ source: value.source, url: secret.link?.kind === 'filled' ? secret.link.url : value.source.credential.url })
+  }
   return value.label === undefined ? '' : `<span class="aside">${escapeHtml(capitalised(value.label))}</span>`
 }
 
-const fieldHead = ({ secret, value, id }: { secret: RequestedSecret; value: TypedValue; id: string }) =>
-  `<div class="field-head"><span class="field-name">${tileFor(secret)}<label class="key" for="${id}">${escapeHtml(
+/** The agent's own link, on a line of the head's own under whatever is right of the name. */
+const suggestionOf = ({ request, secret, index }: { request: SecretRequest; secret: RequestedSecret; index: number }) => {
+  const suggested = suggestedOf(secret)
+  return suggested === undefined ? '' : suggestedLink({ request, link: suggested, index })
+}
+
+const fieldHead = ({
+  request,
+  secret,
+  value,
+  index,
+}: {
+  request: SecretRequest
+  secret: RequestedSecret
+  value: TypedValue
+  index: number
+}) =>
+  `<div class="field-head"><span class="field-name">${tileFor(secret)}<label class="key" for="${fieldName(index)}">${escapeHtml(
     secret.name,
-  )}</label></span>${asideOf(value)}</div>`
+  )}</label></span>${asideOf({ secret, value })}${suggestionOf({ request, secret, index })}</div>`
 
 const captionLine = (secret: RequestedSecret) =>
   secret.caption === undefined ? '' : `\n<p class="caption">${escapeHtml(secret.caption)}</p>`
@@ -247,10 +303,12 @@ const replaceNotice = ({ request, secret }: { request: SecretRequest; secret: Re
   return `\n<p class="notice">${icon('triangle-alert')}<span data-writing="${writing}">${what}</span></p>`
 }
 
-const below = (field: FieldArguments) =>
-  `${ruleLines(field)}${scriptLines(field)}${anywayBox(field)}${generateHint(field)}${uncheckedLine(field.value)}${offersLine(
+const below = (field: FieldArguments) => {
+  const suggested = suggestedOf(field.secret)
+  return `${ruleLines(field)}${scriptLines(field)}${anywayBox(field)}${generateHint(field)}${uncheckedLine(field.value)}${offersLine(
     field.value,
-  )}${replaceNotice(field)}`
+  )}${replaceNotice(field)}${suggested === undefined ? '' : confirmBox({ request: field.request, link: suggested, index: field.index })}`
+}
 
 /**
  * A single-line value still goes in a textarea. Safari's AutoFill takes any input masked with
@@ -259,10 +317,9 @@ const below = (field: FieldArguments) =>
  * textarea for one. The page script and the server drop line breaks, as a text input would.
  */
 const singleLineField = (field: FieldArguments) => {
-  const id = fieldName(field.index)
   const names = [...(field.value.masked ? ['secret'] : []), ...(field.broken.length > 0 ? ['invalid'] : [])]
   return `<div class="field">
-${fieldHead({ secret: field.secret, value: field.value, id })}${captionLine(field.secret)}
+${fieldHead({ request: field.request, secret: field.secret, value: field.value, index: field.index })}${captionLine(field.secret)}
 <div class="input"><textarea${classes(names)} rows="1" data-single-line ${fieldAttributes(field)}></textarea>${
     field.value.masked ? revealButton(field.secret) : ''
   }${STATE_MARKS}${field.generate === undefined ? '' : GENERATE}${TRIM}</div>
@@ -274,7 +331,7 @@ ${below(field)}
 const multiLineField = (field: FieldArguments) => {
   const id = fieldName(field.index)
   return `<div class="field">
-${fieldHead({ secret: field.secret, value: field.value, id })}${captionLine(field.secret)}
+${fieldHead({ request: field.request, secret: field.secret, value: field.value, index: field.index })}${captionLine(field.secret)}
 <div class="input multi"><textarea${classes(field.broken.length > 0 ? ['invalid'] : [])} ${fieldAttributes(field)}></textarea>${STATE_MARKS}</div>
 <div class="pick"><input id="${id}-file" name="${id}-file" type="file" data-fills="${id}" aria-label="Choose a file for ${escapeHtml(
     field.secret.name,

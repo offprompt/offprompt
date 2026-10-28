@@ -63,7 +63,7 @@ import { vercel } from './providers/vercel/provider.js'
 import { voyage } from './providers/voyage/provider.js'
 import { workos } from './providers/workos/provider.js'
 import { xai } from './providers/xai/provider.js'
-import type { Category, Credential, Provider } from './schema.js'
+import type { Category, Credential, Provider, Template } from './schema.js'
 
 /** Every provider in the registry. Adding one is a folder under `providers/` and a line here. */
 export const providers: readonly Provider[] = [
@@ -190,3 +190,19 @@ export const offersFor = (format: string) =>
   providers.flatMap(provider =>
     provider.offers.filter(offer => offer.format === format).map(offer => ({ provider, url: offer.url })),
   )
+
+/** A page some keys share that takes parameters, and the keys that link to it, by reference. */
+export type TemplatedPage = { readonly refs: readonly string[]; readonly template: Template }
+
+/** Every templated page in the registry, once each, as the tool tells the agent what each key takes. */
+export const templatedPages: readonly TemplatedPage[] = providers.flatMap(provider =>
+  provider.credentials
+    .flatMap(credential => (credential.template === undefined ? [] : [{ credential, template: credential.template }]))
+    .filter((entry, index, all) => all.findIndex(other => other.template.url === entry.template.url) === index)
+    .map(({ template }) => ({
+      refs: provider.credentials
+        .filter(credential => credential.template?.url === template.url)
+        .map(credential => referenceOf({ provider, credential })),
+      template,
+    })),
+)

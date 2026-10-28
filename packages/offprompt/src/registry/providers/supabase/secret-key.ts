@@ -1,10 +1,12 @@
 import type { Credential } from '../../schema.js'
+import { projectApiKeys } from './project-page.js'
 
 export const secretKey: Credential = {
   id: 'secret_key',
   label: 'Secret key',
   names: ['SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY'],
   url: 'https://supabase.com/dashboard/project/_/settings/api-keys',
+  template: projectApiKeys,
   placeholder: 'sb_secret_…',
   rules: [
     {

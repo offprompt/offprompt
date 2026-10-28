@@ -72,6 +72,63 @@ publishable key.
 `caption` is one short line under the field's name, up to 90 characters, such as where to find
 the value: "Stripe dashboard → Developers → API keys".
 
+## Where a value is made
+
+`link` takes you to the page where a value is made. It comes in two forms.
+
+### Parameters, for a provider's key
+
+Some keys are made on a page that belongs to one account, organisation or project, whose ID or
+name is in the page's address. For those, the agent names it, and the field's **Get it** opens
+that page rather than one that asks you which:
+
+```json
+[
+  { "name": "SUPABASE_SECRET_KEY", "provider": "supabase", "link": { "project": "abcdefghijklmnopqrst" } },
+  { "name": "R2_ACCESS_KEY_ID", "provider": "cloudflare", "link": { "account": "023e105f4ecef8ad9ca31a8372d0c353" } },
+  { "name": "SENTRY_AUTH_TOKEN", "provider": "sentry", "link": { "org": "acme-inc" } }
+]
+```
+
+| Keys | Parameter | What it is | Where a project keeps it |
+| --- | --- | --- | --- |
+| Supabase's secret and publishable keys | `project` | The project ref, 20 lowercase letters | The subdomain of `SUPABASE_URL`, or `supabase/.temp/project-ref` once `supabase link` has run. The `project_id` at the top of `supabase/config.toml` is a local name, not the ref |
+| Cloudflare's R2 access key ID and secret access key | `account` | The account ID, 32 hexadecimal digits | `account_id` in `wrangler.toml` or `wrangler.jsonc`, or `CLOUDFLARE_ACCOUNT_ID` |
+| Sentry's auth token | `org` | The organization slug | `org` in `.sentryclirc`, `defaults.org` in `sentry.properties`, or `SENTRY_ORG` |
+
+The tool's schema gives the agent the same list, and tells it to read the values from the project
+rather than guess. Each address comes from the provider's own docs or source.
+
+A value fills one whole part of the address, a path segment or the first part of the host, and
+takes only letters, digits, `.`, `_` and `-`, so it can choose which of the provider's pages
+opens and nothing else: never another path, a query or another site. A parameter that is
+missing or does not fit leaves **Get it** on the key's usual page, and the result says why.
+
+### An address, for anything else
+
+For a key no provider issues, such as an internal tool's token, `link` is the https address
+where it is made:
+
+```json
+{ "name": "VAULT_TOKEN", "link": "https://vault.acme.internal/ui/vault/access/tokens/new" }
+```
+
+The field shows it as the agent's suggestion, "Suggested by Claude Code", with its whole host,
+set apart from offprompt's own links. Clicking it opens a box, "Open vault.acme.internal?",
+which says the link was proposed by your agent and not verified by offprompt, and shows the
+whole address. Only **Open** in that box opens it, in a new tab that is not told which page sent
+you. A provider's key can take an address too; it shows under the key's **Get it**, never in its
+place.
+
+An address that is not https, or that names a user before its host, as
+`https://github.com@lookalike.example` does, is dropped.
+
+### What the agent hears
+
+The result's [`links`](/reference/collect-secret#output) says what became of each: used as the
+key's **Get it**, shown as a suggestion, or dropped, with why. A link that cannot be used never
+stops the request.
+
 ## Generated values
 
 `generate` asks for a random value, for signing and encryption secrets such as `AUTH_SECRET`,
@@ -109,4 +166,5 @@ Agents are told to ask for every key a task needs in one call, so you paste once
 
 `reason` is shown on the page as the agent's claim about why it needs the values, so it is
 written for you: up to 2,000 characters of Markdown, rendered with bold, italics, code, lists
-and quotes. Links show their address as text and are not clickable.
+and quotes. Links show their address as text and are not clickable; a key's
+[`link`](#where-a-value-is-made) is the way to give one you can open.

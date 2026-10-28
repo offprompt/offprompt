@@ -1,10 +1,12 @@
 import type { Credential } from '../../schema.js'
+import { projectApiKeys } from './project-page.js'
 
 export const publishableKey: Credential = {
   id: 'publishable_key',
   label: 'Publishable key',
   names: ['SUPABASE_PUBLISHABLE_KEY', 'SUPABASE_ANON_KEY'],
   url: 'https://supabase.com/dashboard/project/_/settings/api-keys',
+  template: projectApiKeys,
   placeholder: 'sb_publishable_…',
   secret: false,
   rules: [

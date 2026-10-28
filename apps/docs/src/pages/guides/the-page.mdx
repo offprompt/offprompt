@@ -37,7 +37,7 @@ and some their logo; any other shows the name it gave. See
 
 Below it is the agent's reason, rendered from Markdown and labelled as the agent's claim. It
 can use bold, lists and code. A link in it shows its address as text and is not clickable,
-because this is a page people type secrets into: the only clickable links on it come from
+because this is a page people type secrets into: the links that open at a click come from
 offprompt's [registry](/reference/providers), on the provider's own domains.
 
 ## Where it writes
@@ -80,8 +80,12 @@ file to drop here.
 
 One field per key, in a card headed by the count and a **Show values** switch.
 
-Each field carries its name, the provider's logo, and on the right the address where the key is
-made, or what kind of value it is. The caption the agent gave sits under the name. Under the
+Each field carries its name, the provider's logo, and on the right **Get it**, the page where the
+key is made, or what kind of value it is. Where the agent named your account, organisation or
+project, **Get it** opens that one's page. A link the agent gave of its own sits under it,
+marked "Suggested by" the agent with its whole host, and opens only once you confirm the host;
+see [Where a value is made](/guides/asking-for-values#where-a-value-is-made). The caption the
+agent gave sits under the name. Under the
 field come its checks, then, where they apply:
 
 - a line for a value nothing checks;

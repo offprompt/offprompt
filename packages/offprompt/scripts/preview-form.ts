@@ -76,6 +76,18 @@ const main = async () => {
       kind: 'dotenv',
     }),
     open({
+      asks: [
+        { name: 'SUPABASE_SECRET_KEY', provider: 'supabase', link: { project: 'xuqpsshjxdecrwdyuxvs' } },
+        { name: 'R2_ACCESS_KEY_ID', provider: 'cloudflare', link: { account: 'my-account' } },
+        { name: 'STRIPE_SECRET_KEY', provider: 'stripe', link: 'https://dashboard.stripe.com/test/apikeys' },
+        { name: 'VAULT_TOKEN', link: 'https://vault.acme-internal.example/ui/vault/access/tokens/new' },
+      ],
+      reason:
+        'The worker reads from Supabase and R2, charges through Stripe in test mode, and pulls its signing key from the team Vault.',
+      path: '.env',
+      kind: 'dotenv',
+    }),
+    open({
       asks: [{ name: 'GITHUB_APP_PRIVATE_KEY', format: 'pem' }],
       reason: 'The webhook handler signs its installation tokens with it.',
       path: 'secrets/github-app.pem',
