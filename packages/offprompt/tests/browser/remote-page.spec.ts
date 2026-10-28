@@ -1,7 +1,6 @@
-import { expect, test as base } from '@playwright/test'
-
 import { fontFaces, pasteScript } from '../../scripts/build.mjs'
 import { setupWorkspace } from '../helpers/workspace.js'
+import { expect, test as base } from './fixtures.js'
 
 const RESEND_KEY = `re_${'a'.repeat(30)}`
 

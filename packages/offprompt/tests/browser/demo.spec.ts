@@ -1,6 +1,7 @@
-import { expect, test as base, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
 import { demoScript, fontFaces, pasteScript } from '../../scripts/build.mjs'
+import { expect, test as base } from './fixtures.js'
 
 /**
  * The showcase embeds the page script, the demo's stand-in and the fonts through build-time
