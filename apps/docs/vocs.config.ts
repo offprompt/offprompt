@@ -80,6 +80,8 @@ export default defineConfig({
       text: 'Guides',
       items: [
         { text: 'API keys and agents', link: '/guides/claude-code-api-keys' },
+        { text: 'API keys in Cursor', link: '/guides/cursor-api-keys' },
+        { text: 'Secrets and agent context', link: '/guides/keep-secrets-out-of-agent-context' },
         { text: 'The page', link: '/guides/the-page' },
         { text: 'Asking for values', link: '/guides/asking-for-values' },
         { text: 'The fingerprint', link: '/guides/fingerprint' },
