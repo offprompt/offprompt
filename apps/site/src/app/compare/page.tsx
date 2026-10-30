@@ -5,9 +5,12 @@ import { Anchor } from '@/components/anchor'
 import { CopyCommand } from '@/components/copy-command'
 import { FRAME } from '@/components/frame'
 import { JsonLd } from '@/components/json-ld'
+import { LogoTile } from '@/components/logo'
+import { InfisicalMark, OffpromptMark } from '@/components/marks'
 import { Shell } from '@/components/shell'
-import { CHECKED, FAQ, ROWS, TOOLS } from '@/lib/compare'
+import { CHECKED, FAQ, ROWS, type Tool, TOOLS } from '@/lib/compare'
 import { pageMetadata } from '@/lib/metadata'
+import { provider } from '@/lib/registry'
 import { DOCS, INSTALL, REPO } from '@/lib/site'
 
 const TITLE = 'offprompt vs 1Password Environments MCP vs Infisical MCP'
@@ -32,6 +35,25 @@ const FAQ_PAGE = {
 
 const LINK = 'text-ink underline decoration-line underline-offset-4 hover:decoration-ink'
 
+const ONEPASSWORD = provider('onepassword').logo
+
+const TILE = 'flex size-10 shrink-0 items-center justify-center rounded-lg text-ink outline outline-line -outline-offset-1'
+
+/**
+ * Each tool's mark on a plain tile, in the text colour, as the registry explorer draws a logo with
+ * no brand colour, so no tool stands out from the others.
+ */
+const Mark = ({ id }: { readonly id: Tool['id'] }) => {
+  if (id === 'onepassword') {
+    return ONEPASSWORD === undefined ? null : <LogoTile name="1Password" logo={ONEPASSWORD} className="size-10 shrink-0" />
+  }
+  return (
+    <span className={TILE} aria-hidden="true">
+      {id === 'offprompt' ? <OffpromptMark className="h-3 w-6" /> : <InfisicalMark className="h-3 w-6" />}
+    </span>
+  )
+}
+
 /** Text with the parts between backticks set as code. */
 const Inline = ({ text }: { readonly text: string }) =>
   text.split('`').map((part, index) => (index % 2 === 1 ? <code key={index}>{part}</code> : part))
@@ -53,7 +75,10 @@ const Table = () => (
           </th>
           {TOOLS.map(tool => (
             <th key={tool.id} scope="col" className="py-3 pr-4 align-bottom font-medium text-ink">
-              {tool.name}
+              <span className="flex flex-col items-start gap-2.5">
+                <Mark id={tool.id} />
+                {tool.name}
+              </span>
             </th>
           ))}
         </tr>
