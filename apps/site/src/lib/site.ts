@@ -16,6 +16,9 @@ export type Link = { readonly label: string; readonly href: string }
 /** Where offprompt's own page can be tried, with a stand-in for its server. */
 export const PLAYGROUND: Link = { label: 'Playground', href: '/playground' }
 
+/** offprompt beside the tools people weigh it against. */
+export const COMPARE: Link = { label: 'Compare', href: '/compare' }
+
 export const NAV: readonly Link[] = [
   { label: 'How it works', href: '/#how-it-works' },
   { label: 'Rich fields', href: '/#rich-fields' },
@@ -30,6 +33,7 @@ export const FOOTER: readonly { readonly head: string; readonly links: readonly 
     links: [
       { label: 'How it works', href: '/#how-it-works' },
       PLAYGROUND,
+      COMPARE,
       { label: 'Rich fields', href: '/#rich-fields' },
       { label: 'Changelog', href: `${REPO}/releases` },
       { label: 'Roadmap', href: `${REPO}/blob/main/DESIGN.md#roadmap` },
@@ -40,6 +44,8 @@ export const FOOTER: readonly { readonly head: string; readonly links: readonly 
     links: [
       { label: 'Docs', href: `${DOCS}/introduction` },
       { label: 'API keys and agents', href: `${DOCS}/guides/claude-code-api-keys` },
+      { label: 'API keys in Cursor', href: `${DOCS}/guides/cursor-api-keys` },
+      { label: 'Secrets and agent context', href: `${DOCS}/guides/keep-secrets-out-of-agent-context` },
       { label: 'GitHub', href: REPO },
       { label: 'npm', href: NPM },
       { label: 'Registry', href: `${DOCS}/reference/providers` },
