@@ -3,6 +3,7 @@ import { defineConfig } from 'vocs/config'
 
 import redirects from './redirects.json' with { type: 'json' }
 import { registryLists } from './registry.ts'
+import { structuredData } from './structured-data.ts'
 
 /** The public repository, as offprompt.dev links it. */
 const REPO = 'https://github.com/offprompt/offprompt'
@@ -59,7 +60,7 @@ export default defineConfig({
     return `https://offprompt.dev/og/docs?section=${encodeURIComponent(section)}&title=%title&description=%description`
   },
   socials: [{ icon: 'github', link: REPO }],
-  markdown: { remarkPlugins: [registryLists] },
+  markdown: { remarkPlugins: [registryLists], rehypePlugins: [structuredData] },
   topNav: [
     { text: 'Guide', link: '/introduction' },
     { text: 'Reference', link: '/reference/collect-secret', match: '/reference' },
