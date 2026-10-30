@@ -25,7 +25,7 @@ It works with Claude Code, Codex, Cursor, Pi and any other agent that speaks MCP
 
 ## Compared
 
-- [offprompt vs 1Password Environments MCP vs Infisical MCP vs envmcp](${SITE}${COMPARE.href}): what each one does with a secret's value, from each tool's own docs
+- [offprompt vs 1Password Environments MCP vs Infisical MCP](${SITE}${COMPARE.href}): what each one does with a secret's value, from each tool's own docs
 
 ## Source
 

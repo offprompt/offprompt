@@ -1,5 +1,5 @@
 /**
- * What /compare says about offprompt and three tools people weigh it against. Every line about
+ * What /compare says about offprompt and two tools people weigh it against. Every line about
  * another tool says only what that tool's own docs, README or source say, checked on the date
  * below, and each tool lists where. Where its docs are silent, the cell says so rather than
  * guessing. Text in backticks is set as code.
@@ -10,7 +10,7 @@ import type { Link } from '@/lib/site'
 export const CHECKED = '30 October 2026'
 
 export type Tool = {
-  readonly id: 'offprompt' | 'onepassword' | 'infisical' | 'envmcp'
+  readonly id: 'offprompt' | 'onepassword' | 'infisical'
   readonly name: string
   readonly sources: readonly Link[]
 }
@@ -46,14 +46,6 @@ export const TOOLS: readonly Tool[] = [
       { label: 'Infisical pricing', href: 'https://infisical.com/pricing' },
     ],
   },
-  {
-    id: 'envmcp',
-    name: 'envmcp',
-    sources: [
-      { label: 'envmcp README', href: 'https://github.com/griffithsbs/envmcp' },
-      { label: 'npm', href: 'https://www.npmjs.com/package/envmcp' },
-    ],
-  },
 ]
 
 export type Row = { readonly label: string } & Readonly<Record<Tool['id'], string>>
@@ -64,7 +56,6 @@ export const ROWS: readonly Row[] = [
     offprompt: 'An MCP server the agent calls to ask you for a value, which it writes into the project',
     onepassword: 'An MCP server, part of the 1Password desktop app, that manages 1Password Environments',
     infisical: "Infisical's MCP server, which calls Infisical's API",
-    envmcp: 'A command wrapper that fills `$VARIABLES` in Cursor MCP server definitions. It is not an MCP server itself',
   },
   {
     label: 'How a new value gets in',
@@ -72,7 +63,6 @@ export const ROWS: readonly Row[] = [
     onepassword:
       'In the 1Password app, or the agent passes values to `append_variables`. Its Claude Code skill imports a `.env` by having the agent read the file',
     infisical: 'The agent passes it as `secretValue` to `create-secret` or `update-secret`',
-    envmcp: 'You write it into a `.env.mcp` file',
   },
   {
     label: 'Can its tools return a value to the agent',
@@ -80,7 +70,6 @@ export const ROWS: readonly Row[] = [
     onepassword: 'No. The docs say it "never returns the secrets stored in your Environments"',
     infisical:
       'Yes, by default, from `get-secret` and `list-secrets`. `INFISICAL_MASK_SECRET_VALUES=true` replaces them with `<masked>`',
-    envmcp: 'It has no tools',
   },
   {
     label: 'Where values live',
@@ -88,14 +77,12 @@ export const ROWS: readonly Row[] = [
     onepassword:
       'In 1Password. A mounted `.env` is a named pipe, read on demand and never stored on disk, on Mac and Linux',
     infisical: 'In Infisical Cloud or a self-hosted Infisical',
-    envmcp: 'In `.env.mcp`, in the project, a parent folder or your home folder',
   },
   {
     label: "Checks a key's format",
     offprompt: 'Yes, for 65 providers and 111 kinds of key, such as a prefix and a length, plus 12 formats',
     onepassword: 'Not documented',
     infisical: 'Not documented',
-    envmcp: 'Not documented',
   },
   {
     label: 'From a cloud sandbox',
@@ -107,28 +94,24 @@ export const ROWS: readonly Row[] = [
       'Runs locally as part of the desktop app. The docs say remote-only MCP clients are not supported yet',
     // TODO(valerio): Infisical documents nothing about cloud sandboxes for its MCP server.
     infisical: 'Not documented. It needs Infisical credentials wherever it runs',
-    envmcp: 'Not documented',
   },
   {
     label: 'Account needed',
     offprompt: 'None',
     onepassword: 'A 1Password account and the desktop app',
     infisical: 'An Infisical account, with a machine identity or an access token',
-    envmcp: 'None',
   },
   {
     label: 'Agents named in its docs',
     offprompt: 'Claude Code, Codex, Cursor, Pi, and any agent that speaks MCP',
     onepassword: 'Claude Code, Codex, Cursor and Kiro, and any client that speaks MCP over stdio',
     infisical: 'Claude Desktop, in its configuration example',
-    envmcp: 'Cursor',
   },
   {
     label: 'Setup',
     offprompt: '`npx offprompt init`',
     onepassword: 'Turn on its MCP integration in the 1Password app, then add the server or the Claude Code plugin',
     infisical: '`npx -y @infisical/mcp`, with Infisical credentials in its environment',
-    envmcp: '`npx envmcp <command> $VARIABLE` as the command in `.cursor/mcp.json`',
   },
   {
     label: 'License and price',
@@ -136,7 +119,6 @@ export const ROWS: readonly Row[] = [
     // TODO(valerio): 1Password does not state the MCP server's license, or which plans include Environments.
     onepassword: 'Needs a 1Password subscription. The Claude Code plugin is MIT',
     infisical: 'The MCP server is Apache-2.0. Infisical has a free plan and paid plans',
-    envmcp: 'MIT, free',
   },
 ]
 
@@ -151,7 +133,7 @@ export const FAQ: readonly Question[] = [
   {
     question: "Which of these keep secret values out of the agent's context?",
     answer:
-      "offprompt returns key names and a fingerprint, never values. 1Password's docs say its MCP server never returns the secrets stored in your Environments, though its Claude Code skill imports an existing .env by having the agent read the file. Infisical's MCP server returns values from get-secret and list-secrets unless INFISICAL_MASK_SECRET_VALUES is set to true. envmcp has no tools for the agent to call.",
+      "offprompt returns key names and a fingerprint, never values. 1Password's docs say its MCP server never returns the secrets stored in your Environments, though its Claude Code skill imports an existing .env by having the agent read the file. Infisical's MCP server returns values from get-secret and list-secrets unless INFISICAL_MASK_SECRET_VALUES is set to true.",
   },
   {
     question: 'Does offprompt replace 1Password or Infisical?',

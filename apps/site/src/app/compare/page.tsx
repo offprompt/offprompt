@@ -10,14 +10,14 @@ import { CHECKED, FAQ, ROWS, TOOLS } from '@/lib/compare'
 import { pageMetadata } from '@/lib/metadata'
 import { DOCS, INSTALL, REPO } from '@/lib/site'
 
-const TITLE = 'offprompt vs 1Password Environments MCP vs Infisical MCP vs envmcp'
+const TITLE = 'offprompt vs 1Password Environments MCP vs Infisical MCP'
 
 export const metadata: Metadata = pageMetadata({
   path: '/compare',
   title: TITLE,
   description:
-    'How offprompt, 1Password Environments MCP, Infisical MCP and envmcp get API keys to a coding agent, and which of them let a value reach its context.',
-  share: 'offprompt compared with 1Password Environments MCP, Infisical MCP and envmcp',
+    "How offprompt, 1Password's Environments MCP server and Infisical's MCP server handle an API key a coding agent needs, and which let its value reach the agent.",
+  share: 'offprompt compared with 1Password Environments MCP and Infisical MCP',
 })
 
 const FAQ_PAGE = {
@@ -45,7 +45,7 @@ const Part = ({ title, children }: { readonly title: string; readonly children: 
 
 const Table = () => (
   <div className="overflow-x-auto border-y border-line">
-    <table className="w-full min-w-[920px] table-fixed border-collapse text-left text-[14px] leading-[21px] lg:text-[14.5px]">
+    <table className="w-full min-w-[760px] table-fixed border-collapse text-left text-[14px] leading-[21px] lg:text-[14.5px]">
       <thead>
         <tr className="border-b border-line">
           <th scope="col" className="w-[160px] py-3 pr-4 font-medium text-muted">
@@ -82,15 +82,14 @@ const Compare = () => (
     <div className={`${FRAME} flex flex-col gap-10 pt-16 pb-24 lg:pt-[104px] lg:pb-32`}>
       <div className="flex max-w-[760px] flex-col gap-6">
         <h1 className="text-[40px] leading-[44px] tracking-[-1.4px] text-ink lg:text-[52px] lg:leading-[58px] lg:tracking-[-1.8px]">
-          offprompt vs 1Password Environments MCP vs Infisical MCP vs envmcp
+          {TITLE}
         </h1>
         <p className="text-[17px] leading-7 text-body lg:text-xl lg:leading-8">
           offprompt is for the moment a coding agent needs a key it does not have. You type the key on a page served
           from <code>127.0.0.1</code>, offprompt writes it straight to the project&apos;s <code>.env</code> or{' '}
           <code>.env.local</code>, and only the key&apos;s name, never its value, enters the agent&apos;s transcript.
-          1Password&apos;s and Infisical&apos;s MCP servers give the agent access to a secrets store you already keep,
-          and envmcp fills variables into Cursor&apos;s MCP config. They answer different problems, and some work
-          together.
+          1Password&apos;s and Infisical&apos;s MCP servers give the agent access to a secrets store you already keep.
+          They answer different problems, and they work together.
         </p>
       </div>
 
@@ -136,7 +135,7 @@ const Compare = () => (
             it: the agent could still open it, which every result tells it not to do. If your team already keeps its
             secrets in 1Password or Infisical, their tools keep them there. 1Password&apos;s mounted <code>.env</code>{' '}
             is never stored on disk, and Infisical&apos;s MCP server lets an agent manage a project&apos;s secrets,
-            with values masked when you turn that on. envmcp keeps credentials out of a Cursor MCP config you commit.
+            with values masked when you turn that on.
           </p>
           <p>
             They combine, too. A store&apos;s command line, such as <code>op inject</code> or{' '}
