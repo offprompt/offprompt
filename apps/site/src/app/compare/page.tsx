@@ -158,9 +158,11 @@ const Compare = () => (
           <p>
             offprompt does not store, share, sync or rotate secrets, and once the file is written it does not guard
             it: the agent could still open it, which every result tells it not to do. If your team already keeps its
-            secrets in 1Password or Infisical, their tools keep them there. 1Password&apos;s mounted <code>.env</code>{' '}
-            is never stored on disk, and Infisical&apos;s MCP server lets an agent manage a project&apos;s secrets,
-            with values masked when you turn that on.
+            secrets in 1Password or Infisical, their tools keep them there. The contents of 1Password&apos;s mounted{' '}
+            <code>.env</code> are never stored on disk, and Infisical&apos;s MCP server lets an agent manage a
+            project&apos;s secrets, with values masked when you turn that on. For an agent that should use a key without
+            seeing it, 1Password for NVIDIA OpenShell (beta) and Infisical&apos;s Agent Vault (preview) put the real
+            value in at a gateway or a proxy.
           </p>
           <p>
             They combine, too. A store&apos;s command line, such as <code>op inject</code> or{' '}

@@ -32,6 +32,7 @@ export const TOOLS: readonly Tool[] = [
       { label: '1Password Environments MCP Server', href: 'https://www.1password.dev/environments/mcp-server' },
       { label: 'Local .env files', href: 'https://www.1password.dev/environments/local-env-file' },
       { label: '1Password Environments', href: 'https://www.1password.dev/environments' },
+      { label: '1Password for NVIDIA OpenShell', href: 'https://www.1password.dev/environments/nvidia-openshell' },
       {
         label: 'Claude Code plugin skill',
         href: 'https://github.com/1Password/1password-claude-plugin/blob/main/skills/1password-environments/SKILL.md',
@@ -43,6 +44,11 @@ export const TOOLS: readonly Tool[] = [
     name: 'Infisical MCP',
     sources: [
       { label: 'infisical-mcp-server README', href: 'https://github.com/Infisical/infisical-mcp-server' },
+      {
+        label: 'Secret validation rules',
+        href: 'https://infisical.com/docs/documentation/platform/secret-validation-rules',
+      },
+      { label: 'Agent Vault', href: 'https://infisical.com/platform/agent-vault' },
       { label: 'Infisical pricing', href: 'https://infisical.com/pricing' },
     ],
   },
@@ -69,31 +75,30 @@ export const ROWS: readonly Row[] = [
     offprompt: 'No. Results carry the key names, the file and a four-emoji fingerprint',
     onepassword: 'No. The docs say it "never returns the secrets stored in your Environments"',
     infisical:
-      'Yes, by default, from `get-secret` and `list-secrets`. `INFISICAL_MASK_SECRET_VALUES=true` replaces them with `<masked>`',
+      'Yes, by default, from `get-secret` and `list-secrets`. Since version 0.0.24, `INFISICAL_MASK_SECRET_VALUES=true` replaces them with `<masked>`',
   },
   {
     label: 'Where values live',
     offprompt: "In the project's `.env`, `.env.local` or another file the agent names",
     onepassword:
-      'In 1Password. A mounted `.env` is a named pipe, read on demand and never stored on disk, on Mac and Linux',
+      'In 1Password. A mounted `.env` is a named pipe on Mac and Linux, read on demand and never stored on disk. Once unlocked, any process can read it',
     infisical: 'In Infisical Cloud or a self-hosted Infisical',
   },
   {
     label: "Checks a key's format",
     offprompt: 'Yes, for 65 providers and 111 kinds of key, such as a prefix and a length, plus 12 formats',
     onepassword: 'Not documented',
-    infisical: 'Not documented',
+    infisical:
+      'Not for particular providers. A project can set validation rules, such as a length, a regex or a prefix, that Infisical checks on every write',
   },
   {
     label: 'From a cloud sandbox',
     offprompt:
       'Yes. A link through a Cloudflare quick tunnel, with values encrypted in your browser to a key only the sandbox holds',
-    // TODO(valerio): 1Password documents a separate "1Password for NVIDIA OpenShell (beta)" for sandboxes;
-    // decide whether to mention it once its docs are checked.
     onepassword:
-      'Runs locally as part of the desktop app. The docs say remote-only MCP clients are not supported yet',
-    // TODO(valerio): Infisical documents nothing about cloud sandboxes for its MCP server.
-    infisical: 'Not documented. It needs Infisical credentials wherever it runs',
+      'The MCP server runs locally in the desktop app, and the docs say remote-only MCP clients are not supported yet. A separate integration, 1Password for NVIDIA OpenShell (beta), gives an agent in an OpenShell sandbox placeholders instead of values',
+    infisical:
+      "Not documented for the MCP server, which needs Infisical credentials wherever it runs. Infisical's separate Agent Vault (preview) is a proxy that adds the credential to an agent's requests, so the agent never holds it",
   },
   {
     label: 'Account needed',
@@ -104,20 +109,21 @@ export const ROWS: readonly Row[] = [
   {
     label: 'Agents named in its docs',
     offprompt: 'Claude Code, Codex, Cursor, Pi, and any agent that speaks MCP',
-    onepassword: 'Claude Code, Codex, Cursor and Kiro, and any client that speaks MCP over stdio',
+    onepassword: 'Claude Code, Codex, Cursor, Kiro and OpenCode, and any client that speaks MCP over stdio',
     infisical: 'Claude Desktop, in its configuration example',
   },
   {
     label: 'Setup',
     offprompt: '`npx offprompt init`',
-    onepassword: 'Turn on its MCP integration in the 1Password app, then add the server or the Claude Code plugin',
+    onepassword:
+      'Turn on Integrate with MCP clients under Settings > Developer in the 1Password app, then add `1password-mcp` to the agent or install the Claude Code plugin',
     infisical: '`npx -y @infisical/mcp`, with Infisical credentials in its environment',
   },
   {
     label: 'License and price',
     offprompt: 'MIT, free',
-    // TODO(valerio): 1Password does not state the MCP server's license, or which plans include Environments.
-    onepassword: 'Needs a 1Password subscription. The Claude Code plugin is MIT',
+    // 1Password states no license for the MCP server, which ships inside its desktop app.
+    onepassword: 'Needs a 1Password subscription. The Claude Code plugin is MIT, and marked beta',
     infisical: 'The MCP server is Apache-2.0. Infisical has a free plan and paid plans',
   },
 ]
@@ -133,7 +139,7 @@ export const FAQ: readonly Question[] = [
   {
     question: "Which of these keep secret values out of the agent's context?",
     answer:
-      "offprompt returns key names and a fingerprint, never values. 1Password's docs say its MCP server never returns the secrets stored in your Environments, though its Claude Code skill imports an existing .env by having the agent read the file. Infisical's MCP server returns values from get-secret and list-secrets unless INFISICAL_MASK_SECRET_VALUES is set to true.",
+      "offprompt returns key names and a fingerprint, never values. 1Password's docs say its MCP server never returns the secrets stored in your Environments, though its Claude Code skill imports an existing .env by having the agent read the file. Infisical's MCP server returns values from get-secret and list-secrets unless INFISICAL_MASK_SECRET_VALUES is set to true. Both also offer a separate way for an agent to use a key it never sees: 1Password for NVIDIA OpenShell (beta) gives the agent placeholders and swaps in the real values at a gateway, and Infisical's Agent Vault (preview) adds the real credential to the agent's requests at a proxy.",
   },
   {
     question: 'Does offprompt replace 1Password or Infisical?',
