@@ -1,0 +1,113 @@
+---
+description: Give Cursor's agent an API key without pasting it into the chat. It asks with offprompt, you type the key on a local page, and only the key's name reaches the agent.
+---
+
+# How to add API keys to Cursor without pasting them into chat
+
+Install offprompt in the project with `npx offprompt init`, and Cursor's agent asks for a key
+with a tool call instead of in the chat. A page opens in your browser on `127.0.0.1`, you paste
+the key there, and offprompt writes it to the project's `.env`. The agent gets back the key's
+name and a four-emoji fingerprint, never the value, so the key stays out of the conversation
+and out of every request sent to the model.
+
+## Adding a key with offprompt
+
+:::steps{data-howto="true"}
+
+### Install offprompt in the project
+
+In the project's folder, with Node 22 or later:
+
+```sh
+npx offprompt init --agent cursor
+```
+
+This copies the server to `tools/offprompt/mcp.mjs` and declares it in `.cursor/mcp.json`.
+Without `--agent cursor`, `init` sets up every agent it finds on your machine, Cursor included.
+Commit both, and everyone who opens the project in Cursor gets offprompt too. Check that
+offprompt is listed and turned on where Cursor's settings list MCP servers.
+
+### Keep the agent's file tools out of `.env`
+
+Cursor's docs list `.env*` among the files Cursor ignores by default. To make it explicit, add
+the files to `.cursorignore` at the project's root, which keeps them from the Agent and Tab:
+
+```sh [.cursorignore]
+.env
+.env.*
+```
+
+Cursor's [docs on ignore files](https://cursor.com/docs/context/ignore-files) say the Agent's
+terminal and MCP tools are not covered, so a command that prints the file still could.
+
+### Ask for something that needs a key
+
+In the Agent, ask for the task, not the key:
+
+> Add Stripe Checkout to the pricing page.
+
+The agent calls [`collect_secret`](/reference/collect-secret) for `STRIPE_SECRET_KEY`, says why
+it needs it, and names the file, `.env` unless the project reads another, such as `.env.local`.
+
+### Paste the key on the page
+
+The page says who is asking, why, and which file it will write. The field links to where Stripe
+makes the key, and checks what you paste: a Stripe secret key starts with `sk_live_`, `sk_test_`,
+`rk_live_` or `rk_test_`, so a key from the wrong provider is caught before it is written. Press the write button.
+
+### Compare the fingerprint
+
+The page shows **Written.** and four emoji. The agent tells you the same four in the chat. When
+they match, the file holds exactly what you typed, and the agent carries on with the task,
+reading the key from the environment by name.
+
+:::
+
+## In a Cursor Cloud Agent
+
+A Cloud Agent runs in a VM your browser is not on, so offprompt cannot open a page on your
+screen. The agent passes you a link instead, to the same page through a Cloudflare quick tunnel.
+Your browser encrypts the values to a key that only the sandbox holds before they leave it, so
+the tunnel carries ciphertext. Commit `tools/offprompt/` and `.cursor/mcp.json`, and every
+Cloud Agent that clones the project has offprompt. See [Cloud sandboxes](/guides/cloud-sandboxes).
+
+## Without offprompt
+
+Ask the agent which variable it reads and from which file, then open the file in your editor and
+add the line yourself, with `.cursorignore` set as above. The value never passes through the
+chat, but you have to get the name and the file right, and a key the agent finds it needs halfway
+through a task stops the task until you do. [How to give Claude Code an API key](/guides/claude-code-api-keys)
+sets the ways to hand over a key side by side; they are the same for Cursor.
+
+## FAQ
+
+### Is it safe to paste an API key into Cursor's chat?
+
+It is not. What you paste becomes part of the conversation: it goes to the model with every
+later request, stays in the chat's history, and can come back in a summary or in code the agent
+writes. A key that has been pasted cannot be taken back out. Rotate it at the provider.
+
+### Can Cursor's agent still read the `.env` file?
+
+offprompt keeps the value out of the conversation on the way in. Afterwards the file is on disk.
+`.cursorignore` keeps the Agent's file tools and Tab out of it, and every offprompt result tells
+the agent not to open it and lists the keys the file holds, so the agent has no reason to. A
+terminal command can still print it. See the [threat model](/security/threat-model).
+
+### Which keys does offprompt check?
+
+offprompt's [registry](/reference/providers) knows 65 providers and 111 kinds of key, such as
+OpenAI, Anthropic, Stripe, Supabase and Resend keys, with where each is made and the prefix and
+length it should have. Any other key gets a plain field, and a value that should be random, such
+as `AUTH_SECRET`, is generated on the page.
+
+### Does offprompt send my keys anywhere?
+
+On your machine the value goes from your browser to offprompt, running on `127.0.0.1`, and into
+the file. From a Cloud Agent it crosses a Cloudflare tunnel encrypted to the sandbox. offprompt
+has no server of its own and keeps nothing.
+
+### What does it cost?
+
+Nothing. offprompt is open source under the MIT licence, and `npx offprompt init` is the whole
+setup.

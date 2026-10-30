@@ -1,4 +1,4 @@
-import { DOCS, INSTALL, NPM, REPO } from '@/lib/site'
+import { COMPARE, DOCS, INSTALL, NPM, REPO, SITE } from '@/lib/site'
 
 export const dynamic = 'force-static'
 
@@ -18,8 +18,14 @@ It works with Claude Code, Codex, Cursor, Pi and any other agent that speaks MCP
 - [Introduction](${DOCS}/introduction): what offprompt does, and how a value gets from you to the project without passing through the agent
 - [Installation](${DOCS}/installation): in a project for everyone who works on it, or in every agent you use
 - [How to give Claude Code an API key](${DOCS}/guides/claude-code-api-keys): the ways to get a key to an agent, and what each keeps out of the transcript
+- [How to add API keys to Cursor without pasting them into chat](${DOCS}/guides/cursor-api-keys): Cursor's agent asks with offprompt, you type the key on a local page, and only its name reaches the agent
+- [How to keep secrets out of your AI agent's context](${DOCS}/guides/keep-secrets-out-of-agent-context): where secrets get into an agent's context, and how to keep each way closed
 - [FAQ](${DOCS}/faq): short answers to the questions people ask first
 - [Threat model](${DOCS}/security/threat-model): what offprompt protects against, and what it does not
+
+## Compared
+
+- [offprompt vs 1Password Environments MCP vs Infisical MCP](${SITE}${COMPARE.href}): what each one does with a secret's value, from each tool's own docs
 
 ## Source
 

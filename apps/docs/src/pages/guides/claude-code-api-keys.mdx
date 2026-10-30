@@ -4,10 +4,18 @@ description: Four ways to get an API key to Claude Code or another coding agent,
 
 # How to give Claude Code an API key
 
+To give Claude Code an API key safely, put the key in the project's `.env` file without it
+passing through the chat, and keep Claude Code from reading that file afterwards. Either write
+the line yourself and add a deny rule for the file, or install offprompt with
+`npx offprompt init`: Claude Code then asks for the key with a tool call, you type it on a page
+in your browser, and the agent gets back the key's name and never its value. A key pasted into
+the chat stays in the transcript for good.
+
 Sooner or later the agent needs a key: to call Stripe, send mail through Resend, or run the tests
 that hit OpenAI. There are four ways to get one to it, and they differ in where the value ends
 up. This page uses Claude Code for its examples. The ways are the same for Codex, Cursor and
 other agents; the settings that keep an agent out of a file are each agent's own.
+[How to add API keys to Cursor](/guides/cursor-api-keys) has Cursor's.
 
 | | In the chat and transcript | In a file the agent can read | From a cloud sandbox |
 | --- | --- | --- | --- |
@@ -79,10 +87,11 @@ infisical run -- claude
 Nothing is written to disk, and nothing passes through the chat. But every command the agent runs
 inherits that environment, so `env`, `printenv` or a debug line that logs the configuration prints
 every value into the transcript. And the store's login has to be where the agent runs, which in a
-cloud sandbox means handing the sandbox a credential to the whole store.
+cloud sandbox means handing the sandbox a credential to the store.
 
 To fill offprompt's page from one of these stores instead, see
-[Values you already keep](/guides/stores).
+[Values you already keep](/guides/stores). [offprompt compared](https://offprompt.dev/compare)
+sets out what 1Password's and Infisical's MCP servers return to the agent.
 
 ## Letting the agent ask, with offprompt
 

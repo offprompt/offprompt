@@ -1,5 +1,5 @@
 ---
-description: Short answers to the questions people ask about offprompt first.
+description: Short answers to the first questions about offprompt, such as whether the agent can read the .env, where values go, which agents it works with, and its licence.
 ---
 
 # FAQ
@@ -19,7 +19,8 @@ plainly ever since. See the [threat model](/security/threat-model#what-it-does-n
 
 Whatever you paste goes into the model's context, the transcript on disk and the provider's logs,
 and stays there. With offprompt the only thing in any of them is the key's name.
-[How to give Claude Code an API key](/guides/claude-code-api-keys) compares the other ways.
+[How to give Claude Code an API key](/guides/claude-code-api-keys) compares the other ways, and
+[How to add API keys to Cursor](/guides/cursor-api-keys) does the same in Cursor.
 
 ## Does offprompt send my values anywhere?
 
@@ -64,6 +65,14 @@ passes you the link instead.
 The page tells you before anything is written. Each field checks its value as you type, and names
 the key you pasted when it recognises it: "That's the publishable key. Use the secret key from the
 same page."
+
+## How is offprompt different from a secrets manager's MCP server?
+
+A secrets manager's MCP server lets the agent work with a store you already keep, and some
+return a secret's value to the agent when it asks. offprompt has no store: it takes a value you
+type on its page, writes it to the project's file, and returns only the key's name.
+[offprompt compared](https://offprompt.dev/compare) sets it beside 1Password Environments and
+Infisical's MCP server, from what each one's docs say.
 
 ## Can it write to Vercel, GitHub or my secrets manager directly?
 

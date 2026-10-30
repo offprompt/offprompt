@@ -35,7 +35,34 @@ copyright notice and this permission notice appear in all copies.
 
 The provider and agent logos come from offprompt's own registry, and so from the projects
 `packages/offprompt/THIRD_PARTY_NOTICES.md` lists. The marks belong to their owners, and
-the site only uses them to name the providers and agents offprompt works with.
+the site only uses them to name the providers and agents offprompt works with, and the tools
+/compare sets it beside.
+
+Infisical's mark, in `src/components/marks.tsx`, is the infinity sign from
+`docs/logo/light.svg` in [Infisical's repository](https://github.com/Infisical/infisical),
+under the MIT License:
+
+```
+Copyright (c) 2022 Infisical Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 ## Everything else
 

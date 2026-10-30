@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { JsonLd } from '@/components/json-ld'
 import { Cta } from '@/components/sections/cta'
 import { Hero } from '@/components/sections/hero'
 import { HowItWorks } from '@/components/sections/how-it-works'
@@ -37,11 +38,7 @@ const SOFTWARE = {
 
 const Home = () => (
   <Shell>
-    <script
-      type="application/ld+json"
-      // JSON in a script tag ends at the first "</script", so every < is escaped.
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(SOFTWARE).replaceAll('<', '\\u003c') }}
-    />
+    <JsonLd data={SOFTWARE} />
     <Hero />
     <HowItWorks />
     <Schemas />
