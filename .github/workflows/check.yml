@@ -3,6 +3,9 @@
 #
 # A pull request is checked as it will land: main takes changes only through pull requests, each
 # up to date with main when it merges, so what lands on main was checked already.
+#
+# A pull request that changes only the websites, offprompt.dev and the docs, ships nothing to npm,
+# so it is checked on Linux alone, its two apps only, without the real agents.
 name: check
 
 on:
@@ -10,12 +13,45 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Whether the pull request changes only apps/site and apps/docs, and so the systems to check
+  # it on. Anything else, the lockfile and this workflow included, gets every job.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      website: ${{ steps.diff.outputs.website }}
+      os: ${{ steps.diff.outputs.os }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Whether only the websites changed
+        id: diff
+        run: |
+          website=false
+          if [ "$EVENT" = pull_request ]; then
+            changed=$(git diff --name-only "origin/$BASE...HEAD")
+            if [ -n "$changed" ] && ! grep -qvE '^apps/(site|docs)/' <<< "$changed"; then
+              website=true
+            fi
+          fi
+          echo "website=$website" >> "$GITHUB_OUTPUT"
+          if [ "$website" = true ]; then
+            echo 'os=["ubuntu-latest"]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'os=["ubuntu-latest","windows-latest","macos-latest"]' >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.base_ref }}
+
   check:
     name: ${{ matrix.os }}
+    needs: changes
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: ${{ fromJSON(needs.changes.outputs.os) }}
     runs-on: ${{ matrix.os }}
     steps:
       # A Windows checkout turns line endings into CRLF unless told otherwise.
@@ -36,15 +72,16 @@ jobs:
       # The docs do not build on Windows: Vocs writes a page's path, such as
       # reference\providers\upstash.mdx, into code where \u reads as an escape. They are built
       # and served from Linux.
+      # Only the websites changed: their two apps alone. The page's browser tests are offprompt's.
       - name: Typecheck, lint and test
-        run: pnpm exec turbo run typecheck lint test --continue --concurrency=1 ${{ runner.os == 'Windows' && '--filter=!@offprompt/docs' || '' }}
+        run: pnpm exec turbo run typecheck lint test --continue --concurrency=1 ${{ needs.changes.outputs.website == 'true' && '--filter=@offprompt/site --filter=@offprompt/docs' || '' }} ${{ runner.os == 'Windows' && '--filter=!@offprompt/docs' || '' }}
 
       - name: Install the browsers
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && needs.changes.outputs.website != 'true' }}
         run: pnpm --filter offprompt exec playwright install --with-deps
 
       - name: Browser tests
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && needs.changes.outputs.website != 'true' }}
         run: pnpm exec turbo run test:browser --filter offprompt
 
   # The real Claude Code, Codex and Pi, each against a scripted model, so no account is needed:
@@ -53,6 +90,8 @@ jobs:
   # as it is packed for npm, and started by the plugin's launcher.
   hosts:
     name: hosts on ${{ matrix.os }}
+    needs: changes
+    if: ${{ needs.changes.outputs.website != 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -104,6 +143,8 @@ jobs:
   # run here can be Cloudflare's rather than offprompt's.
   tunnel:
     name: tunnel on ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.website != 'true' }}
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -174,7 +215,7 @@ jobs:
   all:
     name: all checks
     if: ${{ always() }}
-    needs: [check, hosts, changeset]
+    needs: [changes, check, hosts, changeset]
     runs-on: ubuntu-latest
     steps:
       - name: Every job passed or was skipped
