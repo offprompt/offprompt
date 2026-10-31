@@ -1,5 +1,6 @@
-import { packExtension } from '@anthropic-ai/mcpb'
-import { access, cp, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises'
+import { validateManifest } from '@anthropic-ai/mcpb'
+import { zipSync } from 'fflate'
+import { access, cp, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
@@ -51,9 +52,32 @@ const found = await Promise.all(BUNDLED.map(({ from }) => exists(from)))
 const missing = BUNDLED.filter((_, index) => !found[index]).map(({ from }) => from)
 if (missing.length > 0) refuse(`missing ${missing.join(', ')}; run 'pnpm mcpb' from the repository root`)
 
-// The bundle is packed from a folder of its own, so it holds these files and nothing else.
+/**
+ * The manifest the bundle carries: the one committed, with each tool's input schema as the
+ * server lists it. Smithery renders a listing from a bundle's tools and takes a tool only with
+ * its schema, which the MCPB schema has no field for, so the committed manifest is checked as
+ * MCPB has it and the schemas go in after. A host reading the manifest as MCPB has it passes
+ * over them. The names have to be the server's own, so the listing never names a tool it lacks.
+ */
+const withSchemas = async manifest => {
+  const { tools } = JSON.parse(await readFile(join(server, 'dist/handshake/tools.json'), 'utf8'))
+  const listed = new Map(tools.map(tool => [tool.name, tool.inputSchema]))
+  const named = manifest.tools.map(tool => tool.name)
+  if (named.length !== listed.size || named.some(name => !listed.has(name))) {
+    refuse(`mcpb/manifest.json names ${named.join(', ')}, but the server lists ${[...listed.keys()].join(', ')}`)
+  }
+  return { ...manifest, tools: manifest.tools.map(tool => ({ ...tool, inputSchema: listed.get(tool.name) })) }
+}
+
+/** A file as the zip holds it, with its permissions where MCPB's own packer puts them. */
+const entry = async path => {
+  const [data, { mode }] = await Promise.all([readFile(path), stat(path)])
+  return [data, { os: 3, attrs: (mode & 0o777) << 16 }]
+}
+
+// The bundle is checked in a folder of its own, where mcpb finds the manifest beside its icon.
 const staged = await mkdtemp(join(tmpdir(), 'offprompt-mcpb-'))
-const packed = await (async () => {
+const files = await (async () => {
   try {
     await Promise.all(
       BUNDLED.map(async ({ file, from }) => {
@@ -61,12 +85,19 @@ const packed = await (async () => {
         await cp(from, join(staged, file))
       }),
     )
-    // mcpb validates the manifest and its icon first, and says why when either fails.
-    return await packExtension({ extensionPath: staged, outputPath: out })
+    // mcpb says why when the manifest or its icon does not pass.
+    if (!validateManifest(join(staged, 'manifest.json'))) return undefined
+    const manifest = await withSchemas(JSON.parse(await readFile(join(staged, 'manifest.json'), 'utf8')))
+    await writeFile(join(staged, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
+    const entries = await Promise.all(BUNDLED.map(async ({ file }) => [file, await entry(join(staged, file))]))
+    return Object.fromEntries(entries)
   } finally {
     await rm(staged, { recursive: true, force: true })
   }
 })()
-if (!packed) refuse(`could not pack ${out}`)
+if (files === undefined) refuse(`mcpb/manifest.json does not pass as an MCPB manifest`)
+
+await mkdir(dirname(out), { recursive: true })
+await writeFile(out, zipSync(files, { level: 9 }))
 
 process.stdout.write(`packed offprompt ${shipped} into ${out}\n`)
