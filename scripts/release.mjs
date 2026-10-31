@@ -1,14 +1,14 @@
 /**
  * Releases the version packages/offprompt/package.json declares, in four parts that each
- * happen once: the package on npm, a GitHub release with the version's changelog entry and its
- * MCP Bundle, the server in the MCP Registry, and the package on the plugin branch, which
- * Anthropic's plugin directory follows. `pending` says which are due, so a run that stopped partway finishes the
+ * happen once: the package on npm, a GitHub release with the version's changelog entry, the
+ * server in the MCP Registry, and the package on the plugin branch, which Anthropic's plugin
+ * directory follows. `pending` says which are due, so a run that stopped partway finishes the
  * rest when run again. The release workflow runs it on main, where npm and the registry trust
  * it through GitHub's OIDC, so no token is stored.
  *
  *   pending              which parts are due, handed to the workflow's next steps
  *   npm [--dry-run]      assembles the package and publishes it; --dry-run shows what would go
- *   github               opens the GitHub release, with offprompt-<version>.mcpb attached
+ *   github               opens the GitHub release
  *   wait-for-npm         waits until npm serves the version, which the registry looks up
  *   plugin [--dry-run]   commits the assembled package to the plugin branch; --dry-run stops
  *                        before the push
@@ -159,22 +159,15 @@ const publishToNpm = async () => {
   if (dryRun) process.stdout.write(`\nThe GitHub release ${tag} would say:\n\n${await notes()}\n`)
 }
 
-/**
- * Opens the GitHub release, carrying the version's MCP Bundle, the file Smithery and other
- * hosts that install a bundle take offprompt as.
- */
 const openRelease = async () => {
   const entry = await notes()
   await inScratch(async work => {
     const notesFile = join(work, 'notes.md')
     await writeFile(notesFile, `${entry}\n`)
-    const bundle = join(work, `offprompt-${version}.mcpb`)
-    await run('pnpm', ['mcpb', bundle])
     await run('gh', [
       'release',
       'create',
       tag,
-      bundle,
       ...repository,
       '--target',
       process.env.GITHUB_SHA ?? 'main',

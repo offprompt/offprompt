@@ -1,8 +1,8 @@
 # Releases offprompt from main. Each change that reaches npm says what it is in a changeset
 # (`pnpm changeset`); while any wait, Changesets keeps a "Release offprompt" pull request open
 # with the next version and its changelog entry. Merging it is the release: the version npm
-# does not have yet goes to npm, to a GitHub release with its entry and its MCP Bundle, to the
-# MCP Registry, and to the plugin branch, which Anthropic's plugin directory follows. npm and the registry trust
+# does not have yet goes to npm, to a GitHub release with its entry, to the MCP Registry, and
+# to the plugin branch, which Anthropic's plugin directory follows. npm and the registry trust
 # this workflow through GitHub's OIDC, so no token is stored. It runs once the repository is
 # public, where npm records where each version was built. Each of the four happens once: a run
 # that stopped partway, run again, finishes the rest.
@@ -65,7 +65,7 @@ jobs:
         if: steps.pending.outputs.github == 'true' || steps.pending.outputs.registry == 'true'
         run: pnpm release wait-for-npm
 
-      - name: A GitHub release with its changelog entry and its MCP Bundle
+      - name: A GitHub release with its changelog entry
         if: steps.pending.outputs.github == 'true'
         run: pnpm release github
         env:
