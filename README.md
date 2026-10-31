@@ -88,9 +88,9 @@ Any other MCP client, Cline among them, can start offprompt from npm:
 }
 ```
 
-add-mcp knows Cline, but Cline also needs the project as `cwd` and a tool timeout longer than its
-60 seconds, which `init -g` does not write. [llms-install.md](llms-install.md) has the entry for
-Cline, and steps an agent can follow to install offprompt.
+Cline also needs the project as `cwd`, since it names no project to the servers it starts.
+[llms-install.md](llms-install.md) has the entry for Cline, and steps an agent can follow to
+install offprompt.
 
 ## Documentation
 

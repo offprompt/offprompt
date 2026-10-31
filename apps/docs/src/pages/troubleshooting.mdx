@@ -81,5 +81,6 @@ to open it.
 
 An agent's own tool timeout can end the call before the request does. `npx offprompt init` sets
 offprompt's timeout to 330 seconds where the agent takes one; set it by hand in a config you wrote
-yourself. The page stays live either way, and the agent can pick the request up with
-[`await_secret`](/reference/await-secret).
+yourself. In Cline, offprompt answers before Cline's 60 seconds are up and the agent goes on
+waiting, so no timeout is needed. The page stays live either way, and the agent can pick the
+request up with [`await_secret`](/reference/await-secret).

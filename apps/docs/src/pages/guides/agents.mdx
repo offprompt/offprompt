@@ -89,6 +89,29 @@ The adapter would otherwise put every server behind one proxy tool, where the mo
 search for `collect_secret` before it could call it, so offprompt is declared with its tools
 exposed directly.
 
+## Cline
+
+Cline keeps its MCP servers in one `cline_mcp_settings.json` for every project, and names no
+project to them, so its entry sets the project as `cwd`:
+
+```json [cline_mcp_settings.json]
+{
+  "mcpServers": {
+    "offprompt": {
+      "command": "npx",
+      "args": ["-y", "offprompt", "mcp"],
+      "cwd": "/absolute/path/to/the/project"
+    }
+  }
+}
+```
+
+The Cline CLI starts its servers in the folder it runs in, and finds the project without `cwd`.
+Cline stops a tool call after 60 seconds, so `collect_secret` answers after 50 with the request
+still open, and the agent goes on waiting with `await_secret` while the page stays up.
+[llms-install.md](https://github.com/offprompt/offprompt/blob/main/llms-install.md) has the steps
+Cline follows to install offprompt itself.
+
 ## Every other agent
 
 `npx offprompt init -g` declares offprompt in the MCP config of every other agent add-mcp knows
@@ -106,8 +129,8 @@ The page's heading names the program the agent runs in, "Claude Code is asking",
 the host gives when it connects to offprompt. The host sets it, not the model, so the agent is never
 asked to introduce itself.
 
-These get their own name: Claude Code, Cursor, Codex, GitHub Copilot and Pi with their logo, and
-Windsurf, Cline, Zed, Gemini CLI and OpenCode without one. Any other shows the name it gave. Inside
+These get their own name: Claude Code, Cursor, Codex, GitHub Copilot, Cline and Pi with their
+logo, and Windsurf, Zed, Gemini CLI and OpenCode without one. Any other shows the name it gave. Inside
 a Conductor workspace the line above the heading, with the badge and the project, adds "in
 Conductor".
 
