@@ -17,6 +17,7 @@
     "check": "turbo run typecheck lint test",
     "preview": "pnpm --filter offprompt preview",
     "package": "pnpm --filter @offprompt/install package",
+    "mcpb": "pnpm --filter @offprompt/install mcpb",
     "agents": "pnpm --filter @offprompt/install agents",
     "e2e": "pnpm --filter offprompt --filter @offprompt/install build && pnpm --filter @offprompt/e2e e2e",
     "playground": "pnpm --filter offprompt --filter @offprompt/install build && pnpm --filter @offprompt/playground playground",

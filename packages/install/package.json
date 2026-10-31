@@ -11,6 +11,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "package": "pnpm --filter offprompt build && node scripts/build.mjs && node scripts/package.mjs",
+    "mcpb": "pnpm --filter offprompt build && node scripts/mcpb.mjs",
     "agents": "pnpm --filter offprompt build && node scripts/build.mjs && node dist/offprompt-install.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -20,6 +21,7 @@
     "offprompt": "workspace:*"
   },
   "devDependencies": {
+    "@anthropic-ai/mcpb": "^2.1.2",
     "@modelcontextprotocol/sdk": "catalog:",
     "@types/cross-spawn": "^6.0.6",
     "@types/node": "catalog:",
