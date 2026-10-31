@@ -1,6 +1,7 @@
 import { namedEmoji } from '../../core/emoji.js'
 import type { RequestedSecret, SecretRequest } from '../../core/store.js'
 import { numbered } from '../../core/wording.js'
+import type { Logo } from '../../registry/schema.js'
 import { escapeHtml } from '../html.js'
 import { tileFor } from './field.js'
 import { icon } from './icons.js'
@@ -11,6 +12,7 @@ import {
   CHECK_MARK,
   counted,
   filePath,
+  inlineLogo,
   page,
   projectName,
 } from './shell.js'
@@ -22,7 +24,6 @@ const outcomeOf = (secret: RequestedSecret) => {
 }
 
 const writtenSecrets = (request: SecretRequest) => request.secrets.filter(secret => outcomeOf(secret) !== 'kept')
-
 
 const heroLine = (request: SecretRequest) => {
   const count = writtenSecrets(request).length
@@ -99,6 +100,47 @@ const receipt = (request: SecretRequest) => `<section class="receipt">
 <ul>${request.secrets.map(receiptRow).join('')}</ul>
 </section>`
 
+/** X's mark, from Simple Icons, on the link that shares the run there. */
+const X_LOGO: Logo = {
+  path: 'M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z',
+}
+
+/**
+ * Where the post says the values went: a `.env` file by its name, which every project shares,
+ * or else the project, since a file of its own may be named after what it holds.
+ */
+const destination = (request: SecretRequest) => {
+  const name = request.sink.relativePath.split('/').at(-1) ?? ''
+  return request.sink.kind === 'dotenv' && name.startsWith('.env') ? name : 'the project'
+}
+
+/**
+ * What a post on X says about the run. It carries the count and the file's name and nothing
+ * else: no key's name, and nothing taken from a value.
+ */
+export const shareText = ({ count, file }: { count: number; file: string }) =>
+  count === 1
+    ? `My AI agent just set up 1 API key and never saw it. It went straight to ${file} via offprompt https://offprompt.dev`
+    : `My AI agent just set up ${String(count)} API keys and never saw one of them. Secrets went straight to ${file} via offprompt https://offprompt.dev`
+
+/**
+ * The run, said in one line to show someone, with a link that opens a post on X. It is a
+ * plain link: nothing leaves the page unless the human clicks it, and then only that text.
+ */
+const share = (request: SecretRequest) => {
+  const count = writtenSecrets(request).length
+  if (count === 0) return ''
+  const text = shareText({ count, file: destination(request) })
+  const url = `https://x.com/intent/post?text=${encodeURIComponent(text)}`
+  const who = request.asker?.name ?? 'Your agent'
+  return `<section class="share">
+<p class="share-line">${escapeHtml(who)} set up <strong>${String(count)} ${count === 1 ? 'key' : 'keys'}</strong> and never saw ${
+    count === 1 ? 'it' : 'one'
+  }.</p>
+<a class="secondary share-x" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${inlineLogo(X_LOGO)}Share on X</a>
+</section>`
+}
+
 /**
  * Shown after a successful write, in place of the form. By now the page holds nothing: the
  * form and its values are gone, and the request is closed, so the tab can go. Only the page
@@ -123,5 +165,6 @@ export const renderWritten = ({
 <div class="hero" role="status"><h1 tabindex="-1">Written.</h1><p>${heroLine(request)}</p></div>
 ${fingerprint(request)}
 ${receipt(request)}
+${share(request)}
 <div class="closing"><p>You can close this tab.</p><p>The page was single use and won't open again.</p></div>`,
   })

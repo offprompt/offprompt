@@ -1,9 +1,9 @@
 # Third-party notices
 
-The provider logos in `src/registry/providers/*/logo.ts`, and the host logos in
-`src/registry/client-logos.ts`, are drawn from these projects. The marks belong to their
-owners, and offprompt only uses them to label links to those providers and to name the
-program that is asking.
+The provider logos in `src/registry/providers/*/logo.ts`, the host logos in
+`src/registry/client-logos.ts`, and X's on the Written page's share link, are drawn from these
+projects. The marks belong to their owners, and offprompt only uses them to label links to
+those providers and to X, and to name the program that is asking.
 
 ## Simple Icons
 
@@ -12,7 +12,7 @@ Convex, Cursor, Datadog, DeepSeek, DigitalOcean, Discord, Docker Hub, ElevenLabs
 GitHub, GitLab, Google Gemini, Hugging Face, Lemon Squeezy, Linear, Mailgun, Mapbox, Mistral
 AI, MongoDB Atlas, Neon, Netlify, Notion, npm, OpenRouter, Paddle, Perplexity, PlanetScale,
 PostHog, Railway, Render, Replicate, Resend, Sentry, Shopify, Stripe, Supabase, Telegram,
-Turso, Upstash and Vercel come from [Simple Icons](https://github.com/simple-icons/simple-icons),
+Turso, Upstash, Vercel and X come from [Simple Icons](https://github.com/simple-icons/simple-icons),
 dedicated to the public domain under
 [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/).
 

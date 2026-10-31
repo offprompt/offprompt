@@ -97,6 +97,17 @@ describe('a sealed submission', () => {
     expect(store.get(request.id)?.status).toBe('written')
   })
 
+  it('answers with the share card, which holds no value', async () => {
+    const { sealFor, postSealed } = await setupTest({ names: ['A_KEY', 'B_KEY'] })
+
+    const html = await (await postSealed(await sealFor({ values: { value0: 'first made-up value', value1: 'second made-up value' } }))).text()
+    const card = /<section class="share">[\s\S]*?<\/section>/.exec(html)?.[0] ?? ''
+
+    expect(card).toContain('set up <strong>2 keys</strong> and never saw one.')
+    expect(card).toContain('href="https://x.com/intent/post?text=')
+    expect(decodeURIComponent(card)).not.toContain('made-up')
+  })
+
   it('carries no plaintext', async () => {
     const { sealFor } = await setupTest()
     const sealed = await sealFor()

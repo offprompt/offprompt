@@ -565,6 +565,17 @@ After a write the page says **Written.**, shows the fingerprint's four emoji wit
 names and how they appear on the agent's side, and lists the file and each key in it as
 added, replaced, generated or kept. It holds no value, and it says the tab can be closed.
 
+Under the receipt, a card says the run in one line to show someone: "Claude Code set up 3
+keys and never saw one", or "1 key and never saw it", counting the keys written and
+generated, not those kept. Beside it, **Share on X** is a link to
+`https://x.com/intent/post?text=…`, opening in a new tab with `noopener noreferrer`, whose
+text is "My AI agent just set up 3 API keys and never saw one of them. Secrets went straight
+to .env.local via offprompt https://offprompt.dev". The post carries the count and the name of
+a `.env` file, which every project shares, and says "the project" for a file of its own,
+whose name may say what it holds. It never names a key and holds nothing taken from a value:
+no length, no prefix. It is a plain link the server renders, so it needs no script, and
+nothing leaves the page unless the human clicks it.
+
 ## Registry
 
 The registry is plain data inside the plugin: formats, and providers with the keys they

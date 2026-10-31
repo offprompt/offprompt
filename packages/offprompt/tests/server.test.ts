@@ -726,6 +726,64 @@ describe('the written page', () => {
   })
 })
 
+describe('the share card on the written page', () => {
+  const shareOf = (html: string) => {
+    const card = /<section class="share">[\s\S]*?<\/section>/.exec(html)?.[0] ?? ''
+    const href = /href="([^"]*)"/.exec(card)?.[1]?.replaceAll('&amp;', '&') ?? ''
+    return { card, href, text: href === '' ? '' : (new URL(href).searchParams.get('text') ?? '') }
+  }
+
+  it('says how many keys the agent set up, and links to a post on X that says it too', async () => {
+    const { submit } = await setupTest({ names: ['A_KEY', 'B_KEY'], ask: { format: 'text' }, sinkPath: '.env.local' })
+    const { card, href, text } = shareOf(withoutIcons(await (await submit({ value0: 'ay', value1: 'bee' })).text()))
+
+    expect(card).toContain('Your agent set up <strong>2 keys</strong> and never saw one.')
+    expect(card).toContain('target="_blank" rel="noopener noreferrer"')
+    expect(href.startsWith('https://x.com/intent/post?text=')).toBe(true)
+    expect(text).toBe(
+      'My AI agent just set up 2 API keys and never saw one of them. Secrets went straight to .env.local via offprompt https://offprompt.dev',
+    )
+    expect(text.length).toBeLessThanOrEqual(280)
+  })
+
+  it('speaks of one key in the singular', async () => {
+    const { submitValue } = await setupTest()
+    const { card, text } = shareOf(await (await submitValue(RESEND_KEY)).text())
+
+    expect(card).toContain('Your agent set up <strong>1 key</strong> and never saw it.')
+    expect(text).toBe('My AI agent just set up 1 API key and never saw it. It went straight to .env via offprompt https://offprompt.dev')
+  })
+
+  it('holds no value, no part of one and no length, in the card or the link, and no key name in the post', async () => {
+    const values = { value0: 'sk_test_51MadeUpShareCardValueQx9', value1: 'whsec_madeUpSigningSecret7Lp' }
+    const names = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET']
+    const { submit } = await setupTest({ names, ask: { format: 'text' } })
+    const html = await (await submit(values)).text()
+    const { card, href, text } = shareOf(html)
+
+    expect(card).not.toBe('')
+    Object.values(values).forEach(value => {
+      expect(html).not.toContain(value)
+      // Every start of the value from three characters on, so no prefix shows either.
+      Array.from({ length: value.length - 2 }, (_, index) => value.slice(0, index + 3)).forEach(prefix => {
+        expect(card).not.toContain(prefix)
+        expect(decodeURIComponent(href)).not.toContain(prefix)
+      })
+      expect(card.replace(/<[^>]*>/g, '')).not.toContain(String(value.length))
+      expect(text).not.toContain(String(value.length))
+    })
+    names.forEach(name => expect(text).not.toContain(name))
+  })
+
+  it('names a file of its own as the project, since its name may say what it holds', async () => {
+    const { submitValue } = await setupTest({ ask: { format: 'text' }, sinkKind: 'file', sinkPath: 'certs/acme-prod.key' })
+    const { text } = shareOf(await (await submitValue('made up contents')).text())
+
+    expect(text).toContain('It went straight to the project via offprompt')
+    expect(text).not.toContain('acme')
+  })
+})
+
 describe('collecting several secrets at once', () => {
   const twoKeys = { names: ['API_SECRET_A', 'API_SECRET_B'], ask: { format: 'text' as const } }
 

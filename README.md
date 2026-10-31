@@ -22,6 +22,8 @@ into the file. The transcript only ever sees the key's name.
 3. **The file is written.** offprompt answers the agent with the key names, the file and a
    four-emoji [fingerprint](https://docs.offprompt.dev/guides/fingerprint), the same four your
    page shows. From then on the agent reads the values from the environment by name.
+   The page then says how many keys your agent set up without seeing one, with a **Share on X**
+   link whose post carries that count and never a key's name or value.
 
 When the agent runs in a [cloud sandbox](https://docs.offprompt.dev/guides/cloud-sandboxes), it
 gives you a link to the page instead. The page reaches you through a Cloudflare tunnel, and your

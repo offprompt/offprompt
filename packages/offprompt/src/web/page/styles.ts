@@ -426,6 +426,14 @@ const RULES = `
   .receipt .done { font-size: 13px; color: var(--ink-3); }
   .receipt .done.replaced { color: var(--warn-ink); }
   .receipt li > .icon { width: 15px; height: 15px; color: var(--ok); }
+  .share { display: flex; align-items: center; gap: 16px; width: 100%; padding: 14px 16px 14px 20px; background: var(--surface);
+           border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px #12332A14; }
+  .share-line { flex: 1; font-size: 15px; line-height: 22px; color: var(--ink-2); }
+  .share-line strong { font-weight: 600; color: var(--ink); }
+  .share-x { text-decoration: none; }
+  .share-x .logo { width: 12px; height: 12px; }
+  .share-x:hover { background: var(--sunken); }
+  .share-x:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
   .closing { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 16px; text-align: center; }
   .closing p:first-child { font-size: 15px; font-weight: 500; }
   .closing p:last-child { font-size: 13.5px; color: var(--ink-3); }
@@ -446,6 +454,7 @@ const RULES = `
     .emoji { flex-wrap: wrap; justify-content: center; gap: 8px; }
     .emoji .glyph { width: 56px; height: 56px; font-size: 30px; }
     .fingerprint { padding: 20px 16px; }
+    .share { flex-wrap: wrap; padding: 14px 16px; }
     dialog.confirm { padding: 20px; }
     .confirm-actions > * { flex: 1 1 auto; justify-content: center; }
   }
