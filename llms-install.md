@@ -14,8 +14,7 @@ Add this entry to the client's MCP settings file (for Cline: `cline_mcp_settings
     "offprompt": {
       "command": "npx",
       "args": ["-y", "offprompt", "mcp"],
-      "cwd": "/absolute/path/to/the/project",
-      "timeout": 330
+      "cwd": "/absolute/path/to/the/project"
     }
   }
 }
@@ -24,9 +23,11 @@ Add this entry to the client's MCP settings file (for Cline: `cline_mcp_settings
 - **`cwd`** is the project offprompt writes into. Replace it with the absolute path of the
   project open in the editor. Cline's settings are global and Cline names no workspace to the
   server, so without `cwd` offprompt can't tell which project it is in and refuses with "no
-  project to write to". When you switch projects, change `cwd` to the new one.
-- **`timeout`** is in seconds. `collect_secret` waits while the human fills in the page, for up
-  to five minutes, and Cline stops a tool call after 60 seconds unless told otherwise.
+  project to write to". When you switch projects, change `cwd` to the new one. The Cline CLI
+  starts the server in the folder it runs in, so there `cwd` can be left out.
+
+No `timeout` is needed. Cline stops a tool call after 60 seconds, so in Cline `collect_secret`
+answers after 50 with the request still open, and the agent goes on waiting with `await_secret`.
 
 For other clients, the same `command` and `args` work. Clients that start the server in the
 project's folder, or name the project as an MCP root, need no `cwd`. Give the client a tool
@@ -42,8 +43,8 @@ npx offprompt init -g     # every project, for this user, in every agent found o
 npx offprompt list        # every agent offprompt knows, whether it was found, and how it reaches it
 ```
 
-`init -g` sets up Cline too (`--agent cline` for the VS Code extension, `--agent cline-cli` for
-the CLI), but it writes neither `cwd` nor `timeout` for it. For Cline, use Option A.
+`init -g` also writes an offprompt entry for Cline when it finds it, without `cwd`. Add `cwd` as
+in Option A.
 
 ## Check that it works
 

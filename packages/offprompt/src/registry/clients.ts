@@ -16,6 +16,11 @@ export type Client = {
   readonly logo?: Logo
   /** A brand colour the page tints the logo's badge with. */
   readonly color?: string
+  /**
+   * How long the host lets a tool call run unless its user raises the limit, where that is
+   * shorter than a request lives and no installer can raise it.
+   */
+  readonly callLimitMs?: number
 }
 
 export const clients: readonly Client[] = [
@@ -30,8 +35,9 @@ export const clients: readonly Client[] = [
   { id: 'codex', name: 'Codex', matches: ['codex'], logo: openai },
   { id: 'copilot', name: 'GitHub Copilot', matches: ['copilot', 'github'], logo: github },
   { id: 'windsurf', name: 'Windsurf', matches: ['windsurf'] },
-  // The VS Code extension introduces itself as Cline, the CLI as @cline/core.
-  { id: 'cline', name: 'Cline', matches: ['cline', '@cline/'] },
+  // The VS Code extension introduces itself as Cline, the CLI as @cline/core. Both stop a call
+  // after 60 seconds unless the server's entry sets a timeout, which its marketplace cannot.
+  { id: 'cline', name: 'Cline', matches: ['cline', '@cline/'], callLimitMs: 60_000 },
   { id: 'zed', name: 'Zed', matches: ['zed'] },
   { id: 'gemini-cli', name: 'Gemini CLI', matches: ['gemini'] },
   { id: 'opencode', name: 'OpenCode', matches: ['opencode'] },
@@ -40,6 +46,15 @@ export const clients: readonly Client[] = [
 ]
 
 const MAX_RAW_NAME = 40
+
+/** The known host a client's name belongs to. */
+const knownClient = (clientInfo: { readonly name: string } | undefined) => {
+  const lower = clientInfo?.name.trim().toLowerCase() ?? ''
+  return lower === '' ? undefined : clients.find(client => client.matches.some(prefix => lower.startsWith(prefix)))
+}
+
+/** How long the host lets a tool call run, where it is known to stop one before a request expires. */
+export const callLimitFor = (clientInfo: { readonly name: string } | undefined) => knownClient(clientInfo)?.callLimitMs
 
 /** Who is asking, as the page says it: a known client by its proper name, any other by the name it gave. */
 export type Asker = { readonly name: string; readonly logo?: Logo; readonly color?: string; readonly via?: string }
@@ -57,8 +72,7 @@ export const askerFor = ({
 }): Asker | undefined => {
   if (clientInfo === undefined || clientInfo.name.trim() === '') return undefined
   const given = clientInfo.name.trim()
-  const lower = given.toLowerCase()
-  const known = clients.find(client => client.matches.some(prefix => lower.startsWith(prefix)))
+  const known = knownClient(clientInfo)
   const via = viaOf(env)
   const base =
     known === undefined
