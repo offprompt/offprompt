@@ -12,6 +12,8 @@ describe('who is asking', () => {
     expect(askerFor({ clientInfo: { name: 'cursor-vscode' }, env: NO_ENV })).toMatchObject({ name: 'Cursor' })
     expect(askerFor({ clientInfo: { name: 'pi-mcp-offprompt' }, env: NO_ENV })).toMatchObject({ name: 'Pi' })
     expect(askerFor({ clientInfo: { name: 'pi-mcp-offprompt' }, env: NO_ENV })?.logo).toBeDefined()
+    expect(askerFor({ clientInfo: { name: 'Cline' }, env: NO_ENV })).toMatchObject({ name: 'Cline' })
+    expect(askerFor({ clientInfo: { name: '@cline/core' }, env: NO_ENV })).toMatchObject({ name: 'Cline' })
     expect(askerFor({ clientInfo: { name: 'pinecone' }, env: NO_ENV })).toEqual({ name: 'pinecone' })
   })
 
