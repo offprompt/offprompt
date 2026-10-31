@@ -11,7 +11,7 @@ export const provider = (id: string): Provider => {
 export const agent = (id: string) => {
   const found = clients.find(candidate => candidate.id === id)
   if (found?.logo === undefined) throw new Error(`offprompt knows no agent ${id} with a logo`)
-  return { name: found.name, logo: found.logo }
+  return { name: found.name, logo: found.logo, color: found.color }
 }
 
 const prefixesOf = (rules: readonly Rule[]): readonly string[] =>

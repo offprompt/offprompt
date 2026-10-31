@@ -105,6 +105,22 @@
     color: var(--color-ink);
   }
 
+  /*
+   * Code in running text sits in a box of its own, as chat apps set it, so a file name or a key
+   * stands out from the words around it. Code with classes of its own, such as the install
+   * command's, and code in a block are left alone.
+   */
+  code:not([class], pre code) {
+    padding: 0.08em 0.36em;
+    border: 1px solid var(--color-line);
+    border-radius: 5px;
+    background: var(--color-panel);
+    color: var(--color-ink);
+    font-size: 0.86em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-eyebrow);
     outline-offset: 2px;
