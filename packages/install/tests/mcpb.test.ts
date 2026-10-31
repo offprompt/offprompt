@@ -2,7 +2,7 @@ import { unpackExtension, validateManifest } from '@anthropic-ai/mcpb'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { execFile } from 'node:child_process'
-import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
@@ -24,7 +24,7 @@ const PACKING_MS = 60_000
 type Manifest = {
   readonly version: string
   readonly server: { readonly entry_point: string; readonly mcp_config: { readonly command: string; readonly args: readonly string[] } }
-  readonly tools: readonly { readonly name: string }[]
+  readonly tools: readonly { readonly name: string; readonly description?: string; readonly inputSchema?: unknown }[]
 }
 
 const scratch = async (prefix: string) => {
@@ -52,7 +52,7 @@ afterEach(async () => {
 })
 
 it(
-  'packs an MCP Bundle that starts the server from its own folder and lists the tools its manifest names',
+  'packs an MCP Bundle that starts the server from its own folder and lists the tools its manifest names, with their schemas',
   async () => {
     const out = await scratch('offprompt-mcpb-out-')
     const unpacked = await scratch('offprompt-mcpb-unpacked-')
@@ -62,9 +62,12 @@ it(
 
     expect(await unpackExtension({ mcpbPath: bundle, outputDir: unpacked, silent: true })).toBe(true)
     expect(await filesIn(unpacked)).toEqual(['LICENSE', 'THIRD_PARTY_NOTICES.md', 'dist/mcp.mjs', 'icon.png', 'manifest.json'])
-    expect(validateManifest(join(unpacked, 'manifest.json'))).toBe(true)
-
     const manifest = JSON.parse(await readFile(join(unpacked, 'manifest.json'), 'utf8')) as Manifest
+
+    // Without the schemas Smithery reads, the manifest is one MCPB takes as it is.
+    const bare = { ...manifest, tools: manifest.tools.map(({ name, description }) => ({ name, description })) }
+    await writeFile(join(unpacked, 'manifest.json'), JSON.stringify(bare))
+    expect(validateManifest(join(unpacked, 'manifest.json'))).toBe(true)
     const { version } = JSON.parse(await readFile(createRequire(import.meta.url).resolve('offprompt/package.json'), 'utf8')) as {
       version: string
     }
@@ -78,7 +81,9 @@ it(
     teardowns.push(() => client.close())
 
     const { tools } = await client.listTools()
-    expect(tools.map(tool => tool.name).sort()).toEqual(manifest.tools.map(tool => tool.name).sort())
+    expect(tools.map(({ name, inputSchema }) => ({ name, inputSchema }))).toEqual(
+      manifest.tools.map(({ name, inputSchema }) => ({ name, inputSchema })),
+    )
   },
   PACKING_MS,
 )
