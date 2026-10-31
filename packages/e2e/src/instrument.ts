@@ -36,7 +36,8 @@ const RECORDING_FILE = 'offprompt-e2e.json'
  * can reach, and with the tunnel off unless the run asks for it. It records every MCP message
  * in both directions, with which directory it was started in and where it was started from. Of
  * the environment it records the names only. Each record carries the launcher's process id, so
- * two clients that started it apart can be told apart.
+ * two clients that started it apart can be told apart, and the first the server's too, so a run
+ * can wait for both to exit before it removes the folders they ran in.
  */
 const shim = (places: string) => `import { spawn } from 'node:child_process'
 import { appendFileSync, existsSync, readFileSync } from 'node:fs'
@@ -46,7 +47,6 @@ import { fileURLToPath } from 'node:url'
 const here = fileURLToPath(import.meta.url)
 ${places}
 const record = entry => appendFileSync(traffic, JSON.stringify({ at: Date.now(), pid: process.pid, ...entry }) + '\\n')
-record({ direction: 'start', cwd: process.cwd(), server: here, env: Object.keys(process.env).sort() })
 
 const real = fileURLToPath(new URL('./mcp.real.mjs', import.meta.url))
 const child = spawn(process.execPath, ['--import', hook, real, ...process.argv.slice(2)], {
@@ -55,6 +55,7 @@ const child = spawn(process.execPath, ['--import', hook, real, ...process.argv.s
   // asks for the tunnel, which then exposes the page through Cloudflare as it would anywhere.
   env: { ...process.env, OFFPROMPT_E2E_OPENED: opened, ...(tunnel ? {} : { OFFPROMPT_TUNNEL: 'off' }) },
 })
+record({ direction: 'start', cwd: process.cwd(), server: here, serverPid: child.pid, env: Object.keys(process.env).sort() })
 process.stdin.on('data', chunk => {
   record({ direction: 'in', data: chunk.toString('utf8') })
   child.stdin.write(chunk)
