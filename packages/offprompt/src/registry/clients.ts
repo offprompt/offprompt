@@ -1,4 +1,4 @@
-import { claude, cursor, pi } from './client-logos.js'
+import { claude, cline, cursor, pi } from './client-logos.js'
 import { logo as github } from './providers/github/logo.js'
 import { logo as openai } from './providers/openai/logo.js'
 import type { Logo } from './schema.js'
@@ -37,7 +37,7 @@ export const clients: readonly Client[] = [
   { id: 'windsurf', name: 'Windsurf', matches: ['windsurf'] },
   // The VS Code extension introduces itself as Cline, the CLI as @cline/core. Both stop a call
   // after 60 seconds unless the server's entry sets a timeout, which its marketplace cannot.
-  { id: 'cline', name: 'Cline', matches: ['cline', '@cline/'], callLimitMs: 60_000 },
+  { id: 'cline', name: 'Cline', matches: ['cline', '@cline/'], logo: cline, callLimitMs: 60_000 },
   { id: 'zed', name: 'Zed', matches: ['zed'] },
   { id: 'gemini-cli', name: 'Gemini CLI', matches: ['gemini'] },
   { id: 'opencode', name: 'OpenCode', matches: ['opencode'] },
