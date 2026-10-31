@@ -36,7 +36,7 @@ export const plain = (text: string) =>
 export const Part = ({ id, title, children }: { readonly id?: string; readonly title: string; readonly children: ReactNode }) => (
   <section id={id} className="flex scroll-mt-6 flex-col gap-3 border-t border-line pt-8">
     <h2 className="text-[22px] tracking-[-0.4px] text-ink lg:text-[26px]">{title}</h2>
-    <div className="flex flex-col gap-3 text-base leading-[26px] text-body lg:text-[17px] lg:leading-7">{children}</div>
+    <div className="flex flex-col gap-3 text-base leading-[26px] text-body lg:text-[17px] lg:leading-7 [&_code]:[overflow-wrap:anywhere]">{children}</div>
   </section>
 )
 
@@ -59,6 +59,8 @@ export type Step = {
   readonly code?: readonly { readonly file?: string; readonly text: string }[]
   /** What follows the code, such as a caution. */
   readonly after?: string
+  /** A picture of the step, such as the terminal it happens in. */
+  readonly picture?: ReactNode
 }
 
 /** A guide's steps, numbered, each with its code. */
@@ -85,6 +87,7 @@ export const Steps = ({ steps }: { readonly steps: readonly Step[] }) => (
             <Rich text={step.after} />
           </p>
         )}
+        {step.picture}
       </li>
     ))}
   </ol>
@@ -167,6 +170,8 @@ type Props = {
   readonly guide: Guide
   /** The short answer, under the title. */
   readonly lede: ReactNode
+  /** The guide's main picture, the width of the page, under the short answer. */
+  readonly shot?: ReactNode
   readonly data: readonly object[]
   /** Where the provider's facts come from. */
   readonly sources?: Sources
@@ -174,7 +179,7 @@ type Props = {
 }
 
 /** A guide's page: its title and short answer, its parts, where its facts come from, and the other guides. */
-export const GuidePage = ({ guide, lede, data, sources, children }: Props) => (
+export const GuidePage = ({ guide, lede, shot, data, sources, children }: Props) => (
   <Shell>
     {data.map((item, index) => (
       <JsonLd key={index} data={item} />
@@ -187,6 +192,7 @@ export const GuidePage = ({ guide, lede, data, sources, children }: Props) => (
         </h1>
         <div className="flex flex-col gap-4 text-[17px] leading-7 text-body lg:text-xl lg:leading-8">{lede}</div>
       </div>
+      {shot}
       <div className="flex max-w-[680px] flex-col gap-10">
         {children}
         {sources !== undefined && (

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { Anchor } from '@/components/anchor'
 import { article, Code, Faq, faqPage, GuidePage, LINK, Part, type Question, Rich } from '@/components/guide'
+import { Bright, Collect, Figure, Says, Session, Shot, Tool, Waiting, Written, You } from '@/components/guide-shots'
 import { HUB, PROVIDER_GUIDES } from '@/lib/guides'
 import { pageMetadata } from '@/lib/metadata'
 import { DOCS, INSTALL } from '@/lib/site'
@@ -37,13 +38,67 @@ tool_timeout_sec = 330`
 
 const CALL = `
 {
-  "secrets": [{ "name": "RESEND_API_KEY", "provider": "resend" }],
-  "reason": "Sending the sign-in emails needs a **Resend** key.",
+  "secrets": [{ "name": "OPENAI_API_KEY", "provider": "openai" }],
+  "reason": "Each new support ticket gets a short summary from **OpenAI**, written by \`lib/summarise.ts\`.",
   "sink": { "kind": "dotenv", "path": ".env.local" }
 }`
 
-const RESULT = `
-Wrote 1 value to .env.local · fingerprint 🍋 🥝 🌮 🧀`
+// A made-up key, so the picture can show what pasting puts in the transcript.
+const PASTED = 'sk-proj-EXAMPLE-n0t-a-real-key-Qz4f9Wm2Lx7Rk1Tb'
+
+const PROJECT = 'acme-support'
+
+/** The way it usually goes: the agent asks in the chat, and the key goes into the transcript twice. */
+const Pasting = () => (
+  <Figure caption="Pasted into Claude Code: the key is in the conversation, and the agent echoes it again when it writes the file. Every request to the model from here on carries both. (The key is made up.)">
+    <Session project={PROJECT}>
+      <You>Summarise each new support ticket with OpenAI.</You>
+      <Says>I need an OpenAI API key for this. Paste it here and I&apos;ll add it to .env.local.</Says>
+      <You>{PASTED}</You>
+      <Tool name="Write" args=".env.local">
+        <span>Wrote 1 lines to .env.local</span>
+        <span>
+          <span className="text-term-dim">1 </span>
+          <Bright>OPENAI_API_KEY={PASTED}</Bright>
+        </span>
+      </Tool>
+    </Session>
+  </Figure>
+)
+
+/** The same task with offprompt: the agent asks by name, and waits while you type. */
+const Asking = () => (
+  <Session project={PROJECT}>
+    <You>Summarise each new support ticket with OpenAI.</You>
+    <Says>That needs OPENAI_API_KEY, which isn&apos;t in .env.local yet. I&apos;ll ask you for it with offprompt.</Says>
+    <Collect>
+      <span>
+        file: <Bright>.env.local</Bright>
+      </span>
+      <span>
+        keys: <Bright>OPENAI_API_KEY</Bright> <span className="hidden text-term-dim lg:inline">· openai</span>
+      </span>
+      <span>Opened http://127.0.0.1:4123 in your browser. Waiting for you to write it…</span>
+    </Collect>
+    <Waiting />
+  </Session>
+)
+
+/** What the agent gets back: the name, the file and the four emoji your page shows too. */
+const Answered = () => (
+  <Figure caption="What the agent gets back, and what your page shows once it is written. The four emoji match, so the file holds what you typed; the key itself appears nowhere in the session.">
+    <Session project={PROJECT}>
+      <Collect>
+        <span>Wrote 1 value to .env.local · fingerprint 🍋 🥝 🌮 🧀</span>
+      </Collect>
+      <Says>
+        Fingerprint 🍋 🥝 🌮 🧀. OPENAI_API_KEY is in .env.local; lib/summarise.ts reads it as
+        process.env.OPENAI_API_KEY.
+      </Says>
+    </Session>
+    <Written sample="guide-hub-written" />
+  </Figure>
+)
 
 const QUESTIONS: readonly Question[] = [
   {
@@ -91,6 +146,14 @@ const Hub = () => (
         the key exists.
       </p>
     }
+    shot={
+      <Shot
+        session={<Asking />}
+        sample="guide-hub"
+        height={520}
+        caption="Claude Code asks offprompt for the key by name, and offprompt's own page opens in your browser for that request. The page is offprompt's, rendered for this example; you type the key there, never in the terminal."
+      />
+    }
   >
     <Part title="What happens to a key you paste into the chat">
       <p>
@@ -115,6 +178,7 @@ const Hub = () => (
       <p>
         None of this can be taken back. A key that has been in a chat is best treated as exposed, and replaced.
       </p>
+      <Pasting />
     </Part>
 
     <Part title="The fix: the agent asks, and you type the key somewhere else">
@@ -130,17 +194,17 @@ const Hub = () => (
           asking, what for, and which file it will write.
         </li>
         <li>
-          You paste the key. The page checks it against what offprompt knows of the provider, such as a Resend key
-          starting with <code>re_</code>, and links to where the key is made.
+          You paste the key. The page checks it against what offprompt knows of the provider, such as an OpenAI
+          project key starting with <code>sk-proj-</code>, and links to where the key is made.
         </li>
         <li>
           offprompt writes the key to <code>.env.local</code>, and answers the agent with the key&apos;s name and a
           fingerprint of four emoji, which your page shows too:
         </li>
       </ol>
-      <Code>{RESULT}</Code>
+      <Answered />
       <p>
-        From then on the project reads the key by name, as <code>process.env.RESEND_API_KEY</code>. The agent never
+        From then on the project reads the key by name, as <code>process.env.OPENAI_API_KEY</code>. The agent never
         had the value, so it cannot repeat it.
       </p>
       <p>

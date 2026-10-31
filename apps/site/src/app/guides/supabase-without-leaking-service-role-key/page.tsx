@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { Anchor } from '@/components/anchor'
 import { article, GuidePage, howTo, LINK, Part, type Step, Steps } from '@/components/guide'
+import { Bright, Collect, Figure, Says, Session, Shot, Tool, Waiting, You } from '@/components/guide-shots'
 import { HUB, SUPABASE } from '@/lib/guides'
 import { pageMetadata } from '@/lib/metadata'
 
@@ -34,9 +35,65 @@ export const supabaseAdmin = createClient(process.env.SUPABASE_URL!, process.env
   auth: { autoRefreshToken: false, persistSession: false },
 })`
 
+const PROJECT = 'acme-admin'
+
+/** Claude Code asking offprompt for the project URL and a secret key. */
+const Asking = () => (
+  <Session project={PROJECT}>
+    <You>Write a script that lists the project&apos;s users.</You>
+    <Says>
+      Listing users goes through supabase.auth.admin, which needs a secret key, so this runs as a server script and
+      never in the browser. I&apos;ll ask you for SUPABASE_URL and SUPABASE_SECRET_KEY with offprompt.
+    </Says>
+    <Collect>
+      <span>
+        file: <Bright>.env.local</Bright>
+      </span>
+      <span className="whitespace-pre">
+        keys: <Bright>SUPABASE_URL</Bright> <span className="hidden text-term-dim lg:inline">· url</span>
+      </span>
+      <span className="whitespace-pre">
+        {'      '}
+        <Bright>SUPABASE_SECRET_KEY</Bright> <span className="hidden text-term-dim lg:inline">· supabase</span>
+      </span>
+      <span>Opened http://127.0.0.1:4123 in your browser. Waiting for you to write them…</span>
+    </Collect>
+    <Waiting />
+  </Session>
+)
+
+/** What a policy error should lead to: a policy, not the key that skips them all. */
+const Policy = () => (
+  <Figure caption="What to ask of the agent when Row Level Security stops a query: a policy for that table, with the publishable key still in use.">
+    <Session project={PROJECT}>
+      <You>Saving a profile fails. Fix it.</You>
+      <Says>
+        The insert fails with &ldquo;new row violates row-level security policy for table profiles&rdquo;. Switching to
+        the secret key would skip every policy on every table, so I&apos;ll add a policy that lets a signed-in user
+        insert their own row instead.
+      </Says>
+      <Tool name="Write" args="supabase/migrations/20261031120000_profiles_insert_own.sql">
+        <span>Wrote 4 lines to supabase/migrations/20261031120000_profiles_insert_own.sql</span>
+      </Tool>
+    </Session>
+  </Figure>
+)
+
+/** The admin script, run by the agent with the file loaded. */
+const Listed = () => (
+  <Figure caption="The agent runs the script on your machine. The secret key goes from .env.local to Supabase, and never through the session.">
+    <Session project={PROJECT}>
+      <Tool name="Bash" args="node --env-file=.env.local list-users.mjs">
+        <span>42 users</span>
+      </Tool>
+    </Session>
+  </Figure>
+)
+
 const STEPS: readonly Step[] = [
   {
     name: 'Check that the code needs a secret key at all',
+    picture: <Policy />,
     text: "Most of an app's code should use the publishable key, with Row Level Security deciding what each user may read and write. A secret key is for code that has to act beyond any one user: an admin script, a webhook handler, a scheduled job, or a call to `supabase.auth.admin`. If the agent reaches for the secret key because a query came back empty or failed with a row-level security error, the fix is a policy, not the key.",
   },
   {
@@ -65,6 +122,7 @@ const STEPS: readonly Step[] = [
   },
   {
     name: 'Use the key only in server code',
+    picture: <Listed />,
     text: 'A Node script reads both values from the environment, and runs with the file loaded:',
     code: [
       { text: 'npm install @supabase/supabase-js' },
@@ -92,6 +150,14 @@ const Supabase = () => (
         and out of any code the browser loads. Let the agent ask for it with offprompt, which writes it to{' '}
         <code>.env.local</code> as <code>SUPABASE_SECRET_KEY</code>, and use it only in server code.
       </p>
+    }
+    shot={
+      <Shot
+        session={<Asking />}
+        sample="guide-supabase"
+        height={680}
+        caption="Claude Code asks offprompt for the project URL and a secret key, and offprompt's page for that request opens in your browser. The URL shows in the clear, and the key's Get it link opens that project's API keys."
+      />
     }
     sources={[
       { label: 'Supabase: Understanding API keys', href: 'https://supabase.com/docs/guides/api/api-keys' },

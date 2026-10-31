@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { Anchor } from '@/components/anchor'
 import { article, GuidePage, howTo, LINK, Part, type Step, Steps } from '@/components/guide'
+import { Bright, Collect, Figure, Says, Session, Shot, Tool, Waiting, You } from '@/components/guide-shots'
 import { HUB, RESEND } from '@/lib/guides'
 import { pageMetadata } from '@/lib/metadata'
 
@@ -26,6 +27,44 @@ if (error) {
 }
 
 console.log(\`Sent \${data.id}\`)`
+
+const PROJECT = 'acme-app'
+
+/** Claude Code asking offprompt for the Resend key, and waiting while you type it. */
+const Asking = () => (
+  <Session project={PROJECT}>
+    <You>Send a welcome email with Resend when someone signs up.</You>
+    <Says>
+      I&apos;ll send it from app/api/signup/route.ts with the resend SDK. That needs RESEND_API_KEY, which isn&apos;t
+      in .env.local yet, so I&apos;ll ask you for it with offprompt.
+    </Says>
+    <Collect>
+      <span>
+        file: <Bright>.env.local</Bright>
+      </span>
+      <span>
+        keys: <Bright>RESEND_API_KEY</Bright> <span className="hidden text-term-dim lg:inline">· resend</span>
+      </span>
+      <span>Opened http://127.0.0.1:4123 in your browser. Waiting for you to write it…</span>
+    </Collect>
+    <Waiting />
+  </Session>
+)
+
+/** The test send, run by the agent: the key is read from the file, and never printed. */
+const Sent = () => (
+  <Figure caption="The agent runs the script. Node reads RESEND_API_KEY from .env.local, so the key appears nowhere in the session: only the ID Resend gives the email.">
+    <Session project={PROJECT}>
+      <Tool name="Bash" args="node --env-file=.env.local send.mjs">
+        <span>Sent 4ef9a417-02e9-4d39-ad75-9611e0fcc33c</span>
+      </Tool>
+      <Says>
+        Resend accepted the test email to delivered@resend.dev. Next I&apos;ll send the welcome email from the signup
+        route the same way.
+      </Says>
+    </Session>
+  </Figure>
+)
 
 const STEPS: readonly Step[] = [
   {
@@ -57,6 +96,7 @@ const STEPS: readonly Step[] = [
   },
   {
     name: 'Send a test email',
+    picture: <Sent />,
     text: "Install Resend's Node SDK, which needs Node 20 or later, and send to `delivered@resend.dev`, one of Resend's test addresses: it reports a delivery without reaching a real inbox. Swap the `from` address for one on your verified domain.",
     code: [
       { text: 'npm install resend' },
@@ -83,6 +123,14 @@ const Resend = () => (
         <code>RESEND_API_KEY</code>, and the code the agent writes reads it from there. The key never enters the chat,
         and if it leaks anyway, it can only send mail from that one domain.
       </p>
+    }
+    shot={
+      <Shot
+        session={<Asking />}
+        sample="guide-resend"
+        height={540}
+        caption="Claude Code asks offprompt for RESEND_API_KEY by name, and offprompt's page for that request opens in your browser. It checks the key as you type it, and its Get it link opens Resend's API Keys page."
+      />
     }
     sources={[
       { label: 'Resend: Create an API key', href: 'https://resend.com/docs/create-an-api-key' },

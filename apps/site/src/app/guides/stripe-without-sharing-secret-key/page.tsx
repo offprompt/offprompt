@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { Anchor } from '@/components/anchor'
 import { article, GuidePage, howTo, LINK, Part, type Step, Steps } from '@/components/guide'
+import { Bright, Collect, Figure, Prompt, Says, Session, Shell, Shot, Waiting, You } from '@/components/guide-shots'
 import { HUB, STRIPE } from '@/lib/guides'
 import { pageMetadata } from '@/lib/metadata'
 
@@ -55,6 +56,66 @@ createServer((req, res) => {
   res.end('<form method="post" action="/checkout"><button>Buy a T-shirt, $20</button></form>')
 }).listen(4242, () => console.log(\`Open \${base}\`))`
 
+const PROJECT = 'acme-shop'
+
+/** Claude Code asking offprompt for both Stripe secrets in one request. */
+const Asking = () => (
+  <Session project={PROJECT}>
+    <You>Add a Stripe Checkout button for a $20 T-shirt.</You>
+    <Says>
+      Checkout needs STRIPE_SECRET_KEY, and the webhook STRIPE_WEBHOOK_SECRET. Neither is in .env.local, so I&apos;ll
+      ask you for both with offprompt. A restricted key with Checkout Sessions: Write is enough.
+    </Says>
+    <Collect>
+      <span>
+        file: <Bright>.env.local</Bright>
+      </span>
+      <span className="whitespace-pre">
+        keys: <Bright>STRIPE_SECRET_KEY</Bright> <span className="hidden text-term-dim lg:inline">· stripe</span>
+      </span>
+      <span className="whitespace-pre">
+        {'      '}
+        <Bright>STRIPE_WEBHOOK_SECRET</Bright> <span className="hidden text-term-dim lg:inline">· stripe</span>
+      </span>
+      <span>Opened http://127.0.0.1:4123 in your browser. Waiting for you to write them…</span>
+    </Collect>
+    <Waiting />
+  </Session>
+)
+
+/** The Stripe CLI in a terminal of your own, where the signing secret it prints stays out of the agent's session. */
+const Listening = () => (
+  <Figure caption="Your own terminal, not the agent's. The secret is hidden here; yours prints in full, and you paste it on offprompt's page.">
+    <Shell project={PROJECT}>
+      <Prompt project={PROJECT}>stripe listen --forward-to localhost:4242/webhook</Prompt>
+      <span>
+        &gt; Ready! Your webhook signing secret is <span className="text-term-fg">whsec_••••••••••••••••</span> (^C to
+        quit)
+      </span>
+    </Shell>
+  </Figure>
+)
+
+/** The events a test payment sends, forwarded to the local webhook and answered. */
+const Paid = () => (
+  <Figure caption="The same terminal after a test payment: the CLI forwards checkout.session.completed, among the other events the payment makes, and the webhook answers 200 once the signature checks out.">
+    <Shell project={PROJECT}>
+      <Prompt project={PROJECT}>stripe listen --forward-to localhost:4242/webhook</Prompt>
+      <span>
+        &gt; Ready! Your webhook signing secret is <span className="text-term-fg">whsec_••••••••••••••••</span> (^C to
+        quit)
+      </span>
+      <span>
+        2026-10-31 16:24:03 <span className="text-term-fg">--&gt; checkout.session.completed</span> [evt_1SNx…]
+      </span>
+      <span>
+        2026-10-31 16:24:03 &lt;-- <span className="text-mint">[200]</span> POST http://localhost:4242/webhook
+        [evt_1SNx…]
+      </span>
+    </Shell>
+  </Figure>
+)
+
 const STEPS: readonly Step[] = [
   {
     name: 'Work in a sandbox',
@@ -68,6 +129,7 @@ const STEPS: readonly Step[] = [
   },
   {
     name: 'Start the webhook listener in your own terminal',
+    picture: <Listening />,
     text: "Checkout tells your server about a payment with a `checkout.session.completed` event, which the server checks with a signing secret starting `whsec_`. For local testing, the [Stripe CLI](https://docs.stripe.com/stripe-cli) forwards events and prints that secret. Run it in a terminal of your own, not through the agent: a command the agent runs puts its output, and the secret, in the transcript.",
     code: [{ text: 'stripe listen --forward-to localhost:4242/webhook' }],
     after:
@@ -100,6 +162,7 @@ const STEPS: readonly Step[] = [
   },
   {
     name: 'Pay with a test card',
+    picture: <Paid />,
     text: 'Open `http://localhost:4242`, press the button and pay with card number `4242 4242 4242 4242`, any future expiry date and any three-digit CVC. Stripe redirects to the success URL, the CLI forwards `checkout.session.completed`, and the server logs the session ID.',
   },
 ]
@@ -115,6 +178,14 @@ const Stripe = () => (
         paste both on a page in your browser, they are written to <code>.env.local</code>, and the agent writes code
         that reads <code>STRIPE_SECRET_KEY</code> and <code>STRIPE_WEBHOOK_SECRET</code> without ever seeing them.
       </p>
+    }
+    shot={
+      <Shot
+        session={<Asking />}
+        sample="guide-stripe"
+        height={790}
+        caption="Claude Code asks offprompt for both Stripe secrets in one request, and offprompt's page for it opens in your browser. Typed into the secret key's field, a publishable pk_test_ key is caught before anything is written."
+      />
     }
     sources={[
       { label: 'Stripe: API keys', href: 'https://docs.stripe.com/keys' },
