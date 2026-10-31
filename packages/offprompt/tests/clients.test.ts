@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { askerFor, clients } from '../src/registry/clients.js'
+import { askerFor, callLimitFor, clients } from '../src/registry/clients.js'
 
 const NO_ENV = {}
 
@@ -32,6 +32,14 @@ describe('who is asking', () => {
       name: 'Claude Code',
       via: 'Conductor',
     })
+  })
+
+  it('knows which hosts stop a tool call before a request expires', () => {
+    expect(callLimitFor({ name: 'Cline' })).toBe(60_000)
+    expect(callLimitFor({ name: '@cline/core' })).toBe(60_000)
+    expect(callLimitFor({ name: 'claude-code' })).toBeUndefined()
+    expect(callLimitFor({ name: 'my-agent' })).toBeUndefined()
+    expect(callLimitFor(undefined)).toBeUndefined()
   })
 
   it('keeps every client id unique and every match lowercase', () => {

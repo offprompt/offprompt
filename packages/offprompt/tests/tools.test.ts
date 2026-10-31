@@ -50,12 +50,15 @@ const setupTest = async ({
   git = false,
   ttlMs,
   awaitMs,
+  callLimitMs,
   project,
 }: {
   git?: boolean
   ttlMs?: number
   /** How long await_secret holds a call open. */
   awaitMs?: number
+  /** How long the host lets a tool call run, as Cline's 60 seconds, shortened. */
+  callLimitMs?: number
   /** How the project is found; the workspace by default. */
   project?: () => Promise<Result<string>>
 } = {}) => {
@@ -78,6 +81,7 @@ const setupTest = async ({
       return Promise.resolve(channels.shift() ?? { channel: 'browser' })
     },
     ...(awaitMs === undefined ? {} : { awaitMs }),
+    ...(callLimitMs === undefined ? {} : { callLimit: () => callLimitMs }),
   })
 
   const client = new Client({ name: 'test-client', version: 'test' })
@@ -466,10 +470,37 @@ describe('await_secret', () => {
 
     const waiting = payloadOf(await call('await_secret', { request_id: lastRequest().id }))
 
-    expect(waiting).toMatchObject({ status: 'awaiting', note: 'Still waiting for the human. Call await_secret again with this request_id.' })
+    expect(waiting).toMatchObject({ status: 'awaiting' })
+    expect(String(waiting.note)).toContain('Call await_secret with this request_id, and again while it says awaiting')
     expect(waiting.url).toBeUndefined()
     await call('cancel_secret', { request_id: lastRequest().id })
     await collecting
+  })
+
+  it('answers before a host that stops calls sooner would cut the wait off, and await_secret takes over', async () => {
+    const { collect, call, typeIntoPage, lastRequest } = await setupTest({ callLimitMs: 10_030 })
+
+    const collected = payloadOf(await collect())
+
+    expect(collected).toMatchObject({ status: 'awaiting', names: ['RESEND_API_KEY'] })
+    expect(String(collected.note)).toContain('Call await_secret with this request_id')
+    expect(String(collected.note)).toContain('Do not paste or repeat any URL')
+    expect(collected.url).toBeUndefined()
+
+    await typeIntoPage({ request: lastRequest(), value: RESEND_KEY })
+    expect(payloadOf(await call('await_secret', { request_id: collected.request_id }))).toMatchObject({ status: 'written' })
+  })
+
+  it("long-polls within a host's limit on a call", async () => {
+    const { collect, call } = await setupTest({ callLimitMs: 10_030 })
+    const collected = payloadOf(await collect())
+
+    const started = Date.now()
+    const waiting = payloadOf(await call('await_secret', { request_id: collected.request_id }))
+
+    expect(waiting).toMatchObject({ status: 'awaiting' })
+    expect(Date.now() - started).toBeLessThan(5_000)
+    await call('cancel_secret', { request_id: collected.request_id })
   })
 
   it('reports an unknown request id as an error rather than a status', async () => {
