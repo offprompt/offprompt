@@ -7,7 +7,7 @@ import { OffpromptMark } from '../marks'
 export const Footer = () => (
   <footer className="border-t border-line">
     <div className={`${FRAME} flex flex-col gap-10 pt-12 pb-10 lg:gap-16 lg:pt-[72px] lg:pb-14`}>
-      <div className="flex flex-col gap-9 lg:flex-row lg:gap-8">
+      <div className="flex flex-col gap-9 xl:flex-row xl:gap-8">
         <div className="flex flex-1 flex-col gap-4">
           <Anchor href="/" className="flex w-fit items-center gap-2.5 text-ink" aria-label="offprompt, home">
             <OffpromptMark className="h-4 w-8" />
@@ -17,9 +17,9 @@ export const Footer = () => (
             An MCP server beside your agent. The secret goes around the conversation.
           </p>
         </div>
-        <div className="flex gap-4 lg:gap-8">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-9 md:grid-cols-4 md:gap-x-8 xl:flex xl:gap-8">
           {FOOTER.map(({ head, links }) => (
-            <nav key={head} className="flex flex-1 flex-col gap-3 lg:w-[200px] lg:flex-none lg:gap-3.5" aria-label={head}>
+            <nav key={head} className="flex flex-col gap-3 lg:gap-3.5 xl:w-[168px]" aria-label={head}>
               <h3 className="text-sm font-medium text-ink lg:text-[14.5px]">{head}</h3>
               {links.map(({ label, href }) => (
                 <Anchor key={label} href={href} className="text-sm text-body transition-colors hover:text-ink lg:text-[14.5px]">
