@@ -1,5 +1,12 @@
 # offprompt
 
+## 0.3.1
+
+### Patch Changes
+
+- f7774c4: Each GitHub release carries offprompt as an MCP Bundle, `offprompt-<version>.mcpb`, which Smithery and other hosts that install bundles take as it is. It holds the same server as the npm package, started with `node`.
+- 67d3076: The MCP Bundle lists each tool with its input schema, which Smithery needs to take the bundle.
+
 ## 0.3.0
 
 ### Minor Changes

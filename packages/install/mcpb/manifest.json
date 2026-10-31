@@ -3,7 +3,7 @@
   "manifest_version": "0.3",
   "name": "offprompt",
   "display_name": "offprompt",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "MCP server that lets Claude Code, Cursor or Codex ask you for API keys on a local page and write them to .env. The agent only ever sees key names.",
   "long_description": "When a task needs a value only you have, such as an API key, a token or a password, the agent calls offprompt instead of asking you to paste it into the chat. offprompt opens a page in your browser, checks each value against what its registry knows of the key, and writes it into the project's `.env` or another file. The agent gets the key names and a four-emoji fingerprint, never the values. From a cloud sandbox the page is reached through a Cloudflare tunnel, and your browser seals the values to a key only the sandbox holds.\n\noffprompt writes into the project the agent works in: the folder it starts offprompt in, or the workspace it names as an MCP root. A host that names neither gets a refusal saying so.",
   "author": {
