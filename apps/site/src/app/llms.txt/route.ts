@@ -1,4 +1,4 @@
-import { GUIDE_PAGES } from '@/lib/guides'
+import { GUIDE_PAGES, INDEX } from '@/lib/guides'
 import { COMPARE, DOCS, INSTALL, NPM, REPO, SITE } from '@/lib/site'
 
 export const dynamic = 'force-static'
@@ -26,6 +26,7 @@ It works with Claude Code, Codex, Cursor, Pi and any other agent that speaks MCP
 
 ## Guides
 
+- [${INDEX.title}](${SITE}${INDEX.path}): ${INDEX.description}
 ${GUIDE_PAGES.map(guide => `- [${guide.title}](${SITE}${guide.path}): ${guide.description}`).join('\n')}
 
 ## Compared

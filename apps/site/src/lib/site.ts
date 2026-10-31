@@ -1,4 +1,4 @@
-import { GUIDE_PAGES, HUB } from '@/lib/guides'
+import { GUIDE_PAGES, INDEX } from '@/lib/guides'
 
 /** offprompt.dev, built from apps/site. */
 export const SITE = 'https://offprompt.dev'
@@ -18,8 +18,8 @@ export type Link = { readonly label: string; readonly href: string }
 /** Where offprompt's own page can be tried, with a stand-in for its server. */
 export const PLAYGROUND: Link = { label: 'Playground', href: '/playground' }
 
-/** What happens to a key pasted into an agent's chat, and the guides for one provider at a time. */
-export const GUIDES: Link = { label: 'Guides', href: HUB.path }
+/** Every guide: what happens to a key pasted into an agent's chat, and one provider at a time. */
+export const GUIDES: Link = { label: 'Guides', href: INDEX.path }
 
 /** offprompt beside the tools people weigh it against. */
 export const COMPARE: Link = { label: 'Compare', href: '/compare' }
@@ -47,7 +47,7 @@ export const FOOTER: readonly { readonly head: string; readonly links: readonly 
   },
   {
     head: 'Guides',
-    links: GUIDE_PAGES.map(guide => ({ label: guide.label, href: guide.path })),
+    links: [{ label: 'All guides', href: INDEX.path }, ...GUIDE_PAGES.map(guide => ({ label: guide.label, href: guide.path }))],
   },
   {
     head: 'Developers',

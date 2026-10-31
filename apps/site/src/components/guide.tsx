@@ -4,8 +4,9 @@ import { Anchor } from '@/components/anchor'
 import { CopyCommand } from '@/components/copy-command'
 import { FRAME } from '@/components/frame'
 import { JsonLd } from '@/components/json-ld'
+import { Services } from '@/components/services'
 import { Shell } from '@/components/shell'
-import { CHECKED, type Guide, GUIDE_PAGES, MODIFIED } from '@/lib/guides'
+import { CHECKED, type Guide, GUIDE_PAGES, INDEX, MODIFIED } from '@/lib/guides'
 import { INSTALL, REPO, SITE } from '@/lib/site'
 
 export const LINK = 'text-ink underline decoration-line underline-offset-4 hover:decoration-ink'
@@ -154,15 +155,21 @@ type Sources = readonly { readonly label: string; readonly href: string }[]
 /** The other guides, so a reader of one finds the rest. */
 const More = ({ guide }: { readonly guide: Guide }) => (
   <Part title="More guides">
-    <ul className="flex flex-col gap-2">
+    <ul className="flex flex-col gap-5">
       {GUIDE_PAGES.filter(other => other.path !== guide.path).map(other => (
-        <li key={other.path}>
+        <li key={other.path} className="flex flex-col gap-2">
           <Anchor href={other.path} className={LINK}>
             {other.title}
           </Anchor>
+          <Services uses={other.uses} />
         </li>
       ))}
     </ul>
+    <p>
+      <Anchor href={INDEX.path} className={LINK}>
+        All guides
+      </Anchor>
+    </p>
   </Part>
 )
 
@@ -178,15 +185,34 @@ type Props = {
   readonly children: ReactNode
 }
 
+/** Where the guide sits on the site, for search results that show the path to a page. */
+const breadcrumbs = (guide: Guide) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'offprompt', item: SITE },
+    { '@type': 'ListItem', position: 2, name: 'Guides', item: `${SITE}${INDEX.path}` },
+    { '@type': 'ListItem', position: 3, name: guide.title, item: `${SITE}${guide.path}` },
+  ],
+})
+
 /** A guide's page: its title and short answer, its parts, where its facts come from, and the other guides. */
 export const GuidePage = ({ guide, lede, shot, data, sources, children }: Props) => (
   <Shell>
-    {data.map((item, index) => (
+    {[...data, breadcrumbs(guide)].map((item, index) => (
       <JsonLd key={index} data={item} />
     ))}
     <article className={`${FRAME} flex flex-col gap-10 pt-16 pb-24 lg:pt-[104px] lg:pb-32`}>
       <div className="flex max-w-[760px] flex-col gap-6">
-        <p className="font-mono text-[11px] tracking-[1.2px] text-eyebrow lg:text-xs">GUIDE</p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <Anchor
+            href={INDEX.path}
+            className="font-mono text-[11px] tracking-[1.2px] text-eyebrow hover:text-ink lg:text-xs"
+          >
+            GUIDES
+          </Anchor>
+          <Services uses={guide.uses} />
+        </div>
         <h1 className="text-[36px] leading-[41px] tracking-[-1.2px] text-ink lg:text-[48px] lg:leading-[54px] lg:tracking-[-1.6px]">
           {guide.title}
         </h1>

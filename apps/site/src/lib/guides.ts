@@ -9,6 +9,9 @@ export const CHECKED = '31 October 2026'
 /** The same date, for the guides' structured data. */
 export const MODIFIED = '2026-10-31'
 
+/** A service a guide uses, by its id in offprompt's registry: an agent that asks, or a provider. */
+export type Service = { readonly agent: string } | { readonly provider: string }
+
 export type Guide = {
   readonly path: string
   readonly title: string
@@ -17,7 +20,17 @@ export type Guide = {
   readonly description: string
   /** The title a link preview shows, where it differs from the page's own. */
   readonly share?: string
+  /** What the guide uses, shown by their logos. */
+  readonly uses: readonly Service[]
 }
+
+/** The page that lists the guides. */
+export const INDEX = {
+  path: '/guides',
+  title: 'Guides: API keys and coding agents',
+  description:
+    'How to give Claude Code, Codex or Cursor the API keys a task needs without pasting them into the chat, one provider at a time: Resend, Stripe and Supabase.',
+} as const
 
 export const HUB: Guide = {
   path: '/guides/paste-api-key-into-ai-agent',
@@ -26,6 +39,7 @@ export const HUB: Guide = {
   description:
     "A key pasted into an AI agent's chat stays in the transcript and goes to the model provider with each request. Let the agent ask for it without seeing it instead.",
   share: 'Your agent asked for an API key. Don’t paste it into the chat.',
+  uses: [{ agent: 'claude-code' }, { agent: 'codex' }, { agent: 'cursor' }, { provider: 'openai' }],
 }
 
 export const RESEND: Guide = {
@@ -34,6 +48,7 @@ export const RESEND: Guide = {
   label: 'Resend API key',
   description:
     'Verify a domain, make a Resend key that can only send from it, and let your coding agent ask for RESEND_API_KEY with offprompt, so the key never enters the chat.',
+  uses: [{ provider: 'resend' }],
 }
 
 export const STRIPE: Guide = {
@@ -42,6 +57,7 @@ export const STRIPE: Guide = {
   label: 'Stripe secret key',
   description:
     'Build Stripe Checkout with a coding agent while the secret key and webhook signing secret stay out of the chat: test keys, restricted keys and offprompt.',
+  uses: [{ provider: 'stripe' }],
 }
 
 export const SUPABASE: Guide = {
@@ -50,6 +66,7 @@ export const SUPABASE: Guide = {
   label: 'Supabase service_role key',
   description:
     "Supabase's service_role and secret keys bypass Row Level Security. Keep them out of the agent's chat and the browser, and use them only in server code.",
+  uses: [{ provider: 'supabase' }],
 }
 
 /** The provider guides, in the order the hub lists them. */

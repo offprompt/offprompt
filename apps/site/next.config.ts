@@ -12,9 +12,6 @@ const config: NextConfig = {
   // go through a route handler instead (app/op/api/send), which a rewrite couldn't replace: see
   // lib/umami-proxy.ts.
   rewrites: () => Promise.resolve([{ source: '/op/script.js', destination: 'https://cloud.umami.is/script.js' }]),
-  // The guides start from the one about pasting a key, which links to the rest.
-  redirects: () =>
-    Promise.resolve([{ source: '/guides', destination: '/guides/paste-api-key-into-ai-agent', permanent: false }]),
 }
 
 export default config

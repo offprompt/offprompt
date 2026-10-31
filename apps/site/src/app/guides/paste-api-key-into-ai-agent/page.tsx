@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Anchor } from '@/components/anchor'
 import { article, Code, Faq, faqPage, GuidePage, LINK, Part, type Question, Rich } from '@/components/guide'
 import { Bright, Collect, Figure, Says, Session, Shot, Tool, Waiting, Written, You } from '@/components/guide-shots'
+import { Services } from '@/components/services'
 import { HUB, PROVIDER_GUIDES } from '@/lib/guides'
 import { pageMetadata } from '@/lib/metadata'
 import { DOCS, INSTALL } from '@/lib/site'
@@ -274,6 +275,7 @@ const Hub = () => (
               {guide.title}
             </Anchor>
             <span>{guide.description}</span>
+            <Services uses={guide.uses} className="pt-1" />
           </li>
         ))}
       </ul>
