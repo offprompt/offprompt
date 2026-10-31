@@ -30,7 +30,8 @@ export const clients: readonly Client[] = [
   { id: 'codex', name: 'Codex', matches: ['codex'], logo: openai },
   { id: 'copilot', name: 'GitHub Copilot', matches: ['copilot', 'github'], logo: github },
   { id: 'windsurf', name: 'Windsurf', matches: ['windsurf'] },
-  { id: 'cline', name: 'Cline', matches: ['cline'] },
+  // The VS Code extension introduces itself as Cline, the CLI as @cline/core.
+  { id: 'cline', name: 'Cline', matches: ['cline', '@cline/'] },
   { id: 'zed', name: 'Zed', matches: ['zed'] },
   { id: 'gemini-cli', name: 'Gemini CLI', matches: ['gemini'] },
   { id: 'opencode', name: 'OpenCode', matches: ['opencode'] },
