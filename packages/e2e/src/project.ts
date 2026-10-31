@@ -49,6 +49,7 @@ export const setupProject = async ({ agent, from, install = true }: { agent: str
         () => true,
         () => false,
       ),
-    cleanup: () => rm(root, { recursive: true, force: true }),
+    // On Windows a server started in the project, still on its way out, can hold the folder a moment longer.
+    cleanup: () => rm(root, { recursive: true, force: true, maxRetries: 10 }),
   }
 }

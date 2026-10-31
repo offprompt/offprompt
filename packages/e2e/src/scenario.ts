@@ -8,9 +8,9 @@ import { instrument } from './instrument.js'
 import { collectSessions, filesUnder, projectFiles, prune, sessionFilesOf } from './leaks.js'
 import { startModel, type Call } from './model.js'
 import { fillPage, waitForPage } from './page.js'
-import { readIfPresent, runCommand } from './process.js'
+import { readIfPresent, runCommand, settle } from './process.js'
 import { artifactsFor, setupProject } from './project.js'
-import { field, readTraffic } from './traffic.js'
+import { field, launchedIn, readTraffic } from './traffic.js'
 
 const AGENT_TIMEOUT_MS = 6 * 60_000
 
@@ -196,10 +196,12 @@ export const runScenario = async ({
   const places = [...(await filesUnder(artifacts)), ...(await projectFiles(project.root))]
 
   /**
-   * Pi writes its session folder again as it exits, so cleaning up takes it out once more. A
-   * home a plugin ran from may be held a moment longer on Windows, by a server on its way out.
+   * Pi writes its session folder again as it exits, so cleaning up takes it out once more. Every
+   * offprompt the run started is waited for first, since on Windows a folder a process still
+   * runs in, or ran from, cannot be removed.
    */
   const cleanup = async () => {
+    await settle(await launchedIn(traffic))
     await project.cleanup()
     if (mock !== undefined) {
       await rm(mock.home, { recursive: true, force: true, maxRetries: 10 })

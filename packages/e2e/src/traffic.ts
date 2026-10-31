@@ -80,6 +80,18 @@ const sessionOf = (entries: readonly unknown[]) => {
 }
 
 /**
+ * Every process the run's launches of offprompt started: each launcher, and the server it
+ * started in turn.
+ */
+export const launchedIn = async (path: string): Promise<readonly number[]> =>
+  (await readIfPresent(path))
+    .split('\n')
+    .map(parsed)
+    .filter(entry => field(entry, 'direction') === 'start')
+    .flatMap(entry => [field(entry, 'pid'), field(entry, 'serverPid')])
+    .filter((pid): pid is number => typeof pid === 'number')
+
+/**
  * What passed between the agents and offprompt, one session per launch: where offprompt was
  * started, how each client introduced itself, the tool calls and their results, and whether
  * the page was offered through the agent's own dialog.
