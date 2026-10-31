@@ -73,6 +73,25 @@ Claude Code asks once before it starts a server a project declares. Codex and Pi
 project's config only in a project you trust. [Agents](https://docs.offprompt.dev/guides/agents)
 has each one in detail.
 
+### Manual MCP config
+
+Any other MCP client, Cline among them, can start offprompt from npm:
+
+```json
+{
+  "mcpServers": {
+    "offprompt": {
+      "command": "npx",
+      "args": ["-y", "offprompt", "mcp"]
+    }
+  }
+}
+```
+
+add-mcp knows Cline, but Cline also needs the project as `cwd` and a tool timeout longer than its
+60 seconds, which `init -g` does not write. [llms-install.md](llms-install.md) has the entry for
+Cline, and steps an agent can follow to install offprompt.
+
 ## Documentation
 
 [docs.offprompt.dev](https://docs.offprompt.dev) has the rest: what the agent can ask for, the
