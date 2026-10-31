@@ -1,3 +1,4 @@
+import { GUIDE_PAGES } from '@/lib/guides'
 import { COMPARE, DOCS, INSTALL, NPM, REPO, SITE } from '@/lib/site'
 
 export const dynamic = 'force-static'
@@ -22,6 +23,10 @@ It works with Claude Code, Codex, Cursor, Pi and any other agent that speaks MCP
 - [How to keep secrets out of your AI agent's context](${DOCS}/guides/keep-secrets-out-of-agent-context): where secrets get into an agent's context, and how to keep each way closed
 - [FAQ](${DOCS}/faq): short answers to the questions people ask first
 - [Threat model](${DOCS}/security/threat-model): what offprompt protects against, and what it does not
+
+## Guides
+
+${GUIDE_PAGES.map(guide => `- [${guide.title}](${SITE}${guide.path}): ${guide.description}`).join('\n')}
 
 ## Compared
 
