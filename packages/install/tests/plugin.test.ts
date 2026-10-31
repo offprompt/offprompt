@@ -63,7 +63,6 @@ it('declares the version of the server it ships, in every manifest', async () =>
   expect(await versionIn(fileURLToPath(new URL('../plugin/.claude-plugin/plugin.json', import.meta.url)))).toBe(server)
   expect(await versionIn(fileURLToPath(new URL('../plugin/.codex-plugin/plugin.json', import.meta.url)))).toBe(server)
   expect(await versionIn(fileURLToPath(new URL('../plugin/plugin.json', import.meta.url)))).toBe(server)
-  expect(await versionIn(fileURLToPath(new URL('../mcpb/manifest.json', import.meta.url)))).toBe(server)
 })
 
 it('lists the version it ships in the MCP Registry entry, which takes each version once', async () => {

@@ -7,4 +7,3 @@ dist/
 .gstack/
 test-results/
 playwright-report/
-*.mcpb
