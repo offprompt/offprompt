@@ -182,7 +182,17 @@ Claude Code's MCP tool timeout defaults to about 28 hours and its stdio idle win
 30 minutes, so the 300 second TTL bounds the wait long before either does. The manifest
 declares the per-server timeout anyway, so a lower `MCP_TOOL_TIMEOUT` cannot cut it short.
 
-Two cases do not wait, and `await_secret` does the waiting for both. One is the last rung
+Cline stops a tool call after 60 seconds unless the server's entry sets `timeout`, and nothing
+offprompt installs can set it there: Cline's marketplace installs a server with
+`cline mcp install`, which takes no timeout, and add-mcp writes none for Cline. A person who took
+longer than a minute to get their key lost the request, and the page with it when Cline stopped
+the server. So offprompt knows, by the name a host gives at initialize, the hosts that stop a
+call sooner than a request lives, and in those it answers 10 seconds before the host would cut
+it off: `collect_secret` returns `awaiting` after 50 seconds in Cline, with a note to wait with
+`await_secret` and do nothing else, and `await_secret` long-polls for 50. The page stays open in
+the browser throughout. Every other host waits as before.
+
+Two cases do not wait at all, and `await_secret` does the waiting for both. One is the last rung
 of the local ladder below, where the model has to relay the URL itself: blocking there
 would hold back the message that gets the human to the page. The other is every request
 made from a sandbox, which lives longer than any one call. Both return `awaiting`, with
@@ -190,7 +200,8 @@ the URL.
 
 ### `await_secret`
 
-Long-polls one request for up to 60 seconds. Returns `written`, `awaiting` or `expired`.
+Long-polls one request for up to 60 seconds, or 10 seconds less than a host's own limit on a
+call where offprompt knows one: 50 in Cline. Returns `written`, `awaiting` or `expired`.
 Needed only after a `collect_secret` that came back `awaiting`, or to re-attach to a
 request whose blocking call the human interrupted. While a request whose link the agent
 passes on is `awaiting`, the result carries its `url` again; once that request closes

@@ -7,7 +7,7 @@ program that is asking.
 
 ## Simple Icons
 
-The logos of 1Password, Algolia, Anthropic, Auth0, Claude, Clerk, Cloudflare, Cloudinary,
+The logos of 1Password, Algolia, Anthropic, Auth0, Claude, Clerk, Cline, Cloudflare, Cloudinary,
 Convex, Cursor, Datadog, DeepSeek, DigitalOcean, Discord, Docker Hub, ElevenLabs, Fly.io,
 GitHub, GitLab, Google Gemini, Hugging Face, Lemon Squeezy, Linear, Mailgun, Mapbox, Mistral
 AI, MongoDB Atlas, Neon, Netlify, Notion, npm, OpenRouter, Paddle, Perplexity, PlanetScale,
