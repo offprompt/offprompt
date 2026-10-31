@@ -4,7 +4,7 @@ import { FRAME } from '../frame'
 import { LogoMark } from '../logo'
 
 /** The agents offprompt is tested with, by the logos its page shows them under. */
-const AGENTS = ['claude-code', 'codex', 'cursor', 'pi'].map(agent)
+const AGENTS = ['claude-code', 'codex', 'cursor', 'cline', 'pi'].map(agent)
 
 /** The foot of the hero. */
 export const WorksWith = () => (
@@ -12,7 +12,7 @@ export const WorksWith = () => (
     <p className="text-sm text-body lg:text-base">Tested with</p>
     <ul className="grid grid-cols-2 gap-x-10 gap-y-5 sm:flex sm:flex-wrap sm:justify-center sm:gap-x-16 lg:gap-x-20">
       {AGENTS.map(({ name, logo }) => (
-        <li key={name} className="flex items-center gap-2.5 text-faint lg:gap-3">
+        <li key={name} className="flex items-center gap-2.5 text-faint odd:last:col-span-2 odd:last:justify-center lg:gap-3">
           <LogoMark logo={logo} className="size-6 shrink-0 lg:size-8" />
           <span className="text-[21px] leading-[30px] font-semibold tracking-[-0.5px] whitespace-nowrap lg:text-[28px] lg:leading-10 lg:tracking-[-0.8px]">
             {name}

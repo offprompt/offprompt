@@ -7,7 +7,7 @@ program that is asking.
 
 ## Simple Icons
 
-The logos of 1Password, Algolia, Anthropic, Auth0, Claude, Clerk, Cloudflare, Cloudinary,
+The logos of 1Password, Algolia, Anthropic, Auth0, Claude, Clerk, Cline, Cloudflare, Cloudinary,
 Convex, Cursor, Datadog, DeepSeek, DigitalOcean, Discord, Docker Hub, ElevenLabs, Fly.io,
 GitHub, GitLab, Google Gemini, Hugging Face, Lemon Squeezy, Linear, Mailgun, Mapbox, Mistral
 AI, MongoDB Atlas, Neon, Netlify, Notion, npm, OpenRouter, Paddle, Perplexity, PlanetScale,
@@ -210,7 +210,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 `mcp.mjs` carries the code of these npm packages inside it.
 Each is under the licence named with it, whose text follows.
 
-### @modelcontextprotocol/sdk 1.32.1
+### @modelcontextprotocol/sdk 1.32.2
 
 Licence: MIT
 
@@ -387,7 +387,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### zod 4.6.5
+### zod 4.6.6
 
 Licence: MIT
 
