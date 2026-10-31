@@ -1,5 +1,5 @@
 import { stars } from '@/lib/github'
-import { NAV, PLAYGROUND, REPO } from '@/lib/site'
+import { NAV, REPO } from '@/lib/site'
 
 import { Anchor } from '../anchor'
 import { FRAME } from '../frame'
@@ -36,18 +36,12 @@ export const Nav = async () => {
             {count}
           </Anchor>
           <Anchor
-            href={PLAYGROUND.href}
-            className="hidden rounded-lg bg-card px-4 py-2.5 text-sm font-medium text-ink outline outline-line -outline-offset-1 transition-colors hover:bg-panel lg:block"
-          >
-            {PLAYGROUND.label}
-          </Anchor>
-          <Anchor
             href="/#get-started"
             className="rounded-lg bg-brand px-3 py-2 text-[13px] font-medium text-white transition-colors hover:bg-ink lg:px-4 lg:py-2.5 lg:text-sm"
           >
             Get started
           </Anchor>
-          <MobileMenu links={[PLAYGROUND, ...NAV]} />
+          <MobileMenu links={NAV} />
         </div>
       </div>
     </header>

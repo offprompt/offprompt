@@ -1,3 +1,5 @@
+import { GUIDE_PAGES, HUB } from '@/lib/guides'
+
 /** offprompt.dev, built from apps/site. */
 export const SITE = 'https://offprompt.dev'
 
@@ -17,7 +19,7 @@ export type Link = { readonly label: string; readonly href: string }
 export const PLAYGROUND: Link = { label: 'Playground', href: '/playground' }
 
 /** What happens to a key pasted into an agent's chat, and the guides for one provider at a time. */
-export const GUIDES: Link = { label: 'Guides', href: '/guides/paste-api-key-into-ai-agent' }
+export const GUIDES: Link = { label: 'Guides', href: HUB.path }
 
 /** offprompt beside the tools people weigh it against. */
 export const COMPARE: Link = { label: 'Compare', href: '/compare' }
@@ -26,6 +28,7 @@ export const NAV: readonly Link[] = [
   { label: 'How it works', href: '/#how-it-works' },
   { label: 'Rich fields', href: '/#rich-fields' },
   { label: 'Security', href: '/#security' },
+  GUIDES,
   { label: 'Docs', href: `${DOCS}/introduction` },
   { label: 'Changelog', href: `${REPO}/releases` },
 ]
@@ -43,10 +46,13 @@ export const FOOTER: readonly { readonly head: string; readonly links: readonly 
     ],
   },
   {
+    head: 'Guides',
+    links: GUIDE_PAGES.map(guide => ({ label: guide.label, href: guide.path })),
+  },
+  {
     head: 'Developers',
     links: [
       { label: 'Docs', href: `${DOCS}/introduction` },
-      GUIDES,
       { label: 'API keys and agents', href: `${DOCS}/guides/claude-code-api-keys` },
       { label: 'API keys in Cursor', href: `${DOCS}/guides/cursor-api-keys` },
       { label: 'Secrets and agent context', href: `${DOCS}/guides/keep-secrets-out-of-agent-context` },
