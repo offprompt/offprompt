@@ -90,6 +90,16 @@ On Windows, install with `npx offprompt init -g` instead. The plugin starts its 
 shell script, which Windows does not run by itself; `init -g` has its copy of the plugin start
 the server with `node`.
 
+### As an MCP Bundle
+
+Each [GitHub release](https://github.com/offprompt/offprompt/releases) carries offprompt as an
+[MCP Bundle](https://github.com/modelcontextprotocol/mcpb), `offprompt-<version>.mcpb`: the same
+server, with a manifest that tells a host to start it with `node`. Smithery lists offprompt from
+it, and a host that installs bundles takes the file as it is. Such a host starts offprompt in
+the bundle's folder, so offprompt writes to the workspace the host names as an MCP root, as
+[Where the project is](#where-the-project-is) says. Claude Desktop names none, so there offprompt
+refuses.
+
 ## Updating
 
 Run `init` again from the newest version. In a project, that replaces `tools/offprompt/mcp.mjs`:

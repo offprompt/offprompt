@@ -1,8 +1,8 @@
 /**
  * Puts the version Changesets gave offprompt into every other file that declares it: the
- * plugin's three manifests, both places in server.json, which the MCP Registry reads, and the
- * server's source, whose version it reports to a host when it starts. Each file keeps its own
- * layout: only the old version is replaced, where it stands.
+ * plugin's three manifests, the MCP Bundle's, both places in server.json, which the MCP Registry
+ * reads, and the server's source, whose version it reports to a host when it starts. Each file
+ * keeps its own layout: only the old version is replaced, where it stands.
  */
 import { readFile, writeFile } from 'node:fs/promises'
 
@@ -21,6 +21,7 @@ const DECLARED = [
   { file: 'packages/install/plugin/.claude-plugin/plugin.json', times: 1, ...IN_JSON },
   { file: 'packages/install/plugin/.codex-plugin/plugin.json', times: 1, ...IN_JSON },
   { file: 'packages/install/plugin/plugin.json', times: 1, ...IN_JSON },
+  { file: 'packages/install/mcpb/manifest.json', times: 1, ...IN_JSON },
   { file: 'server.json', times: 2, ...IN_JSON },
   { file: 'packages/offprompt/src/version.ts', times: 1, ...IN_SOURCE },
 ]

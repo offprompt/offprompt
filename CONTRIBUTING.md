@@ -129,10 +129,11 @@ tests need no changeset.
 Nobody publishes by hand. On `main`, the release workflow keeps a "Release offprompt" pull
 request open while changesets wait, with the next version and its changelog entry in
 `packages/offprompt/CHANGELOG.md`. Merging it publishes that version to npm, opens a GitHub
-release with its entry, lists it in the MCP Registry, and commits the same package to the
-`plugin` branch, which Anthropic's plugin directory reads it from. A run that stopped partway
-finishes the rest when run again. `pnpm release npm --dry-run` shows what would go out, and
-`pnpm release plugin --dry-run` what the `plugin` branch would get.
+release with its entry and its MCP Bundle, lists it in the MCP Registry, and commits the same
+package to the `plugin` branch, which Anthropic's plugin directory reads it from. A run that
+stopped partway finishes the rest when run again. `pnpm release npm --dry-run` shows what would
+go out, and `pnpm release plugin --dry-run` what the `plugin` branch would get. `pnpm mcpb
+offprompt.mcpb` packs the MCP Bundle the GitHub release carries, which is what Smithery lists.
 
 Changes reach `main` only through pull requests. One merges once it is up to date with `main`
 and its `all checks` check passes, which it does when the checks and the hosts have passed on
