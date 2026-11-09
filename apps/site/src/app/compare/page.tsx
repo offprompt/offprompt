@@ -9,6 +9,7 @@ import { LogoTile } from '@/components/logo'
 import { InfisicalMark, OffpromptMark } from '@/components/marks'
 import { Shell } from '@/components/shell'
 import { CHECKED, FAQ, ROWS, type Tool, TOOLS } from '@/lib/compare'
+import { COMPARISONS } from '@/lib/comparisons'
 import { pageMetadata } from '@/lib/metadata'
 import { provider } from '@/lib/registry'
 import { DOCS, INSTALL, REPO } from '@/lib/site'
@@ -173,6 +174,24 @@ const Compare = () => (
             </Anchor>
             .
           </p>
+        </Part>
+
+        <Part title="One-to-one comparisons">
+          <p>
+            This page weighs the MCP servers. For offprompt beside a full secrets platform, where the question is less
+            which value reaches the agent and more where offprompt fits alongside a store a team already runs, each of
+            these takes one tool on its own:
+          </p>
+          <ul className="flex flex-col gap-3">
+            {COMPARISONS.map(comparison => (
+              <li key={comparison.path} className="flex flex-col gap-1">
+                <Anchor href={comparison.path} className={`${LINK} font-medium`}>
+                  {comparison.label}
+                </Anchor>
+                <span>{comparison.blurb}</span>
+              </li>
+            ))}
+          </ul>
         </Part>
 
         <Part title="Sources">

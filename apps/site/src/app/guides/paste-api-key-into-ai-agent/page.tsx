@@ -4,9 +4,10 @@ import { Anchor } from '@/components/anchor'
 import { article, Code, Faq, faqPage, GuidePage, LINK, Part, type Question, Rich } from '@/components/guide'
 import { Bright, Collect, Figure, Says, Session, Shot, Tool, Waiting, Written, You } from '@/components/guide-shots'
 import { Services } from '@/components/services'
+import { COMPARISONS } from '@/lib/comparisons'
 import { HUB, PROVIDER_GUIDES } from '@/lib/guides'
 import { pageMetadata } from '@/lib/metadata'
-import { DOCS, INSTALL } from '@/lib/site'
+import { COMPARE, DOCS, INSTALL } from '@/lib/site'
 
 export const metadata: Metadata = pageMetadata(HUB)
 
@@ -279,6 +280,30 @@ const Hub = () => (
           </li>
         ))}
       </ul>
+    </Part>
+
+    <Part title="How it compares to a secrets manager">
+      <p>
+        If your team already keeps secrets in a tool like HashiCorp Vault, Doppler, Infisical or 1Password, offprompt
+        does not replace it: those hold and sync the keys you have, and offprompt gets a new one into the project without
+        the chat. Each page below takes one of them on its own, honestly, and says where the two fit together:
+      </p>
+      <ul className="flex flex-col gap-3">
+        {COMPARISONS.map(comparison => (
+          <li key={comparison.path}>
+            <Anchor href={comparison.path} className={`${LINK} font-medium`}>
+              {comparison.label}
+            </Anchor>
+          </li>
+        ))}
+      </ul>
+      <p>
+        Or the three-way look at the MCP servers:{' '}
+        <Anchor href={COMPARE.href} className={LINK}>
+          offprompt vs 1Password Environments MCP vs Infisical MCP
+        </Anchor>
+        .
+      </p>
     </Part>
 
     <Faq questions={QUESTIONS} />
