@@ -5,20 +5,31 @@ import { CopyCommand } from '@/components/copy-command'
 import { FRAME } from '@/components/frame'
 import { Faq, faqPage, LINK, Part, type Question, Rich } from '@/components/guide'
 import { JsonLd } from '@/components/json-ld'
-import { OffpromptMark } from '@/components/marks'
+import { DopplerMark, InfisicalMark, OffpromptMark, OnePasswordMark, VaultMark } from '@/components/marks'
 import { Shell } from '@/components/shell'
 import { type Comparison, COMPARISONS, MODIFIED, type Row, type Sources } from '@/lib/comparisons'
 import { COMPARE, INSTALL, REPO, SITE } from '@/lib/site'
 
-/** The mark in the offprompt column header, on a plain tile, as the registry draws a logo with no brand colour. */
-const OffpromptTile = () => (
+/**
+ * A tool's mark on a plain tile in the text colour, as the registry draws a logo with no brand
+ * colour, so no tool stands out. Each mark is sized for its own viewBox to sit the same on the tile.
+ */
+const Tile = ({ children }: { readonly children: ReactNode }) => (
   <span
     className="flex size-9 shrink-0 items-center justify-center rounded-lg text-ink outline outline-line -outline-offset-1"
     aria-hidden="true"
   >
-    <OffpromptMark className="h-2.5 w-5" />
+    {children}
   </span>
 )
+
+/** The competitor's mark, by the comparison's slug, each sized to sit the same on the tile. */
+const CompetitorMark = ({ slug }: { readonly slug: Comparison['slug'] }) => {
+  if (slug === 'offprompt-vs-hashicorp-vault') return <VaultMark className="size-5" />
+  if (slug === 'offprompt-vs-doppler') return <DopplerMark className="size-[18px]" />
+  if (slug === 'offprompt-vs-infisical') return <InfisicalMark className="h-3 w-6" />
+  return <OnePasswordMark className="size-5" />
+}
 
 const OFFPROMPT = { '@type': 'Organization', name: 'offprompt', url: SITE }
 
@@ -47,7 +58,7 @@ const breadcrumbs = (page: Comparison) => ({
 })
 
 /** The at-a-glance table: offprompt beside the other tool, a question a row. */
-export const Table = ({ competitor, rows }: { readonly competitor: string; readonly rows: readonly Row[] }) => (
+export const Table = ({ page, rows }: { readonly page: Comparison; readonly rows: readonly Row[] }) => (
   <div className="overflow-x-auto border-y border-line">
     <table className="w-full min-w-[640px] table-fixed border-collapse text-left text-[14px] leading-[21px] lg:text-[14.5px]">
       <thead>
@@ -57,12 +68,19 @@ export const Table = ({ competitor, rows }: { readonly competitor: string; reado
           </th>
           <th scope="col" className="py-3 pr-4 align-bottom font-medium text-ink">
             <span className="flex flex-col items-start gap-2.5">
-              <OffpromptTile />
+              <Tile>
+                <OffpromptMark className="h-2.5 w-5" />
+              </Tile>
               offprompt
             </span>
           </th>
           <th scope="col" className="py-3 pr-4 align-bottom font-medium text-ink">
-            <span className="flex min-h-[36px] flex-col items-start justify-end gap-2.5">{competitor}</span>
+            <span className="flex flex-col items-start gap-2.5">
+              <Tile>
+                <CompetitorMark slug={page.slug} />
+              </Tile>
+              {page.competitor}
+            </span>
           </th>
         </tr>
       </thead>
@@ -167,7 +185,7 @@ export const ComparePage = ({ page, lede, rows, children, questions, sources, ch
 
       <section className="flex flex-col gap-5">
         <h2 className="text-[22px] tracking-[-0.4px] text-ink lg:text-[26px]">At a glance</h2>
-        <Table competitor={page.competitor} rows={rows} />
+        <Table page={page} rows={rows} />
         <p className="text-[13.5px] text-muted lg:text-sm">
           What each tool&apos;s own docs say, as of {checked}. &ldquo;Not documented&rdquo; means its docs do not say.
         </p>
