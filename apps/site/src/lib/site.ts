@@ -29,6 +29,7 @@ export const NAV: readonly Link[] = [
   { label: 'Rich fields', href: '/#rich-fields' },
   { label: 'Security', href: '/#security' },
   GUIDES,
+  COMPARE,
   { label: 'Docs', href: `${DOCS}/introduction` },
   { label: 'Changelog', href: `${REPO}/releases` },
 ]
