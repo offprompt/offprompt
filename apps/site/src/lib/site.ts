@@ -26,11 +26,8 @@ export const COMPARE: Link = { label: 'Compare', href: '/compare' }
 
 export const NAV: readonly Link[] = [
   { label: 'How it works', href: '/#how-it-works' },
-  { label: 'Rich fields', href: '/#rich-fields' },
-  { label: 'Security', href: '/#security' },
   GUIDES,
   { label: 'Docs', href: `${DOCS}/introduction` },
-  { label: 'Changelog', href: `${REPO}/releases` },
 ]
 
 export const FOOTER: readonly { readonly head: string; readonly links: readonly Link[] }[] = [

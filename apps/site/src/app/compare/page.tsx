@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
 import { Anchor } from '@/components/anchor'
+import { ComparisonTile } from '@/components/comparison'
 import { CopyCommand } from '@/components/copy-command'
 import { FRAME } from '@/components/frame'
 import { JsonLd } from '@/components/json-ld'
@@ -9,6 +10,7 @@ import { LogoTile } from '@/components/logo'
 import { InfisicalMark, OffpromptMark } from '@/components/marks'
 import { Shell } from '@/components/shell'
 import { CHECKED, FAQ, ROWS, type Tool, TOOLS } from '@/lib/compare'
+import { COMPARISONS } from '@/lib/comparisons'
 import { pageMetadata } from '@/lib/metadata'
 import { provider } from '@/lib/registry'
 import { DOCS, INSTALL, REPO } from '@/lib/site'
@@ -173,6 +175,27 @@ const Compare = () => (
             </Anchor>
             .
           </p>
+        </Part>
+
+        <Part title="One-to-one comparisons">
+          <p>
+            This page weighs the MCP servers. For offprompt beside a full secrets platform, where the question is less
+            which value reaches the agent and more where offprompt fits alongside a store a team already runs, each of
+            these takes one tool on its own:
+          </p>
+          <ul className="flex flex-col gap-4">
+            {COMPARISONS.map(comparison => (
+              <li key={comparison.path} className="flex gap-3">
+                <ComparisonTile slug={comparison.slug} />
+                <span className="flex flex-col gap-1">
+                  <Anchor href={comparison.path} className={`${LINK} font-medium`}>
+                    {comparison.label}
+                  </Anchor>
+                  <span>{comparison.blurb}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
         </Part>
 
         <Part title="Sources">

@@ -1,3 +1,4 @@
+import { COMPARISONS } from '@/lib/comparisons'
 import { GUIDE_PAGES, INDEX } from '@/lib/guides'
 import { COMPARE, DOCS, INSTALL, NPM, REPO, SITE } from '@/lib/site'
 
@@ -32,6 +33,7 @@ ${GUIDE_PAGES.map(guide => `- [${guide.title}](${SITE}${guide.path}): ${guide.de
 ## Compared
 
 - [offprompt vs 1Password Environments MCP vs Infisical MCP](${SITE}${COMPARE.href}): what each one does with a secret's value, from each tool's own docs
+${COMPARISONS.map(comparison => `- [${comparison.title}](${SITE}${comparison.path}): ${comparison.description}`).join('\n')}
 
 ## Source
 
