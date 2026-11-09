@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
 import { Anchor } from '@/components/anchor'
+import { ComparisonTile } from '@/components/comparison'
 import { CopyCommand } from '@/components/copy-command'
 import { FRAME } from '@/components/frame'
 import { JsonLd } from '@/components/json-ld'
@@ -182,13 +183,16 @@ const Compare = () => (
             which value reaches the agent and more where offprompt fits alongside a store a team already runs, each of
             these takes one tool on its own:
           </p>
-          <ul className="flex flex-col gap-3">
+          <ul className="flex flex-col gap-4">
             {COMPARISONS.map(comparison => (
-              <li key={comparison.path} className="flex flex-col gap-1">
-                <Anchor href={comparison.path} className={`${LINK} font-medium`}>
-                  {comparison.label}
-                </Anchor>
-                <span>{comparison.blurb}</span>
+              <li key={comparison.path} className="flex gap-3">
+                <ComparisonTile slug={comparison.slug} />
+                <span className="flex flex-col gap-1">
+                  <Anchor href={comparison.path} className={`${LINK} font-medium`}>
+                    {comparison.label}
+                  </Anchor>
+                  <span>{comparison.blurb}</span>
+                </span>
               </li>
             ))}
           </ul>

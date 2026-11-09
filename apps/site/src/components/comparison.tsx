@@ -31,6 +31,13 @@ const CompetitorMark = ({ slug }: { readonly slug: Comparison['slug'] }) => {
   return <OnePasswordMark className="size-5" />
 }
 
+/** The competitor's mark on its tile, for a link to a comparison page. The same tile the table draws. */
+export const ComparisonTile = ({ slug }: { readonly slug: Comparison['slug'] }) => (
+  <Tile>
+    <CompetitorMark slug={slug} />
+  </Tile>
+)
+
 const OFFPROMPT = { '@type': 'Organization', name: 'offprompt', url: SITE }
 
 /** The comparison as an article, for search engines and the assistants that read a page. */
@@ -129,13 +136,16 @@ export const SourceList = ({ competitor, sources, checked }: { readonly competit
 /** The other comparison pages, and the three-way one, so a reader of one finds the rest. */
 const More = ({ page }: { readonly page: Comparison }) => (
   <Part title="Other comparisons">
-    <ul className="flex flex-col gap-3">
+    <ul className="flex flex-col gap-4">
       {COMPARISONS.filter(other => other.path !== page.path).map(other => (
-        <li key={other.path} className="flex flex-col gap-1">
-          <Anchor href={other.path} className={`${LINK} font-medium`}>
-            {other.label}
-          </Anchor>
-          <span>{other.blurb}</span>
+        <li key={other.path} className="flex gap-3">
+          <ComparisonTile slug={other.slug} />
+          <span className="flex flex-col gap-1">
+            <Anchor href={other.path} className={`${LINK} font-medium`}>
+              {other.label}
+            </Anchor>
+            <span>{other.blurb}</span>
+          </span>
         </li>
       ))}
     </ul>

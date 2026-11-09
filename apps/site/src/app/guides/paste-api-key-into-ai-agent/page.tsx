@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { Anchor } from '@/components/anchor'
+import { ComparisonTile } from '@/components/comparison'
 import { article, Code, Faq, faqPage, GuidePage, LINK, Part, type Question, Rich } from '@/components/guide'
 import { Bright, Collect, Figure, Says, Session, Shot, Tool, Waiting, Written, You } from '@/components/guide-shots'
 import { Services } from '@/components/services'
@@ -290,7 +291,8 @@ const Hub = () => (
       </p>
       <ul className="flex flex-col gap-3">
         {COMPARISONS.map(comparison => (
-          <li key={comparison.path}>
+          <li key={comparison.path} className="flex items-center gap-3">
+            <ComparisonTile slug={comparison.slug} />
             <Anchor href={comparison.path} className={`${LINK} font-medium`}>
               {comparison.label}
             </Anchor>
