@@ -3,6 +3,7 @@
 [![npm](https://img.shields.io/npm/v/offprompt)](https://www.npmjs.com/package/offprompt)
 [![check](https://github.com/offprompt/offprompt/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/offprompt/offprompt/actions/workflows/check.yml)
 [![MIT licence](https://img.shields.io/github/license/offprompt/offprompt)](LICENSE)
+[![offprompt/offprompt MCP server](https://glama.ai/mcp/servers/offprompt/offprompt/badges/score.svg)](https://glama.ai/mcp/servers/offprompt/offprompt)
 
 offprompt lets a coding agent ask you for a secret and have it land where the project needs it,
 without the value passing through the model.
